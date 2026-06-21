@@ -1,0 +1,1 @@
+ssh -t pawlesh@192.168.0.18 "cd ~/docker/homeserverpage && git pull && sudo docker compose up -d --build"

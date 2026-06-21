@@ -1,5 +1,7 @@
 using HomeServerPage.Client.Pages;
 using HomeServerPage.Components;
+using HomeServerPage.Data.Fridge;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,7 +10,18 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents()
     .AddInteractiveWebAssemblyComponents();
 
+var fridgeConnection = builder.Configuration.GetConnectionString("FridgeDbConnection");
+
+builder.Services.AddDbContextFactory<FridgeDbContext>(op => op.UseSqlite(fridgeConnection));
+
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var dbFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<FridgeDbContext>>();
+    using var db = dbFactory.CreateDbContext();
+    db.Database.Migrate();
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

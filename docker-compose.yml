@@ -10,13 +10,11 @@ services:
       - "8090:8080"
     restart: always
     volumes:
-      - hsp_db:/app/db
+      - hsp_db:/app/Database
       - ${PRIVATE_DATA_PATH}:/app/data/private
-      - ${NEXTCLOUD_DATA_PATH}:/app/data/nextcloud
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - AppSettings__PrivateDataPath=/app/data/private
-      - AppSettings__NextcloudDataPath=/app/data/nextcloud
 
 volumes:
   hsp_db:
