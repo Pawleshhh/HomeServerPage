@@ -1,42 +1,125 @@
 @page "/fridge"
-@rendermode InteractiveServer
-
+@attribute [StreamRendering]
 @using HomeServerPage.Data.Fridge
 @inject IFridgeService FridgeService
 
 <PageTitle>My Fridge</PageTitle>
 
-<div id="input">
-    <EditForm Model="@EditedFridgeItem" OnValidSubmit="OnValidFridgeItemSubmitAsync" FormName="FridgeAddForm" method="post">
-        <label class="form-label">
-            Nazwa:
-            <InputText @bind-Value="@EditedFridgeItem.Name" />
-        </label>
-        <label class="form-label">
-            Ilość:
-            <InputNumber @bind-Value="@EditedFridgeItem.QuanitityValue" />
-        </label>
-        <label class="form-label">
-            Rodzaj ilości:
-            <InputSelect @bind-Value="@EditedFridgeItem.QuantityType" />
-        </label>
-        <label class="form-label">
-            Data dodania:
-            <InputDate @bind-Value="@EditedFridgeItem.AddedDate" />
-        </label>
-        <label class="form-label">
-            Termin ważności:
-            <InputDate @bind-Value="@EditedFridgeItem.ExpirationDate" />
-        </label>
-        <label class="form-label">
-            Data otwarcia:
-            <InputDate @bind-Value="@EditedFridgeItem.OpenDate" />
-        </label>
-        <label class="form-label">
-            Ważność po otwarciu:
-            <InputNumber @bind-Value="@EditedFridgeItem.TimeAfterOpen" />
-        </label>
-    </EditForm>
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-xl-10">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4">
+                    <div class="mb-4">
+                        <h1 class="h3 mb-1">My Fridge</h1>
+                        <p class="text-body-secondary mb-0">Add a new product to your fridge inventory.</p>
+                    </div>
+
+                    <EditForm Model="@EditedFridgeItem" OnValidSubmit="OnValidFridgeItemSubmitAsync" FormName="FridgeAddForm" method="post">
+                        <div class="row g-3">
+                            <div class="col-12 col-md-6">
+                                <label class="form-label" for="fridge-name">Nazwa</label>
+                                <InputText id="fridge-name" class="form-control" @bind-Value="@EditedFridgeItem.Name" placeholder="Np. Mleko" />
+                            </div>
+
+                            <div class="col-12 col-md-3">
+                                <label class="form-label" for="fridge-quantity">Ilość</label>
+                                <InputNumber id="fridge-quantity" class="form-control" @bind-Value="@EditedFridgeItem.QuanitityValue" />
+                            </div>
+
+                            <div class="col-12 col-md-3">
+                                <label class="form-label" for="fridge-quantity-type">Rodzaj ilości</label>
+                                <InputSelect id="fridge-quantity-type" class="form-select" @bind-Value="@EditedFridgeItem.QuantityType">
+                                    @foreach (var quantityType in QuantityTypes)
+                                    {
+                                        <option value="@quantityType">@quantityType</option>
+                                    }
+                                </InputSelect>
+                            </div>
+
+                            <div class="col-12 col-md-4">
+                                <label class="form-label" for="fridge-added-date">Data dodania</label>
+                                <InputDate id="fridge-added-date" class="form-control" @bind-Value="@EditedFridgeItem.AddedDate" />
+                            </div>
+
+                            <div class="col-12 col-md-4">
+                                <label class="form-label" for="fridge-expiration-date">Termin ważności</label>
+                                <InputDate id="fridge-expiration-date" class="form-control" @bind-Value="@EditedFridgeItem.ExpirationDate" />
+                            </div>
+
+                            <div class="col-12 col-md-4">
+                                <label class="form-label" for="fridge-open-date">Data otwarcia</label>
+                                <InputDate id="fridge-open-date" class="form-control" @bind-Value="@EditedFridgeItem.OpenDate" />
+                            </div>
+
+                            <div class="col-12 col-md-4">
+                                <label class="form-label" for="fridge-time-after-open">Ważność po otwarciu</label>
+                                <div class="input-group">
+                                    <InputNumber id="fridge-time-after-open" class="form-control" @bind-Value="@EditedFridgeItem.TimeAfterOpen" />
+                                    <span class="input-group-text">h</span>
+                                </div>
+                            </div>
+
+                            <div class="col-12 d-flex justify-content-end pt-2">
+                                <button type="submit" class="btn btn-primary px-4">Dodaj do lodówki</button>
+                            </div>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0 mt-4">
+                <div class="card-body p-4">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
+                        <div>
+                            <h2 class="h4 mb-1">Fridge items</h2>
+                            <p class="text-body-secondary mb-0">Current products stored in the database.</p>
+                        </div>
+                        <span class="badge text-bg-light border">@Items.Count item(s)</span>
+                    </div>
+
+                    @if (Items.Count == 0)
+                    {
+                        <div class="alert alert-light border mb-0" role="status">
+                            No fridge items yet. Add your first product using the form above.
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th scope="col">Nazwa</th>
+                                        <th scope="col">Ilość</th>
+                                        <th scope="col">Rodzaj</th>
+                                        <th scope="col">Data dodania</th>
+                                        <th scope="col">Data otwarcia</th>
+                                        <th scope="col">Termin ważności</th>
+                                        <th scope="col">Po otwarciu</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Items)
+                                    {
+                                        <tr>
+                                            <td class="fw-semibold">@item.Name</td>
+                                            <td>@item.QuantityValue</td>
+                                            <td>@item.QuantityType</td>
+                                            <td>@item.AddedDate.ToString("yyyy-MM-dd")</td>
+                                            <td>@item.OpenDate.ToString("yyyy-MM-dd")</td>
+                                            <td>@item.ExpirationDate.ToString("yyyy-MM-dd")</td>
+                                            <td>@item.TimeAfterOpen.TotalHours h</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 @code {
@@ -44,6 +127,8 @@
     public FridgeItemModel EditedFridgeItem { get; set; } = FridgeItemModel.CreateClearEditedFridgeItem();
 
     public List<FridgeItem> Items { get; set; } = [];
+
+    private static IReadOnlyList<QuantityType> QuantityTypes { get; } = Enum.GetValues<QuantityType>();
 
     protected override async Task OnInitializedAsync()
     {

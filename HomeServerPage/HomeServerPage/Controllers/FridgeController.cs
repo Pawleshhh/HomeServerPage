@@ -1,0 +1,23 @@
+using HomeServerPage.Data.Fridge;
+using Microsoft.AspNetCore.Mvc;
+
+namespace HomeServerPage.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public class FridgeController(IFridgeService fridgeService) : ControllerBase
+{
+    [HttpGet]
+    public async Task<ActionResult<List<FridgeItem>>> GetItems()
+    {
+        var items = await fridgeService.GetItemsAsync();
+        return Ok(items);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> AddItem([FromBody] FridgeItem item)
+    {
+        await fridgeService.AddItemAsync(item);
+        return Ok();
+    }
+}

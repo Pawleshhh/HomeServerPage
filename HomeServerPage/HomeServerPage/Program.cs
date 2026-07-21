@@ -10,6 +10,8 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents()
     .AddInteractiveWebAssemblyComponents();
 
+builder.Services.AddControllers();
+
 var fridgeConnection = builder.Configuration.GetConnectionString("FridgeDbConnection");
 
 builder.Services.AddDbContextFactory<FridgeDbContext>(op => op.UseSqlite(fridgeConnection));
@@ -40,6 +42,7 @@ app.UseHttpsRedirection();
 
 app.UseAntiforgery();
 
+app.MapControllers();
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()
