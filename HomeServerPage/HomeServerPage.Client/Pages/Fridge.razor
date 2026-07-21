@@ -1,0 +1,92 @@
+@page "/fridge"
+@rendermode InteractiveServer
+
+@using HomeServerPage.Data.Fridge
+@inject IFridgeService FridgeService
+
+<PageTitle>My Fridge</PageTitle>
+
+<div id="input">
+    <EditForm Model="@EditedFridgeItem" OnValidSubmit="OnValidFridgeItemSubmitAsync" FormName="FridgeAddForm" method="post">
+        <label class="form-label">
+            Nazwa:
+            <InputText @bind-Value="@EditedFridgeItem.Name" />
+        </label>
+        <label class="form-label">
+            Ilość:
+            <InputNumber @bind-Value="@EditedFridgeItem.QuanitityValue" />
+        </label>
+        <label class="form-label">
+            Rodzaj ilości:
+            <InputSelect @bind-Value="@EditedFridgeItem.QuantityType" />
+        </label>
+        <label class="form-label">
+            Data dodania:
+            <InputDate @bind-Value="@EditedFridgeItem.AddedDate" />
+        </label>
+        <label class="form-label">
+            Termin ważności:
+            <InputDate @bind-Value="@EditedFridgeItem.ExpirationDate" />
+        </label>
+        <label class="form-label">
+            Data otwarcia:
+            <InputDate @bind-Value="@EditedFridgeItem.OpenDate" />
+        </label>
+        <label class="form-label">
+            Ważność po otwarciu:
+            <InputNumber @bind-Value="@EditedFridgeItem.TimeAfterOpen" />
+        </label>
+    </EditForm>
+</div>
+
+@code {
+
+    public FridgeItemModel EditedFridgeItem { get; set; } = FridgeItemModel.CreateClearEditedFridgeItem();
+
+    public List<FridgeItem> Items { get; set; } = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        Items = await FridgeService.GetItemsAsync();
+        await base.OnInitializedAsync();
+    }
+
+    private async Task OnValidFridgeItemSubmitAsync(EditContext args)
+    {
+        await FridgeService.AddItemAsync(this.EditedFridgeItem.ToFridgeItem());
+        this.EditedFridgeItem = FridgeItemModel.CreateClearEditedFridgeItem();
+        Items = await FridgeService.GetItemsAsync();
+    }
+
+    public class FridgeItemModel
+    {
+        public string? Name { get; set; }
+
+        public int QuanitityValue { get; set; }
+
+        public QuantityType QuantityType { get; set; }
+
+        public DateTime AddedDate { get; set; }
+
+        public DateTime OpenDate { get; set; }
+
+        public DateTime ExpirationDate { get; set; }
+
+        public int TimeAfterOpen { get; set; }
+
+        public FridgeItem ToFridgeItem()
+            => new(0, Name ?? throw new NullReferenceException(), QuanitityValue, QuantityType, AddedDate, OpenDate, ExpirationDate, TimeSpan.FromHours(TimeAfterOpen));
+
+        public static FridgeItemModel CreateClearEditedFridgeItem()
+            => new FridgeItemModel
+                {
+                    Name = "Name",
+                    QuanitityValue = 1,
+                    QuantityType = QuantityType.Unit,
+                    AddedDate = DateTime.Now,
+                    OpenDate = DateTime.Now,
+                    ExpirationDate = DateTime.Now,
+                    TimeAfterOpen = 0
+                };
+    }
+}

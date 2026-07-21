@@ -13,6 +13,7 @@ builder.Services.AddRazorComponents()
 var fridgeConnection = builder.Configuration.GetConnectionString("FridgeDbConnection");
 
 builder.Services.AddDbContextFactory<FridgeDbContext>(op => op.UseSqlite(fridgeConnection));
+builder.Services.AddScoped<IFridgeService, FridgeService>();
 
 var app = builder.Build();
 

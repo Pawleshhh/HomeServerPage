@@ -1,4 +1,4 @@
-﻿namespace HomeServerPage.Data.Fridge;
+namespace HomeServerPage.Data.Fridge;
 
 public record FridgeItem(
     int Id, 
