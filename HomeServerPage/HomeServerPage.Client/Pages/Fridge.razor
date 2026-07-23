@@ -101,7 +101,7 @@
                                     <td>@item.QuantityValue</td>
                                     <td>@item.QuantityType</td>
                                     <td>@item.AddedDate.ToString("yyyy-MM-dd")</td>
-                                    <td>@item.OpenDate.ToString("yyyy-MM-dd")</td>
+                                    <td>@(item.OpenDate.HasValue ? item.OpenDate.Value.ToString("yyyy-MM-dd") : null)</td>
                                     <td>@item.ExpirationDate.ToString("yyyy-MM-dd")</td>
                                     <td>@item.TimeAfterOpen.TotalHours h</td>
                                 </tr>
