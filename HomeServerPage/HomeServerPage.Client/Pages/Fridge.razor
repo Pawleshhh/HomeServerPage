@@ -40,7 +40,7 @@
                     </div>
 
                     <div class="col-12 col-md-3">
-                        <label class="form-label label-truncate" for="fridge-added-date">Add Date (to the fridge)</label>
+                        <label class="form-label label-truncate" for="fridge-added-date">Added Date</label>
                         <InputDate id="fridge-added-date" class="form-control" @bind-Value="@EditedFridgeItem.AddedDate" />
                     </div>
 
@@ -58,20 +58,17 @@
                     </div>
 
                     <div class="col-12 col-md-3">
-                        <label class="form-label label-truncate" for="fridge-time-after-open">Expiration time after opening</label>
-                        <div class="input-group">
-                            <InputNumber id="fridge-time-after-open" class="form-control" @bind-Value="@EditedFridgeItem.TimeAfterOpen" />
-                            <span class="input-group-text">h</span>
-                        </div>
+                        <label class="form-label label-truncate" for="fridge-time-after-open">Time after open (hours)</label>
+                        <InputNumber id="fridge-time-after-open" class="form-control" @bind-Value="@EditedFridgeItem.TimeAfterOpen" />
                     </div>
 
-                    <div class="col-12 d-flex justify-content-end pt-2">
-                        <button type="submit" class="btn btn-primary px-4">Add</button>
+                    <div class="col-12 d-grid d-md-flex justify-content-md-end pt-2">
+                        <button type="submit" class="btn btn-primary px-4">Add to Fridge</button>
                     </div>
                 </div>
             </EditForm>
 
-            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3 mt-4 mt-md-5">
                 <div>
                     <h2 class="h4 mb-1">Fridge items</h2>
                     <p class="text-body-secondary mb-0">Current products stored in the fridge.</p>
@@ -88,26 +85,16 @@
             else
             {
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <colgroup>
-                            <col style="width:20%" />
-                            <col style="width:8%" />
-                            <col style="width:8%" />
-                            <col style="width:16%" />
-                            <col style="width:16%" />
-                            <col style="width:16%" />
-                            <col style="width:16%" />
-                            <col style="width:4%" />
-                        </colgroup>
+                    <table class="table table-hover align-middle mb-0 fridge-table">
                         <thead class="table-light">
                             <tr>
                                 <th scope="col">Name</th>
-                                <th scope="col">Quantity</th>
-                                <th scope="col">Q. type</th>
-                                <th scope="col">Add Date</th>
-                                <th scope="col">Open Date</th>
-                                <th scope="col">Expiration Date</th>
-                                <th scope="col">Time after opening</th>
+                                <th scope="col" class="d-none d-sm-table-cell">Qty</th>
+                                <th scope="col" class="d-none d-lg-table-cell">Type</th>
+                                <th scope="col" class="d-none d-md-table-cell">Added</th>
+                                <th scope="col" class="d-none d-xl-table-cell">Opened</th>
+                                <th scope="col">Expires</th>
+                                <th scope="col" class="d-none d-xl-table-cell">Time (hrs)</th>
                                 <th scope="col" aria-label="Remove"></th>
                             </tr>
                         </thead>
@@ -115,13 +102,16 @@
                             @foreach (var item in Items)
                             {
                                 <tr>
-                                    <td class="fw-semibold">@item.Name</td>
-                                    <td>@item.QuantityValue</td>
-                                    <td>@item.QuantityType</td>
-                                    <td>@item.AddedDate.ToString("d")</td>
-                                    <td>@(item.OpenDate.HasValue ? item.OpenDate.Value.ToString("d") : "Not provided")</td>
+                                    <td class="fw-semibold">
+                                        <div>@item.Name</div>
+                                        <small class="text-muted d-sm-none">@item.QuantityValue @item.QuantityType</small>
+                                    </td>
+                                    <td class="d-none d-sm-table-cell">@item.QuantityValue</td>
+                                    <td class="d-none d-lg-table-cell">@item.QuantityType</td>
+                                    <td class="d-none d-md-table-cell">@item.AddedDate.ToString("d")</td>
+                                    <td class="d-none d-xl-table-cell">@(item.OpenDate.HasValue ? item.OpenDate.Value.ToString("d") : "-")</td>
                                     <td>@item.ExpirationDate.ToString("d")</td>
-                                    <td>@item.TimeAfterOpen.TotalHours h</td>
+                                    <td class="d-none d-xl-table-cell">@item.TimeAfterOpen.TotalHours</td>
                                     <td>
                                         <button type="button" class="btn btn-sm btn-outline-danger" @onclick="() => RemoveItemAsync(item)" title="Remove">
                                             🗑️

@@ -5,3 +5,34 @@
     overflow: hidden;
     text-overflow: ellipsis;
 }
+
+/* Table improvements for mobile */
+::deep .fridge-table {
+    font-size: 0.875rem;
+}
+
+@media (max-width: 575.98px) {
+    /* Smaller font on mobile for better fit */
+    ::deep .fridge-table {
+        font-size: 0.8125rem;
+    }
+
+    /* Reduce button padding on mobile */
+    ::deep .fridge-table .btn-sm {
+        padding: 0.15rem 0.4rem;
+        font-size: 0.75rem;
+    }
+}
+
+@media (max-width: 767.98px) {
+    /* Improve spacing for mobile form */
+    ::deep .form-label {
+        margin-bottom: 0.25rem;
+        font-size: 0.875rem;
+    }
+
+    ::deep .form-control,
+    ::deep .form-select {
+        font-size: 0.875rem;
+    }
+}
