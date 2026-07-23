@@ -1,5 +1,6 @@
 @page "/fridge"
 @attribute [StreamRendering]
+@using System.ComponentModel.DataAnnotations
 @using HomeServerPage.Data.Fridge
 @inject IFridgeService FridgeService
 
@@ -14,19 +15,22 @@
             </div>
 
             <EditForm Model="@EditedFridgeItem" OnValidSubmit="OnValidFridgeItemSubmitAsync" FormName="FridgeAddForm" method="post">
+                <DataAnnotationsValidator/>
+
                 <div class="row g-3">
                     <div class="col-12 col-md-6">
-                        <label class="form-label" for="fridge-name">Nazwa</label>
-                        <InputText id="fridge-name" class="form-control" @bind-Value="@EditedFridgeItem.Name" placeholder="Np. Mleko" />
+                        <label class="form-label label-truncate" for="fridge-name">Name</label>
+                        <InputText id="fridge-name" class="form-control" @bind-Value="@EditedFridgeItem.Name" placeholder="Milk" />
+                        <ValidationMessage For="@(() => @EditedFridgeItem.Name)" />
                     </div>
 
                     <div class="col-12 col-md-3">
-                        <label class="form-label" for="fridge-quantity">Ilość</label>
+                        <label class="form-label label-truncate" for="fridge-quantity">Quantity</label>
                         <InputNumber id="fridge-quantity" class="form-control" @bind-Value="@EditedFridgeItem.QuanitityValue" />
                     </div>
 
                     <div class="col-12 col-md-3">
-                        <label class="form-label" for="fridge-quantity-type">Rodzaj ilości</label>
+                        <label class="form-label label-truncate" for="fridge-quantity-type">Quantity type</label>
                         <InputSelect id="fridge-quantity-type" class="form-select" @bind-Value="@EditedFridgeItem.QuantityType">
                             @foreach (var quantityType in QuantityTypes)
                             {
@@ -35,23 +39,26 @@
                         </InputSelect>
                     </div>
 
-                    <div class="col-12 col-md-4">
-                        <label class="form-label" for="fridge-added-date">Data dodania</label>
+                    <div class="col-12 col-md-3">
+                        <label class="form-label label-truncate" for="fridge-added-date">Add Date (to the fridge)</label>
                         <InputDate id="fridge-added-date" class="form-control" @bind-Value="@EditedFridgeItem.AddedDate" />
                     </div>
 
-                    <div class="col-12 col-md-4">
-                        <label class="form-label" for="fridge-expiration-date">Termin ważności</label>
+                    <div class="col-12 col-md-3">
+                        <label class="form-label label-truncate" for="fridge-expiration-date">Expiration Date</label>
                         <InputDate id="fridge-expiration-date" class="form-control" @bind-Value="@EditedFridgeItem.ExpirationDate" />
+                        <ValidationMessage For="@(() => @EditedFridgeItem.ExpirationDate)" />
                     </div>
 
-                    <div class="col-12 col-md-4">
-                        <label class="form-label" for="fridge-open-date">Data otwarcia</label>
+
+                    <div class="col-12 col-md-3">
+                        <label class="form-label label-truncate" for="fridge-open-date">Open Date</label>
                         <InputDate id="fridge-open-date" class="form-control" @bind-Value="@EditedFridgeItem.OpenDate" />
+                        <ValidationMessage For="@(() => @EditedFridgeItem.OpenDate)" />
                     </div>
 
-                    <div class="col-12 col-md-4">
-                        <label class="form-label" for="fridge-time-after-open">Ważność po otwarciu</label>
+                    <div class="col-12 col-md-3">
+                        <label class="form-label label-truncate" for="fridge-time-after-open">Expiration time after opening</label>
                         <div class="input-group">
                             <InputNumber id="fridge-time-after-open" class="form-control" @bind-Value="@EditedFridgeItem.TimeAfterOpen" />
                             <span class="input-group-text">h</span>
@@ -59,7 +66,7 @@
                     </div>
 
                     <div class="col-12 d-flex justify-content-end pt-2">
-                        <button type="submit" class="btn btn-primary px-4">Dodaj do lodówki</button>
+                        <button type="submit" class="btn btn-primary px-4">Add</button>
                     </div>
                 </div>
             </EditForm>
@@ -67,7 +74,7 @@
             <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
                 <div>
                     <h2 class="h4 mb-1">Fridge items</h2>
-                    <p class="text-body-secondary mb-0">Current products stored in the database.</p>
+                    <p class="text-body-secondary mb-0">Current products stored in the fridge.</p>
                 </div>
                 <span class="badge text-bg-light border">@Items.Count item(s)</span>
             </div>
@@ -82,15 +89,26 @@
             {
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">
+                        <colgroup>
+                            <col style="width:20%" />
+                            <col style="width:8%" />
+                            <col style="width:8%" />
+                            <col style="width:16%" />
+                            <col style="width:16%" />
+                            <col style="width:16%" />
+                            <col style="width:16%" />
+                            <col style="width:4%" />
+                        </colgroup>
                         <thead class="table-light">
                             <tr>
-                                <th scope="col">Nazwa</th>
-                                <th scope="col">Ilość</th>
-                                <th scope="col">Rodzaj</th>
-                                <th scope="col">Data dodania</th>
-                                <th scope="col">Data otwarcia</th>
-                                <th scope="col">Termin ważności</th>
-                                <th scope="col">Po otwarciu</th>
+                                <th scope="col">Name</th>
+                                <th scope="col">Quantity</th>
+                                <th scope="col">Q. type</th>
+                                <th scope="col">Add Date</th>
+                                <th scope="col">Open Date</th>
+                                <th scope="col">Expiration Date</th>
+                                <th scope="col">Time after opening</th>
+                                <th scope="col" aria-label="Remove"></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -100,10 +118,15 @@
                                     <td class="fw-semibold">@item.Name</td>
                                     <td>@item.QuantityValue</td>
                                     <td>@item.QuantityType</td>
-                                    <td>@item.AddedDate.ToString("yyyy-MM-dd")</td>
-                                    <td>@(item.OpenDate.HasValue ? item.OpenDate.Value.ToString("yyyy-MM-dd") : null)</td>
-                                    <td>@item.ExpirationDate.ToString("yyyy-MM-dd")</td>
+                                    <td>@item.AddedDate.ToString("d")</td>
+                                    <td>@(item.OpenDate.HasValue ? item.OpenDate.Value.ToString("d") : "Not provided")</td>
+                                    <td>@item.ExpirationDate.ToString("d")</td>
                                     <td>@item.TimeAfterOpen.TotalHours h</td>
+                                    <td>
+                                        <button type="button" class="btn btn-sm btn-outline-danger" @onclick="() => RemoveItemAsync(item)" title="Remove">
+                                            🗑️
+                                        </button>
+                                    </td>
                                 </tr>
                             }
                         </tbody>
@@ -135,17 +158,32 @@
         Items = await FridgeService.GetItemsAsync();
     }
 
-    public class FridgeItemModel
+    private async Task RemoveItemAsync(FridgeItem item)
     {
+        var removed = await FridgeService.RemoveItemAsync(item.Id);
+        if (removed)
+        {
+            Items = await FridgeService.GetItemsAsync();
+        }
+        else
+        {
+            Items = await FridgeService.GetItemsAsync();
+        }
+    }
+
+    public class FridgeItemModel : IValidatableObject
+    {
+        [Required]
         public string? Name { get; set; }
 
+        [Range(0, int.MaxValue)]
         public int QuanitityValue { get; set; }
 
         public QuantityType QuantityType { get; set; }
 
         public DateTime AddedDate { get; set; }
 
-        public DateTime OpenDate { get; set; }
+        public DateTime? OpenDate { get; set; }
 
         public DateTime ExpirationDate { get; set; }
 
@@ -161,9 +199,26 @@
                     QuanitityValue = 1,
                     QuantityType = QuantityType.Unit,
                     AddedDate = DateTime.Now,
-                    OpenDate = DateTime.Now,
-                    ExpirationDate = DateTime.Now,
+                    OpenDate = null,
+                    ExpirationDate = DateTime.Now.AddDays(1),
                     TimeAfterOpen = 0
                 };
+
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+            if (ExpirationDate < AddedDate)
+            {
+                yield return new ValidationResult(
+                    $"Expiration Date cannot be earlier than Added Date",
+                    new[] { nameof(ExpirationDate) });
+            }
+
+            if (OpenDate is not null && OpenDate < AddedDate)
+            {
+                yield return new ValidationResult(
+                    $"Open Date cannot be earlier than AddedDate",
+                    new[] { nameof(OpenDate) });
+            }
+        }
     }
 }

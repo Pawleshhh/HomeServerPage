@@ -16,4 +16,18 @@ public class FridgeService(IDbContextFactory<FridgeDbContext> dbContextFactory) 
         await dbContext.AddAsync(item);
         await dbContext.SaveChangesAsync();
     }
+
+    public async Task<bool> RemoveItemAsync(int id)
+    {
+        await using var dbContext = await dbContextFactory.CreateDbContextAsync();
+        var entity = await dbContext.FridgeItems.FindAsync(id);
+        if (entity is null)
+        {
+            return false;
+        }
+
+        dbContext.FridgeItems.Remove(entity);
+        await dbContext.SaveChangesAsync();
+        return true;
+    }
 }

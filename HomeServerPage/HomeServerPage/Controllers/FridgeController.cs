@@ -20,4 +20,16 @@ public class FridgeController(IFridgeService fridgeService) : ControllerBase
         await fridgeService.AddItemAsync(item);
         return Ok();
     }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> RemoveItem(int id)
+    {
+        var removed = await fridgeService.RemoveItemAsync(id);
+        if (!removed)
+        {
+            return NotFound();
+        }
+
+        return NoContent();
+    }
 }
