@@ -3,6 +3,7 @@
     <File Path="deploy.bat" />
     <File Path="docker-compose.yml" />
   </Folder>
+  <Project Path="HomeServerPage.Shared/HomeServerPage.Shared.csproj" Id="732ebddf-ca67-416c-82a7-eed5c2e20d0d" />
   <Project Path="HomeServerPage/HomeServerPage.Client/HomeServerPage.Client.csproj" />
   <Project Path="HomeServerPage/HomeServerPage/HomeServerPage.csproj" />
 </Solution>

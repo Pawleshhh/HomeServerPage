@@ -2,6 +2,7 @@
 @attribute [StreamRendering]
 @using System.ComponentModel.DataAnnotations
 @using HomeServerPage.Data.Fridge
+@using HomeServerPage.Shared.Extensions
 @inject IFridgeService FridgeService
 
 <PageTitle>My Fridge</PageTitle>
@@ -111,7 +112,7 @@
                                     <td class="d-none d-md-table-cell">@item.AddedDate.ToString("d")</td>
                                     <td class="d-none d-xl-table-cell">@(item.OpenDate.HasValue ? item.OpenDate.Value.ToString("d") : "-")</td>
                                     <td>@item.ExpirationDate.ToString("d")</td>
-                                    <td class="d-none d-xl-table-cell">@item.TimeAfterOpen.TotalHours</td>
+                                    <td class="d-none d-xl-table-cell">@(item.TimeAfterOpen.Value()?.TotalHours)</td>
                                     <td>
                                         <button type="button" class="btn btn-sm btn-outline-danger" @onclick="() => RemoveItemAsync(item)" title="Remove">
                                             🗑️
@@ -177,10 +178,18 @@
 
         public DateTime ExpirationDate { get; set; }
 
-        public int TimeAfterOpen { get; set; }
+        public int? TimeAfterOpen { get; set; }
 
         public FridgeItem ToFridgeItem()
-            => new(0, Name ?? throw new NullReferenceException(), QuanitityValue, QuantityType, AddedDate, OpenDate, ExpirationDate, TimeSpan.FromHours(TimeAfterOpen));
+            => new(
+                0,
+                Name ?? throw new NullReferenceException(),
+                QuanitityValue,
+                QuantityType,
+                AddedDate,
+                OpenDate,
+                ExpirationDate,
+                TimeAfterOpen.Value()?.Pipe(TimeSpan.FromHours));
 
         public static FridgeItemModel CreateClearEditedFridgeItem()
             => new FridgeItemModel
