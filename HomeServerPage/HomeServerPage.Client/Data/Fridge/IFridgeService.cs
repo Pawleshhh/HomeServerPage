@@ -6,5 +6,7 @@ public interface IFridgeService
 
     Task AddItemAsync(FridgeItem item);
 
+    Task<bool> UpdateItemAsync(FridgeItem item);
+
     Task<bool> RemoveItemAsync(int id);
 }

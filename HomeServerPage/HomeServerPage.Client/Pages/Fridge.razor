@@ -63,8 +63,12 @@
                         <InputNumber id="fridge-time-after-open" class="form-control" @bind-Value="@EditedFridgeItem.TimeAfterOpen" />
                     </div>
 
-                    <div class="col-12 d-grid d-md-flex justify-content-md-end pt-2">
-                        <button type="submit" class="btn btn-primary px-4">Add to Fridge</button>
+                    <div class="col-12 d-grid d-md-flex justify-content-md-end gap-2 pt-2">
+                        @if (SelectedItemId is not null)
+                        {
+                            <button type="button" class="btn btn-outline-secondary px-4" @onclick="ClearSelection">Cancel</button>
+                        }
+                        <button type="submit" class="btn btn-primary px-4">@(SelectedItemId is not null ? "Save Changes" : "Add to Fridge")</button>
                     </div>
                 </div>
             </EditForm>
@@ -74,7 +78,7 @@
                     <h2 class="h4 mb-1">Fridge items</h2>
                     <p class="text-body-secondary mb-0">Current products stored in the fridge.</p>
                 </div>
-                <span class="badge text-bg-light border">@Items.Count item(s)</span>
+                <span class="badge text-bg-light border">@SortedItems.Count item(s)</span>
             </div>
 
             @if (Items.Count == 0)
@@ -92,17 +96,18 @@
                                 <th scope="col">Name</th>
                                 <th scope="col" class="d-none d-sm-table-cell">Qty</th>
                                 <th scope="col" class="d-none d-lg-table-cell">Type</th>
-                                <th scope="col" class="d-none d-md-table-cell">Added</th>
-                                <th scope="col" class="d-none d-xl-table-cell">Opened</th>
-                                <th scope="col">Expires</th>
+                                <th scope="col" class="d-none d-md-table-cell sortable-header" style="cursor:pointer" @onclick="() => SortBy(FridgeSortColumn.Added)">Added @GetSortIcon(FridgeSortColumn.Added)</th>
+                                <th scope="col" class="d-none d-xl-table-cell sortable-header" style="cursor:pointer" @onclick="() => SortBy(FridgeSortColumn.Opened)">Opened @GetSortIcon(FridgeSortColumn.Opened)</th>
+                                <th scope="col" class="sortable-header" style="cursor:pointer" @onclick="() => SortBy(FridgeSortColumn.Expires)">Expires @GetSortIcon(FridgeSortColumn.Expires)</th>
+                                <th scope="col" class="sortable-header" style="cursor:pointer" @onclick="() => SortBy(FridgeSortColumn.DaysLeft)">Days Left @GetSortIcon(FridgeSortColumn.DaysLeft)</th>
                                 <th scope="col" class="d-none d-xl-table-cell">Time (hrs)</th>
                                 <th scope="col" aria-label="Remove"></th>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var item in Items)
+                            @foreach (var item in SortedItems)
                             {
-                                <tr>
+                                <tr class="@(item.Id == SelectedItemId ? "table-active" : null)" style="cursor:pointer" @onclick="() => SelectItem(item)">
                                     <td class="fw-semibold">
                                         <div>@item.Name</div>
                                         <small class="text-muted d-sm-none">@item.QuantityValue @item.QuantityType</small>
@@ -112,9 +117,12 @@
                                     <td class="d-none d-md-table-cell">@item.AddedDate.ToString("d")</td>
                                     <td class="d-none d-xl-table-cell">@(item.OpenDate.HasValue ? item.OpenDate.Value.ToString("d") : "-")</td>
                                     <td>@item.ExpirationDate.ToString("d")</td>
+                                    <td>
+                                        <span class="badge @GetDaysLeftBadgeClass(item)">@GetDaysLeftText(item)</span>
+                                    </td>
                                     <td class="d-none d-xl-table-cell">@(item.TimeAfterOpen.Value()?.TotalHours)</td>
                                     <td>
-                                        <button type="button" class="btn btn-sm btn-outline-danger" @onclick="() => RemoveItemAsync(item)" title="Remove">
+                                        <button type="button" class="btn btn-sm btn-outline-danger" @onclick="() => RemoveItemAsync(item)" @onclick:stopPropagation="true" title="Remove">
                                             🗑️
                                         </button>
                                     </td>
@@ -134,7 +142,69 @@
 
     public List<FridgeItem> Items { get; set; } = [];
 
+    public int? SelectedItemId { get; set; }
+
     private static IReadOnlyList<QuantityType> QuantityTypes { get; } = Enum.GetValues<QuantityType>();
+
+    private enum FridgeSortColumn
+    {
+        Added,
+        Opened,
+        Expires,
+        DaysLeft
+    }
+
+    private FridgeSortColumn CurrentSortColumn { get; set; } = FridgeSortColumn.DaysLeft;
+
+    private bool SortAscending { get; set; } = true;
+
+    private List<FridgeItem> SortedItems
+    {
+        get
+        {
+            IOrderedEnumerable<FridgeItem> ordered = CurrentSortColumn switch
+            {
+                FridgeSortColumn.Added => SortAscending
+                    ? Items.OrderBy(i => i.AddedDate)
+                    : Items.OrderByDescending(i => i.AddedDate),
+                FridgeSortColumn.Opened => SortAscending
+                    ? Items.OrderBy(i => i.OpenDate)
+                    : Items.OrderByDescending(i => i.OpenDate),
+                FridgeSortColumn.Expires => SortAscending
+                    ? Items.OrderBy(i => i.ExpirationDate)
+                    : Items.OrderByDescending(i => i.ExpirationDate),
+                FridgeSortColumn.DaysLeft => SortAscending
+                    ? Items.OrderBy(GetEffectiveExpirationDate)
+                    : Items.OrderByDescending(GetEffectiveExpirationDate),
+                _ => Items.OrderBy(i => i.Id)
+            };
+
+            return ordered.ToList();
+        }
+    }
+
+    private void SortBy(FridgeSortColumn column)
+    {
+        if (CurrentSortColumn == column)
+        {
+            SortAscending = !SortAscending;
+        }
+        else
+        {
+            CurrentSortColumn = column;
+            SortAscending = true;
+        }
+    }
+
+    private string GetSortIcon(FridgeSortColumn column)
+    {
+        if (CurrentSortColumn != column)
+        {
+            return string.Empty;
+        }
+
+        return SortAscending ? "\u25b2" : "\u25bc";
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -144,9 +214,75 @@
 
     private async Task OnValidFridgeItemSubmitAsync(EditContext args)
     {
-        await FridgeService.AddItemAsync(this.EditedFridgeItem.ToFridgeItem());
-        this.EditedFridgeItem = FridgeItemModel.CreateClearEditedFridgeItem();
+        if (SelectedItemId is int selectedId)
+        {
+            await FridgeService.UpdateItemAsync(this.EditedFridgeItem.ToFridgeItem() with { Id = selectedId });
+        }
+        else
+        {
+            await FridgeService.AddItemAsync(this.EditedFridgeItem.ToFridgeItem());
+        }
+
+        ClearSelection();
         Items = await FridgeService.GetItemsAsync();
+    }
+
+    private void SelectItem(FridgeItem item)
+    {
+        if (SelectedItemId == item.Id)
+        {
+            ClearSelection();
+            return;
+        }
+
+        SelectedItemId = item.Id;
+        EditedFridgeItem = FridgeItemModel.FromFridgeItem(item);
+    }
+
+    private void ClearSelection()
+    {
+        SelectedItemId = null;
+        EditedFridgeItem = FridgeItemModel.CreateClearEditedFridgeItem();
+    }
+
+    private static DateTime GetEffectiveExpirationDate(FridgeItem item)
+    {
+        // An item is considered openable if it has a "time after open" value set.
+        // Once opened, expiration is based on open date + time after open.
+        // Until then (or if not openable), fall back to the item's expiration date.
+        if (item.TimeAfterOpen.HasValue && item.OpenDate.HasValue)
+        {
+            return item.OpenDate.Value + item.TimeAfterOpen.Value;
+        }
+
+        return item.ExpirationDate;
+    }
+
+    private static string GetDaysLeftText(FridgeItem item)
+    {
+        var effectiveExpirationDate = GetEffectiveExpirationDate(item);
+        var daysLeft = (effectiveExpirationDate.Date - DateTime.Now.Date).Days;
+
+        return daysLeft switch
+        {
+            < 0 => "Expired",
+            0 => "Today",
+            1 => "1 day",
+            _ => $"{daysLeft} days"
+        };
+    }
+
+    private static string GetDaysLeftBadgeClass(FridgeItem item)
+    {
+        var effectiveExpirationDate = GetEffectiveExpirationDate(item);
+        var daysLeft = (effectiveExpirationDate.Date - DateTime.Now.Date).Days;
+
+        return daysLeft switch
+        {
+            <= 0 => "text-bg-danger",
+            <= 3 => "text-bg-warning",
+            _ => "text-bg-success"
+        };
     }
 
     private async Task RemoveItemAsync(FridgeItem item)
@@ -203,19 +339,31 @@
                     TimeAfterOpen = 0
                 };
 
+        public static FridgeItemModel FromFridgeItem(FridgeItem item)
+            => new FridgeItemModel
+                {
+                    Name = item.Name,
+                    QuanitityValue = (int)item.QuantityValue,
+                    QuantityType = item.QuantityType,
+                    AddedDate = item.AddedDate,
+                    OpenDate = item.OpenDate,
+                    ExpirationDate = item.ExpirationDate,
+                    TimeAfterOpen = item.TimeAfterOpen.HasValue ? (int)item.TimeAfterOpen.Value.TotalHours : null
+                };
+
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
-            if (ExpirationDate < AddedDate)
+            if (ExpirationDate.Date < AddedDate.Date)
             {
                 yield return new ValidationResult(
                     $"Expiration Date cannot be earlier than Added Date",
                     new[] { nameof(ExpirationDate) });
             }
 
-            if (OpenDate is not null && OpenDate < AddedDate)
+            if (OpenDate is not null && OpenDate.Value.Date < AddedDate.Date)
             {
                 yield return new ValidationResult(
-                    $"Open Date cannot be earlier than AddedDate",
+                    $"Open Date cannot be earlier than Added Date",
                     new[] { nameof(OpenDate) });
             }
         }
