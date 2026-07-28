@@ -10,11 +10,8 @@ services:
       - "8090:8080"
     restart: always
     volumes:
-      - hsp_db:/app/Database
+      - ./Database:/app/Database
       - ${PRIVATE_DATA_PATH}:/app/data/private
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - AppSettings__PrivateDataPath=/app/data/private
-
-volumes:
-  hsp_db:
