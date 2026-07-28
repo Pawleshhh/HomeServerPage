@@ -13,4 +13,16 @@ public class FridgeHttpService(HttpClient httpClient) : IFridgeService
     {
         await httpClient.PostAsJsonAsync("api/fridge", item);
     }
+
+    public async Task<bool> UpdateItemAsync(FridgeItem item)
+    {
+        var resp = await httpClient.PutAsJsonAsync($"api/fridge/{item.Id}", item);
+        return resp.IsSuccessStatusCode;
+    }
+
+    public async Task<bool> RemoveItemAsync(int id)
+    {
+        var resp = await httpClient.DeleteAsync($"api/fridge/{id}");
+        return resp.IsSuccessStatusCode;
+    }
 }

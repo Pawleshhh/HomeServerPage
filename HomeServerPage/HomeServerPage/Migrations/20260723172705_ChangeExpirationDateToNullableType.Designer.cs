@@ -3,6 +3,7 @@ using System;
 using HomeServerPage.Data.Fridge;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HomeServerPage.Migrations
 {
     [DbContext(typeof(FridgeDbContext))]
-    partial class FridgeDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260723172705_ChangeExpirationDateToNullableType")]
+    partial class ChangeExpirationDateToNullableType
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.9");
@@ -42,7 +45,7 @@ namespace HomeServerPage.Migrations
                     b.Property<double>("QuantityValue")
                         .HasColumnType("REAL");
 
-                    b.Property<TimeSpan?>("TimeAfterOpen")
+                    b.Property<TimeSpan>("TimeAfterOpen")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
