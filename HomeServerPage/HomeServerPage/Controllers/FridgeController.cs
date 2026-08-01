@@ -7,6 +7,14 @@ namespace HomeServerPage.Controllers;
 [Route("api/[controller]")]
 public class FridgeController(IFridgeService fridgeService) : ControllerBase
 {
+
+    [HttpGet("{id}")]
+    public async Task<ActionResult<FridgeItem>> GetItem(int id)
+    {
+        var item = await fridgeService.GetItemAsync(id);
+        return Ok(item);
+    }
+
     [HttpGet]
     public async Task<ActionResult<List<FridgeItem>>> GetItems()
     {
@@ -15,10 +23,10 @@ public class FridgeController(IFridgeService fridgeService) : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> AddItem([FromBody] FridgeItem item)
+    public async Task<ActionResult<FridgeItem>> AddItem([FromBody] FridgeItem item)
     {
-        await fridgeService.AddItemAsync(item);
-        return Ok();
+        var created = await fridgeService.AddItemAsync(item);
+        return Ok(created);
     }
 
     [HttpPut("{id}")]

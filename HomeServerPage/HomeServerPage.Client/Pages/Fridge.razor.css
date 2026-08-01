@@ -9,6 +9,14 @@
 /* Table improvements for mobile */
 ::deep .fridge-table {
     font-size: 0.875rem;
+    /* Stronger, theme-aware selection highlight (default is only 10% opacity) */
+    --bs-table-active-bg: rgba(var(--bs-primary-rgb), 0.25);
+    --bs-table-active-color: var(--bs-emphasis-color);
+}
+
+[data-bs-theme="dark"] ::deep .fridge-table {
+    /* Bump opacity further for dark mode where the tint is even less visible */
+    --bs-table-active-bg: rgba(var(--bs-primary-rgb), 0.35);
 }
 
 @media (max-width: 575.98px) {
