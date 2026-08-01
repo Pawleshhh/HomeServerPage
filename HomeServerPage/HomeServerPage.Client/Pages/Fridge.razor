@@ -26,7 +26,7 @@
                     </div>
 
                     <div class="col-12 col-md-3">
-                        <label class="form-label label-truncate" for="fridge-quantity">Quantity</label>
+                        <label class="form-label label-truncate" for="fridge-quantity">Quantity @GetQuantityTypeLabel(EditedFridgeItem.QuantityType)</label>
                         <InputNumber id="fridge-quantity" class="form-control" @bind-Value="@EditedFridgeItem.QuanitityValue" />
                     </div>
 
@@ -58,9 +58,19 @@
                         <ValidationMessage For="@(() => @EditedFridgeItem.OpenDate)" />
                     </div>
 
-                    <div class="col-12 col-md-3">
-                        <label class="form-label label-truncate" for="fridge-time-after-open">Time after open (hours)</label>
-                        <InputNumber id="fridge-time-after-open" class="form-control" @bind-Value="@EditedFridgeItem.TimeAfterOpen" />
+                    <div class="col-12 col-md-2">
+                        <label class="form-label label-truncate" for="fridge-time-after-open">Time after open</label>
+                        <InputNumber id="fridge-time-after-open" class="form-control" @bind-Value="@TimeAfterOpenDisplayValue" />
+                    </div>
+
+                    <div class="col-12 col-md-1">
+                        <label class="form-label label-truncate" for="fridge-time-after-open-unit">Unit</label>
+                        <InputSelect id="fridge-time-after-open-unit" class="form-select" @bind-Value="@SelectedTimeAfterOpenUnit">
+                            @foreach (var unit in Enum.GetValues<TimeAfterOpenUnit>())
+                            {
+                                <option value="@unit">@unit</option>
+                            }
+                        </InputSelect>
                     </div>
 
                     <div class="col-12 d-grid d-md-flex justify-content-md-end gap-2 pt-2">
@@ -101,7 +111,7 @@
                                 <th scope="col" class="sortable-header" style="cursor:pointer" @onclick="() => SortBy(FridgeSortColumn.Expires)">Expires @GetSortIcon(FridgeSortColumn.Expires)</th>
                                 <th scope="col" class="sortable-header" style="cursor:pointer" @onclick="() => SortBy(FridgeSortColumn.DaysLeft)">Days Left @GetSortIcon(FridgeSortColumn.DaysLeft)</th>
                                 <th scope="col" class="d-none d-xl-table-cell">Time (hrs)</th>
-                                <th scope="col" aria-label="Remove"></th>
+                                <th scope="col" aria-label="Buttons"></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -113,7 +123,7 @@
                                         <small class="text-muted d-sm-none">@item.QuantityValue @item.QuantityType</small>
                                     </td>
                                     <td class="d-none d-sm-table-cell">@item.QuantityValue</td>
-                                    <td class="d-none d-lg-table-cell">@item.QuantityType</td>
+                                    <td class="d-none d-lg-table-cell">@item.QuantityType @GetQuantityTypeLabel(item.QuantityType)</td>
                                     <td class="d-none d-md-table-cell">@item.AddedDate.ToString("d")</td>
                                     <td class="d-none d-xl-table-cell">@(item.OpenDate.HasValue ? item.OpenDate.Value.ToString("d") : "-")</td>
                                     <td>@item.ExpirationDate.ToString("d")</td>
@@ -122,7 +132,10 @@
                                     </td>
                                     <td class="d-none d-xl-table-cell">@(item.TimeAfterOpen.Value()?.TotalHours)</td>
                                     <td>
-                                        <button type="button" class="btn btn-sm btn-outline-danger" @onclick="() => RemoveItemAsync(item)" @onclick:stopPropagation="true" title="Remove">
+                                        <button type="button" class="btn mx-1-sm btn-sm btn-outline-primary" @onclick="() => CopyItemAsync(item)" @onclick:stopPropagation="true" title="Copy">
+                                            📋
+                                        </button>
+                                        <button type="button" class="btn mx-1-sm btn-sm btn-outline-danger" @onclick="() => RemoveItemAsync(item)" @onclick:stopPropagation="true" title="Remove">
                                             🗑️
                                         </button>
                                     </td>
@@ -285,17 +298,63 @@
         };
     }
 
+    private enum TimeAfterOpenUnit
+    {
+        Hours,
+        Days
+    }
+
+    private TimeAfterOpenUnit SelectedTimeAfterOpenUnit { get; set; } = TimeAfterOpenUnit.Hours;
+
+    private int? TimeAfterOpenDisplayValue
+    {
+        get
+        {
+            if (EditedFridgeItem.TimeAfterOpen is null)
+            {
+                return null;
+            }
+
+            return SelectedTimeAfterOpenUnit switch
+            {
+                TimeAfterOpenUnit.Days => EditedFridgeItem.TimeAfterOpen.Value / 24,
+                _ => EditedFridgeItem.TimeAfterOpen
+            };
+        }
+        set
+        {
+            EditedFridgeItem.TimeAfterOpen = value is null
+                ? null
+                : SelectedTimeAfterOpenUnit switch
+                {
+                    TimeAfterOpenUnit.Days => value.Value * 24,
+                    _ => value.Value
+                };
+        }
+    }
+
+    private string GetQuantityTypeLabel(QuantityType qt)
+    {
+        return qt switch
+        {
+            QuantityType.Weight => "(kg)",
+            _ => string.Empty
+        };
+    }
+
+    private async Task CopyItemAsync(FridgeItem item)
+    {
+        var cloned = item with { Id = 0 };
+        var created = await FridgeService.AddItemAsync(cloned);
+
+        Items = await FridgeService.GetItemsAsync();
+        SelectItem(created);
+    }
+
     private async Task RemoveItemAsync(FridgeItem item)
     {
-        var removed = await FridgeService.RemoveItemAsync(item.Id);
-        if (removed)
-        {
-            Items = await FridgeService.GetItemsAsync();
-        }
-        else
-        {
-            Items = await FridgeService.GetItemsAsync();
-        }
+        await FridgeService.RemoveItemAsync(item.Id);
+        Items = await FridgeService.GetItemsAsync();
     }
 
     public class FridgeItemModel : IValidatableObject
@@ -303,8 +362,8 @@
         [Required]
         public string? Name { get; set; }
 
-        [Range(0, int.MaxValue)]
-        public int QuanitityValue { get; set; }
+        [Range(0, double.MaxValue)]
+        public double QuanitityValue { get; set; }
 
         public QuantityType QuantityType { get; set; }
 
@@ -343,7 +402,7 @@
             => new FridgeItemModel
                 {
                     Name = item.Name,
-                    QuanitityValue = (int)item.QuantityValue,
+                    QuanitityValue = item.QuantityValue,
                     QuantityType = item.QuantityType,
                     AddedDate = item.AddedDate,
                     OpenDate = item.OpenDate,
