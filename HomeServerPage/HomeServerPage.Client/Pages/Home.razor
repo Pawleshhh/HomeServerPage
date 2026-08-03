@@ -1,4 +1,6 @@
 ﻿@page "/"
+@using HomeServerPage.Client.Pages.Fridge
+@using HomeServerPage.Client.Pages.PublicTransport
 
 <PageTitle>Home</PageTitle>
 
@@ -11,6 +13,9 @@
     <div class="row g-4">
         <div class="col-12 col-lg-6 col-xl-5">
             <ExpiringFridgeItems />
+        </div>
+        <div class="col-12 col-lg-6 col-xl-5">
+            <PublicTransportWidget />
         </div>
     </div>
 </div>

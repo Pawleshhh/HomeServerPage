@@ -1,6 +1,7 @@
 using HomeServerPage.Client.Pages;
 using HomeServerPage.Components;
 using HomeServerPage.Data.Fridge;
+using HomeServerPage.Data.PublicTransport;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,6 +17,18 @@ var fridgeConnection = builder.Configuration.GetConnectionString("FridgeDbConnec
 
 builder.Services.AddDbContextFactory<FridgeDbContext>(op => op.UseSqlite(fridgeConnection));
 builder.Services.AddScoped<IFridgeService, FridgeService>();
+
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services.AddScoped<IPublicTransportService, PublicTransportMockService>();
+}
+else
+{
+    builder.Services.AddHttpClient<IPublicTransportService, PublicTransportService>(client =>
+    {
+        client.BaseAddress = new Uri("https://www.zditm.szczecin.pl/api/v2/");
+    });
+}
 
 var app = builder.Build();
 

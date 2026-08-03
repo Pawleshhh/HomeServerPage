@@ -1,0 +1,70 @@
+@using HomeServerPage.Data.PublicTransport
+@inject IPublicTransportService PublicTransportService
+
+<div class="card h-100 shadow-sm">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+            <div>
+                <h2 class="h5 card-title mb-1">Public transport</h2>
+                <p class="text-body-secondary small mb-0">Next departures from Lubomirskiego.</p>
+            </div>
+            <a class="btn btn-sm btn-outline-primary flex-shrink-0" href="/public-transport">View all</a>
+        </div>
+
+        @if (Boards is null)
+        {
+            <p class="text-body-secondary mb-0" role="status">Loading...</p>
+        }
+        else if (errorMessage is not null)
+        {
+            <p class="text-danger mb-0" role="alert">@errorMessage</p>
+        }
+        else if (Boards.Count == 0)
+        {
+            <p class="text-body-secondary mb-0">No departures available.</p>
+        }
+        else
+        {
+            @foreach (var board in Boards)
+            {
+                <div class="mb-3 last-child-mb-0">
+                    <div class="small fw-semibold mb-1">
+                        Lubomirskiego <span class="text-body-secondary">(@board.Stop.Number)</span>
+                    </div>
+                    <div class="list-group list-group-flush">
+                        @foreach (var departure in board.Departures.OrderBy(d => d.DepartureTime.Estimated))
+                        {
+                            <div class="list-group-item px-0 py-2 d-flex align-items-center gap-2">
+                                <span class="badge" style="background-color: @PublicTransportLineColors.GetColor(departure.Line.Number)">
+                                    @departure.Line.Number
+                                </span>
+                                <span class="text-truncate flex-grow-1">@departure.Trip.Headsign.Short</span>
+                                <span class="fw-semibold flex-shrink-0">
+                                    @departure.DepartureTime.Estimated.ToLocalTime().ToString("HH:mm")
+                                </span>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        }
+    </div>
+</div>
+
+@code {
+    private List<DepartureBoard>? Boards;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            Boards = await PublicTransportService.GetDepartureBoardsAsync(limit: 3);
+        }
+        catch (Exception)
+        {
+            errorMessage = "Could not load departures.";
+        }
+    }
+
+}
