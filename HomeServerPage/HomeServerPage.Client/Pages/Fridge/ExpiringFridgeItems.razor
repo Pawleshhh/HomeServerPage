@@ -1,0 +1,51 @@
+@using HomeServerPage.Data.Fridge
+@inject IFridgeService FridgeService
+
+<div class="card h-100 shadow-sm">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+            <div>
+                <h2 class="h5 card-title mb-1">Expiring soon</h2>
+                <p class="text-body-secondary small mb-0">Keep an eye on these fridge items.</p>
+            </div>
+            <a class="btn btn-sm btn-outline-primary flex-shrink-0" href="/fridge">View fridge</a>
+        </div>
+
+        @if (Items is null)
+        {
+            <p class="text-body-secondary mb-0" role="status">Loading...</p>
+        }
+        else if (Items.Count == 0)
+        {
+            <p class="text-body-secondary mb-0">No fridge items yet.</p>
+        }
+        else
+        {
+            <div class="list-group list-group-flush">
+                @foreach (var item in Items)
+                {
+                    <div class="list-group-item px-0 d-flex justify-content-between align-items-center gap-3">
+                        <div class="min-w-0">
+                            <div class="fw-semibold text-truncate">@item.Name</div>
+                            <small class="text-body-secondary">@item.QuantityValue @item.QuantityType · Expires @FridgeLabels.GetEffectiveExpirationDate(item).ToString("d")</small>
+                        </div>
+                        <span class="badge rounded-pill @FridgeLabels.GetDaysLeftBadgeClass(item) flex-shrink-0">@FridgeLabels.GetDaysLeftText(item)</span>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private List<FridgeItem>? Items;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var items = await FridgeService.GetItemsAsync();
+        Items = items
+            .OrderBy(FridgeLabels.GetEffectiveExpirationDate)
+            .Take(3)
+            .ToList();
+    }
+}
