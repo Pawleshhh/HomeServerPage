@@ -1,3 +1,5 @@
+using AstroCalc.Core;
+using AstroCalc.SolarSystem;
 using HomeServerPage.Data.Astronomy;
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,5 +13,17 @@ public class AstronomyController(IAstronomyService astronomyService) : Controlle
     public async Task<ActionResult<bool>> GetStatus(CancellationToken cancellationToken)
     {
         return Ok(await astronomyService.IsAvailableAsync(cancellationToken));
+    }
+
+    [HttpGet("solarsystem/{planetId:int}")]
+    public async Task<ActionResult> GetPlanet(int planetId, [FromQuery] GeographicCoordinate location)
+    {
+        if (!Enum.IsDefined(typeof(Planet), planetId))
+        {
+            return BadRequest($"Unknown planet identifier: {planetId}.");
+        }
+
+        await astronomyService.GetPlanetRiseAndSetTime(location, (Planet)planetId);
+        return Ok();
     }
 }
