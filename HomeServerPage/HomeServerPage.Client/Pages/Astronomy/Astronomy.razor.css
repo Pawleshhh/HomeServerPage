@@ -31,16 +31,12 @@
     max-width: 260px;
 }
 
-.planet-icon-placeholder {
-    display: grid;
+.planet-icon {
     flex: 0 0 2.25rem;
     width: 2.25rem;
     height: 2.25rem;
-    place-items: center;
-    border: 1px dashed var(--bs-secondary-color);
+    object-fit: contain;
     border-radius: 50%;
-    color: var(--bs-secondary-color);
-    font-size: 1.1rem;
 }
 
 .planet-details {

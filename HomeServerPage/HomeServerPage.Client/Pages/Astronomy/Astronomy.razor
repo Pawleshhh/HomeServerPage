@@ -84,10 +84,9 @@
                     @foreach (var observation in observations)
                     {
                         <article class="planet-item">
-                            <div class="planet-icon-placeholder"
-                                 aria-label="@($"{observation.Planet} image placeholder")">
-                                <span aria-hidden="true">◯</span>
-                            </div>
+                            <img class="planet-icon"
+                                 src="@GetPlanetImageUrl(observation.Planet)"
+                                 alt="@($"{observation.Planet}")" />
 
                             <div class="planet-details">
                                 <h3 class="h5 mb-2">@observation.Planet</h3>
@@ -182,6 +181,9 @@
             isLoading = false;
         }
     }
+
+    private static string GetPlanetImageUrl(Planet planet) =>
+        $"images/astronomy/planets/{planet.ToString().ToLowerInvariant()}.png";
 
     private IEnumerable<(string Label, string Value)> GetResultValues(
         RiseTransitSetResult result)
