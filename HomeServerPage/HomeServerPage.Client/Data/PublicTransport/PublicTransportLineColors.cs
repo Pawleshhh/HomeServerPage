@@ -9,10 +9,28 @@ public static class PublicTransportLineColors
         "#e6beff", "#9a6324", "#800000", "#808000", "#000075"
     ];
 
+    private static readonly string NightLineColor = "#000000";
+    private static readonly string BusColor = "#82bc00";
+
     public static string GetColor(string lineNumber)
     {
-        var hash = StringComparer.Ordinal.GetHashCode(lineNumber);
-        var paletteIndex = (int)((uint)hash % ColorPalette.Length);
-        return ColorPalette[paletteIndex];
+        if (int.TryParse(lineNumber, out var color))
+        {
+            return color switch
+            {
+                _ when color >= 500 => NightLineColor,
+                _ when color >= 50 => BusColor,
+                _ => GetFromPalette()
+            };
+        }
+
+        return GetFromPalette();
+
+        string GetFromPalette()
+        {
+            var hash = StringComparer.Ordinal.GetHashCode(lineNumber);
+            var paletteIndex = (int)((uint)hash % ColorPalette.Length);
+            return ColorPalette[paletteIndex];
+        }
     }
 }
