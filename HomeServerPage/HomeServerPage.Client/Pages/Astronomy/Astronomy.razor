@@ -83,7 +83,7 @@
                 <div class="planet-items">
                     @foreach (var observation in observations)
                     {
-                        <article class="planet-item">
+                        <article class="planet-item" data-planet="@observation.Planet.ToString().ToLowerInvariant()">
                             <img class="planet-icon"
                                  src="@GetPlanetImageUrl(observation.Planet)"
                                  alt="@($"{observation.Planet}")" />
