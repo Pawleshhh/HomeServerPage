@@ -58,3 +58,27 @@ h1:focus {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
     text-align: start;
 }
+
+.astronomy-widget-container {
+    max-width: 520px;
+}
+
+.astronomy-widget-scaler {
+    container-type: inline-size;
+    width: 100%;
+    aspect-ratio: 520 / 736;
+    position: relative;
+    overflow: hidden;
+}
+
+    .astronomy-widget-scaler iframe {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 520px;
+        height: 736px;
+        border: 0;
+        overflow: hidden;
+        transform: scale(calc(100cqw / 520px));
+        transform-origin: top left;
+    }
