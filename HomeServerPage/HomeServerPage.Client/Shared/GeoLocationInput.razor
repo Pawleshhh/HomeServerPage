@@ -1,0 +1,83 @@
+@using AstroCalc.Core
+
+<div class="geo-location-input">
+    <div class="row g-2">
+        <div class="col-4">
+            <label class="form-label" for="@_latitudeId">Latitude</label>
+            <input id="@_latitudeId"
+                   type="number"
+                   class="form-control form-control-sm"
+                   step="0.000001"
+                   min="-90"
+                   max="90"
+                   value="@Value.Latitude.Degrees"
+                   @onchange="OnLatitudeChanged" />
+        </div>
+
+        <div class="col-4">
+            <label class="form-label" for="@_longitudeId">Longitude</label>
+            <input id="@_longitudeId"
+                   type="number"
+                   class="form-control form-control-sm"
+                   step="0.000001"
+                   min="-180"
+                   max="180"
+                   value="@Value.Longitude.Degrees"
+                   @onchange="OnLongitudeChanged" />
+        </div>
+
+        <div class="col-4">
+            <label class="form-label" for="@_elevationId">Elevation (m)</label>
+            <input id="@_elevationId"
+                   type="number"
+                   class="form-control form-control-sm"
+                   step="1"
+                   value="@Value.ElevationMeters"
+                   @onchange="OnElevationChanged" />
+        </div>
+    </div>
+</div>
+
+@code {
+    private static int idCounter;
+
+    private readonly string _latitudeId = $"geo-latitude-{Interlocked.Increment(ref idCounter)}";
+    private readonly string _longitudeId = $"geo-longitude-{Interlocked.Increment(ref idCounter)}";
+    private readonly string _elevationId = $"geo-elevation-{Interlocked.Increment(ref idCounter)}";
+
+    [Parameter]
+    public GeographicCoordinate Value { get; set; }
+
+    [Parameter]
+    public EventCallback<GeographicCoordinate> ValueChanged { get; set; }
+
+    private Task OnLatitudeChanged(ChangeEventArgs e) =>
+        UpdateValue(latitude: ParseDouble(e.Value, Value.Latitude.Degrees));
+
+    private Task OnLongitudeChanged(ChangeEventArgs e) =>
+        UpdateValue(longitude: ParseDouble(e.Value, Value.Longitude.Degrees));
+
+    private Task OnElevationChanged(ChangeEventArgs e) =>
+        UpdateValue(elevation: ParseDouble(e.Value, Value.ElevationMeters));
+
+    private Task UpdateValue(double? latitude = null, double? longitude = null, double? elevation = null)
+    {
+        var newValue = GeographicCoordinate.FromDegrees(
+            latitude ?? Value.Latitude.Degrees,
+            longitude ?? Value.Longitude.Degrees,
+            elevation ?? Value.ElevationMeters);
+
+        Value = newValue;
+
+        return ValueChanged.InvokeAsync(newValue);
+    }
+
+    private static double ParseDouble(object? value, double fallback) =>
+        double.TryParse(
+            value?.ToString(),
+            System.Globalization.NumberStyles.Float,
+            System.Globalization.CultureInfo.InvariantCulture,
+            out var result)
+            ? result
+            : fallback;
+}

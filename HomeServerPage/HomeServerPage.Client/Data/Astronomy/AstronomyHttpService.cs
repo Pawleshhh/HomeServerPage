@@ -1,5 +1,6 @@
 using System.Net.Http.Json;
 using AstroCalc.Core;
+using AstroCalc.Observation;
 using AstroCalc.SolarSystem;
 
 namespace HomeServerPage.Data.Astronomy;
@@ -11,10 +12,10 @@ public class AstronomyHttpService(HttpClient httpClient) : IAstronomyService
         return await httpClient.GetFromJsonAsync<bool>("api/astronomy/status", cancellationToken);
     }
 
-    public async Task GetPlanetRiseAndSetTime(GeographicCoordinate location, Planet planet)
+    public async Task<RiseTransitSetResult> GetPlanetRiseAndSetTime(DateTime dateTime, GeographicCoordinate location, Planet planet)
     {
-        var requestUri = $"api/astronomy/solarsystem/{(int)planet}?Latitude={location.Latitude.Degrees}&Longitude={location.Longitude.Degrees}&ElevationMeters={location.ElevationMeters}";
-        using var response = await httpClient.GetAsync(requestUri);
-        response.EnsureSuccessStatusCode();
+        var requestUri = 
+            $"api/astronomy/solarsystem/{(int)planet}?DateTime={dateTime:O}&Latitude={location.Latitude.Degrees}&Longitude={location.Longitude.Degrees}&ElevationMeters={location.ElevationMeters}";
+        return await httpClient.GetFromJsonAsync<RiseTransitSetResult>(requestUri);
     }
 }
