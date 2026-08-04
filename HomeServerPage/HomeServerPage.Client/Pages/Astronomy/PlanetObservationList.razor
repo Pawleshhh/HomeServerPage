@@ -1,0 +1,82 @@
+@using AstroCalc.Observation
+@using HomeServerPage.Data.Astronomy
+
+<div class="astronomy-planet-items @(Compact ? "astronomy-planet-items-compact" : null)">
+    @foreach (var observation in VisibleObservations)
+    {
+        <article class="astronomy-planet-item" data-planet="@observation.Key">
+            <img class="astronomy-planet-icon"
+                 src="@GetObservationImageUrl(observation.Key)"
+                 alt="@observation.Name" />
+
+            <div class="astronomy-planet-details">
+                <h3 class="h5 mb-2">@observation.Name</h3>
+
+                @foreach (var value in GetResultValues(observation.Result))
+                {
+                    <div class="astronomy-planet-result">
+                        <span class="text-body-secondary">@value.Label</span>
+                        <span>@value.Value</span>
+                    </div>
+                }
+            </div>
+        </article>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public IReadOnlyList<AstronomyObservation> Observations { get; set; } = [];
+
+    [Parameter]
+    public DateTime RequestDateUtc { get; set; }
+
+    [Parameter]
+    public bool Compact { get; set; }
+
+    private IEnumerable<AstronomyObservation> VisibleObservations =>
+        Observations;
+
+    private static string GetObservationImageUrl(string key) =>
+        $"images/astronomy/planets/{key}.png";
+
+    private IEnumerable<(string Label, string Value)> GetResultValues(RiseTransitSetResult result)
+    {
+        yield return ("Rise", FormatUtHours(result.RiseUT));
+
+        if (!Compact)
+        {
+            yield return ("Transit", FormatUtHours(result.TransitUT));
+        }
+
+        yield return ("Set", FormatUtHours(result.SetUT));
+
+        if (!Compact && result.RisesAndSets)
+        {
+            yield return ("Above horizon", FormatDuration(result.HoursAboveHorizon));
+        }
+    }
+
+    private string FormatUtHours(double utHours)
+    {
+        if (double.IsNaN(utHours))
+        {
+            return "—";
+        }
+
+        var utcDateTime = DateTime.SpecifyKind(RequestDateUtc.Date.AddHours(utHours), DateTimeKind.Utc);
+        var localDateTime = TimeZoneInfo.ConvertTimeFromUtc(utcDateTime, AstronomyDefaults.LocalTimeZone);
+        return localDateTime.ToString("HH:mm");
+    }
+
+    private static string FormatDuration(double hours)
+    {
+        if (double.IsNaN(hours))
+        {
+            return "—";
+        }
+
+        var timeSpan = TimeSpan.FromHours(hours);
+        return $"{(int)timeSpan.TotalHours}h {timeSpan.Minutes:D2}m";
+    }
+}

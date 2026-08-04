@@ -33,4 +33,17 @@ public class AstronomyController(IAstronomyService astronomyService) : Controlle
         var result = await astronomyService.GetPlanetRiseAndSetTime(dateTime, location, (Planet)planetId);
         return Ok(result);
     }
+
+
+    [HttpGet("solarsystem/moon")]
+    public async Task<ActionResult<RiseTransitSetResult>> GetPlanet(
+        [FromQuery] DateTime dateTime,
+        [FromQuery] double latitude,
+        [FromQuery] double longitude,
+        [FromQuery] double elevationMeters)
+    {
+        var location = GeographicCoordinate.FromDegrees(latitude, longitude, elevationMeters);
+        var result = await astronomyService.GetMoonRiseAndSetTime(dateTime, location);
+        return Ok(result);
+    }
 }
