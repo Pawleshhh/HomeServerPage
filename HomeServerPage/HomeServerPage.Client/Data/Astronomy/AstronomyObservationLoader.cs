@@ -18,8 +18,9 @@ public static class AstronomyObservationLoader
                 await astronomyService.GetPlanetRiseAndSetTime(requestDateUtc, location, planet)));
 
         var observations = await Task.WhenAll(
-            planetObservations.Append(
-                LoadMoonAsync(astronomyService, requestDateUtc, location)));
+            planetObservations
+                .Prepend(LoadSunAsync(astronomyService, requestDateUtc, location))
+                .Append(LoadMoonAsync(astronomyService, requestDateUtc, location)));
 
         return observations;
     }
@@ -33,5 +34,16 @@ public static class AstronomyObservationLoader
             "Moon",
             "moon",
             await astronomyService.GetMoonRiseAndSetTime(requestDateUtc, location));
+    }
+
+    private static async Task<AstronomyObservation> LoadSunAsync(
+        IAstronomyService astronomyService,
+        DateTime requestDateUtc,
+        GeographicCoordinate location)
+    {
+        return new AstronomyObservation(
+            "Sun",
+            "sun",
+            await astronomyService.GetSunRiseAndSetTime(requestDateUtc, location));
     }
 }

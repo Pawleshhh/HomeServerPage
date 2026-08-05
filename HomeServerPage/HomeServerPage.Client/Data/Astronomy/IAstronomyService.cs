@@ -11,4 +11,6 @@ public interface IAstronomyService
     Task<RiseTransitSetResult> GetPlanetRiseAndSetTime(DateTime dateTime, GeographicCoordinate location, Planet planet);
 
     Task<RiseTransitSetResult> GetMoonRiseAndSetTime(DateTime dateTime, GeographicCoordinate location);
+
+    Task<RiseTransitSetResult> GetSunRiseAndSetTime(DateTime dateTime, GeographicCoordinate location);
 }

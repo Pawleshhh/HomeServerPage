@@ -22,9 +22,7 @@ public class AstronomyService : IAstronomyService
         {
             var (jd, obliquity) = GetData(dateTime, location);
 
-            var localPos = dateTime
-                .Pipe(d => JulianDate.FromDateTime(d))
-                .Pipe(jd => PlanetaryPosition.Calculate(planet, jd))
+            var localPos = PlanetaryPosition.Calculate(planet, jd)
                 .Pipe(l => CoordinateTransform.EclipticToEquatorial(l.GeocentricPosition, obliquity))
                 .Pipe(eq => RiseTransitSet.Calculate(eq, location, JulianDate.FromDateTime(dateTime.Date)));
 
@@ -38,13 +36,28 @@ public class AstronomyService : IAstronomyService
         {
             var (jd, obliquity) = GetData(dateTime, location);
 
-            var localPos = dateTime
-                .Pipe(d => JulianDate.FromDateTime(d))
-                .Pipe(jd => LunarPosition.Calculate(jd))
+            var localPos = LunarPosition.Calculate(jd)
                 .Pipe(l => CoordinateTransform.EclipticToEquatorial(l.Position, obliquity))
                 .Pipe(eq => RiseTransitSet.Calculate(eq, location, JulianDate.FromDateTime(dateTime.Date)));
 
             return localPos;
+        });
+    }
+
+    public async Task<RiseTransitSetResult> GetSunRiseAndSetTime(DateTime dateTime, GeographicCoordinate location)
+    {
+        return await Task.Run(() =>
+        {
+            var (jd, obliquity) = GetData(dateTime, location);
+
+            var localPos = SolarPosition.MediumPrecision(jd)
+                .Pipe(s => (s.RightAscension, s.Declination))
+                .Pipe(eq => RiseTransitSet.Calculate(
+                    new EquatorialCoordinate(eq.RightAscension, eq.Declination),
+                    location,
+                    JulianDate.FromDateTime(dateTime.Date)));
+
+            return localPos;    
         });
     }
 

@@ -40,7 +40,7 @@
             <section class="astronomy-panel" aria-labelledby="astronomy-overview-heading">
                 <h2 id="astronomy-overview-heading" class="h4">Sky overview</h2>
                 <p class="text-body-secondary mb-0">
-                    Planetary and lunar rise and set times for the selected location.
+                    Solar, planetary, and lunar rise and set times for the selected location.
                 </p>
             </section>
 
@@ -135,7 +135,7 @@
         }
         catch (Exception exception)
         {
-            loadError = $"Unable to load planetary observations: {exception.Message}";
+            loadError = $"Unable to load celestial observations: {exception.Message}";
         }
         finally
         {

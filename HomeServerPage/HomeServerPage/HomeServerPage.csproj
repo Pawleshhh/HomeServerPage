@@ -28,31 +28,34 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Update="wwwroot\images\astronomy\planets\earth.png">
+    <Content Update="wwwroot\images\astronomy\solarsystem\earth.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Update="wwwroot\images\astronomy\planets\jupiter.png">
+    <Content Update="wwwroot\images\astronomy\solarsystem\jupiter.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Update="wwwroot\images\astronomy\planets\mars.png">
+    <Content Update="wwwroot\images\astronomy\solarsystem\mars.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Update="wwwroot\images\astronomy\planets\mercury.png">
+    <Content Update="wwwroot\images\astronomy\solarsystem\mercury.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Update="wwwroot\images\astronomy\planets\moon.png">
+    <Content Update="wwwroot\images\astronomy\solarsystem\moon.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Update="wwwroot\images\astronomy\planets\neptune.png">
+    <Content Update="wwwroot\images\astronomy\solarsystem\neptune.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Update="wwwroot\images\astronomy\planets\saturn.png">
+    <Content Update="wwwroot\images\astronomy\solarsystem\saturn.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Update="wwwroot\images\astronomy\planets\uranus.png">
+    <Content Update="wwwroot\images\astronomy\solarsystem\sun.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Update="wwwroot\images\astronomy\planets\venus.png">
+    <Content Update="wwwroot\images\astronomy\solarsystem\uranus.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Update="wwwroot\images\astronomy\solarsystem\venus.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

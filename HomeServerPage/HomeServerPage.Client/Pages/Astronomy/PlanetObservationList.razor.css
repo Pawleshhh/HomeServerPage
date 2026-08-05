@@ -47,6 +47,13 @@
     --planet-muted-text-color: rgba(23, 32, 42, 0.78);
 }
 
+.astronomy-planet-item[data-planet="sun"] {
+    --planet-color-start: #ffe259;
+    --planet-color-end: #f09819;
+    --planet-text-color: #3d2500;
+    --planet-muted-text-color: rgba(61, 37, 0, 0.78);
+}
+
 .astronomy-planet-item[data-planet="mercury"] {
     --planet-color-start: #8c7a6b;
     --planet-color-end: #3d332b;

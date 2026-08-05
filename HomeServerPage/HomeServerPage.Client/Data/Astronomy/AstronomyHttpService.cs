@@ -24,4 +24,10 @@ public class AstronomyHttpService(HttpClient httpClient) : IAstronomyService
             $"api/astronomy/solarsystem/moon?DateTime={dateTime:O}&Latitude={location.Latitude.Degrees}&Longitude={location.Longitude.Degrees}&ElevationMeters={location.ElevationMeters}";
         return await httpClient.GetFromJsonAsync<RiseTransitSetResult>(requestUri);
     }
+    public async Task<RiseTransitSetResult> GetSunRiseAndSetTime(DateTime dateTime, GeographicCoordinate location)
+    {
+        var requestUri =
+            $"api/astronomy/solarsystem/sun?DateTime={dateTime:O}&Latitude={location.Latitude.Degrees}&Longitude={location.Longitude.Degrees}&ElevationMeters={location.ElevationMeters}";
+        return await httpClient.GetFromJsonAsync<RiseTransitSetResult>(requestUri);
+    }
 }
