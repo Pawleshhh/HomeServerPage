@@ -1,0 +1,36 @@
+.astronomy-content {
+    display: grid;
+    grid-template-columns: minmax(0, 520px) minmax(280px, 1fr);
+    gap: 1.5rem;
+    align-items: start;
+}
+
+.astronomy-overview {
+    display: grid;
+    gap: 1rem;
+}
+
+.astronomy-panel {
+    padding: 1.25rem;
+    border: 1px solid var(--bs-border-color);
+    border-radius: var(--bs-border-radius);
+    background: var(--bs-body-bg);
+}
+
+.astronomy-panel h2 {
+    margin-bottom: 0.5rem;
+}
+
+.astronomy-future-panel {
+    min-height: 8rem;
+}
+
+.celestial-body-list {
+    min-width: 0;
+}
+
+@media (max-width: 900px) {
+    .astronomy-content {
+        grid-template-columns: 1fr;
+    }
+}

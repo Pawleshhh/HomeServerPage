@@ -1,0 +1,146 @@
+@page "/astronomy"
+
+@using AstroCalc.Core
+@using HomeServerPage.Data.Astronomy
+
+@inject IAstronomyService AstronomyService
+
+<PageTitle>Astronomy</PageTitle>
+
+<div class="container-fluid astronomy-page">
+    <div class="mb-4">
+        <h1 class="h3 mb-1">Astronomy</h1>
+        <p class="text-body-secondary mb-0">
+            Tools and conditions for observing the sky.
+        </p>
+    </div>
+
+    <section class="observer-settings mb-4" aria-labelledby="observer-settings-heading">
+        <h2 id="observer-settings-heading" class="visually-hidden">Observation settings</h2>
+        <div class="row g-2 align-items-end">
+            <div class="col-12 col-lg-8">
+                <GeoLocationInput Value="location" ValueChanged="OnLocationChanged" />
+            </div>
+
+            <div class="col-12 col-lg-4">
+                <EditForm Model="this">
+                    <label class="form-label" for="observation-datetime">Observation date and time</label>
+                    <InputDate id="observation-datetime"
+                               @bind-Value="selectedLocalDateTime"
+                               @bind-Value:after="OnSelectedDateTimeChanged"
+                               Type="InputDateType.DateTimeLocal"
+                               class="form-control form-control-sm" />
+                </EditForm>
+            </div>
+        </div>
+    </section>
+
+    <div class="astronomy-content">
+        <div class="astronomy-overview">
+            <section class="astronomy-panel" aria-labelledby="astronomy-overview-heading">
+                <h2 id="astronomy-overview-heading" class="h4">Sky overview</h2>
+                <p class="text-body-secondary mb-0">
+                    Solar, planetary, and lunar rise and set times for the selected location.
+                </p>
+            </section>
+
+            <section class="astronomy-panel astronomy-future-panel" aria-labelledby="astronomy-future-heading">
+                <h2 id="astronomy-future-heading" class="h5">More astronomy tools</h2>
+                <p class="text-body-secondary mb-0">
+                    Additional observing information will be added here.
+                </p>
+            </section>
+        </div>
+
+        <section class="celestial-body-list" aria-labelledby="celestial-body-list-heading">
+            <div class="d-flex justify-content-between align-items-baseline mb-3">
+                <h2 id="celestial-body-list-heading" class="h4 mb-0">Celestial bodies</h2>
+
+                @if (observationTime is not null)
+                {
+                    <small class="text-body-secondary">
+                        @observationTime.Value.ToString("g")
+                    </small>
+                }
+            </div>
+
+            @if (isLoading)
+            {
+                <p class="text-body-secondary">Loading celestial observations…</p>
+            }
+            else if (loadError is not null)
+            {
+                <div class="alert alert-danger" role="alert">
+                    @loadError
+                </div>
+            }
+            else
+            {
+                <PlanetObservationList Observations="observations" RequestDateUtc="requestDateUtc" />
+            }
+        </section>
+    </div>
+</div>
+
+@code {
+    private GeographicCoordinate location =
+        AstronomyDefaults.Location;
+
+    private DateTime selectedLocalDateTime;
+
+    private IReadOnlyList<AstronomyObservation> observations = [];
+    private DateTimeOffset? observationTime;
+    private DateTime requestDateUtc;
+    private bool isLoading = true;
+    private string? loadError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var nowInPoland = TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, AstronomyDefaults.LocalTimeZone);
+        selectedLocalDateTime = nowInPoland.DateTime;
+
+        await LoadObservationsAsync();
+    }
+
+    private async Task OnLocationChanged(GeographicCoordinate newLocation)
+    {
+        location = newLocation;
+        await LoadObservationsAsync();
+    }
+
+    private async Task OnSelectedDateTimeChanged()
+    {
+        await LoadObservationsAsync();
+    }
+
+    private async Task LoadObservationsAsync()
+    {
+        isLoading = true;
+        loadError = null;
+        StateHasChanged();
+
+        requestDateUtc = TimeZoneInfo.ConvertTimeToUtc(
+            DateTime.SpecifyKind(selectedLocalDateTime, DateTimeKind.Unspecified),
+            AstronomyDefaults.LocalTimeZone);
+        observationTime = TimeZoneInfo.ConvertTime(
+            new DateTimeOffset(requestDateUtc, TimeSpan.Zero),
+            AstronomyDefaults.LocalTimeZone);
+
+        try
+        {
+            observations = await AstronomyObservationLoader.LoadAsync(
+                AstronomyService,
+                requestDateUtc,
+                location);
+        }
+        catch (Exception exception)
+        {
+            loadError = $"Unable to load celestial observations: {exception.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+}

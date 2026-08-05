@@ -1,5 +1,6 @@
 using HomeServerPage.Client.Pages;
 using HomeServerPage.Components;
+using HomeServerPage.Data.Astronomy;
 using HomeServerPage.Data.Fridge;
 using HomeServerPage.Data.PublicTransport;
 using Microsoft.EntityFrameworkCore;
@@ -17,6 +18,7 @@ var fridgeConnection = builder.Configuration.GetConnectionString("FridgeDbConnec
 
 builder.Services.AddDbContextFactory<FridgeDbContext>(op => op.UseSqlite(fridgeConnection));
 builder.Services.AddScoped<IFridgeService, FridgeService>();
+builder.Services.AddScoped<IAstronomyService, AstronomyService>();
 
 if (builder.Environment.IsDevelopment())
 {

@@ -1,0 +1,136 @@
+.astronomy-planet-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.astronomy-planet-item {
+    display: flex;
+    gap: 0.6rem;
+    align-items: center;
+    padding: 0.5rem 0.65rem;
+    border: 1px solid var(--bs-border-color);
+    border-radius: var(--bs-border-radius);
+    background-color: var(--bs-body-bg);
+    background-image: linear-gradient(135deg, var(--planet-color-start, var(--bs-body-bg)) 0%, var(--planet-color-end, var(--bs-body-bg)) 100%);
+    color: var(--planet-text-color, #fff);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+    flex: 1 1 220px;
+    max-width: 260px;
+}
+
+.astronomy-planet-items-compact {
+    gap: 0.5rem;
+}
+
+.astronomy-planet-items-compact .astronomy-planet-item {
+    flex-basis: 180px;
+    max-width: none;
+    padding: 0.4rem 0.5rem;
+}
+
+.astronomy-planet-items-compact .astronomy-planet-icon {
+    width: 1.8rem;
+    height: 1.8rem;
+    flex-basis: 1.8rem;
+}
+
+.astronomy-planet-items-compact .astronomy-planet-details h3 {
+    font-size: 0.85rem;
+    margin-bottom: 0.25rem !important;
+}
+
+.astronomy-planet-item[data-planet="moon"] {
+    --planet-color-start: #e8edf2;
+    --planet-color-end: #7f8b99;
+    --planet-text-color: #17202a;
+    --planet-muted-text-color: rgba(23, 32, 42, 0.78);
+}
+
+.astronomy-planet-item[data-planet="sun"] {
+    --planet-color-start: #ffe259;
+    --planet-color-end: #f09819;
+    --planet-text-color: #3d2500;
+    --planet-muted-text-color: rgba(61, 37, 0, 0.78);
+}
+
+.astronomy-planet-item[data-planet="mercury"] {
+    --planet-color-start: #8c7a6b;
+    --planet-color-end: #3d332b;
+}
+
+.astronomy-planet-item[data-planet="venus"] {
+    --planet-color-start: #e8c887;
+    --planet-color-end: #a3672f;
+    --planet-text-color: #24170b;
+    --planet-muted-text-color: rgba(36, 23, 11, 0.78);
+}
+
+.astronomy-planet-item[data-planet="mars"] {
+    --planet-color-start: #e2704f;
+    --planet-color-end: #7a2711;
+}
+
+.astronomy-planet-item[data-planet="jupiter"] {
+    --planet-color-start: #e0c39a;
+    --planet-color-end: #8a5a2b;
+    --planet-text-color: #2d1d0e;
+    --planet-muted-text-color: rgba(45, 29, 14, 0.78);
+}
+
+.astronomy-planet-item[data-planet="saturn"] {
+    --planet-color-start: #f2debb;
+    --planet-color-end: #a9803f;
+    --planet-text-color: #30200d;
+    --planet-muted-text-color: rgba(48, 32, 13, 0.78);
+}
+
+.astronomy-planet-item[data-planet="uranus"] {
+    --planet-color-start: #9fe3e0;
+    --planet-color-end: #2a6b73;
+    --planet-text-color: #092d32;
+    --planet-muted-text-color: rgba(9, 45, 50, 0.78);
+}
+
+.astronomy-planet-item[data-planet="neptune"] {
+    --planet-color-start: #6a86e0;
+    --planet-color-end: #1c2a6b;
+}
+
+.astronomy-planet-item[data-planet="pluto"] {
+    --planet-color-start: #c9b8a8;
+    --planet-color-end: #5a4a42;
+    --planet-text-color: #241b18;
+    --planet-muted-text-color: rgba(36, 27, 24, 0.78);
+}
+
+.astronomy-planet-icon {
+    flex: 0 0 2.25rem;
+    width: 2.25rem;
+    height: 2.25rem;
+    object-fit: contain;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.25);
+}
+
+.astronomy-planet-details {
+    flex: 1;
+    min-width: 0;
+}
+
+.astronomy-planet-details h3 {
+    font-size: 0.95rem;
+    color: inherit;
+}
+
+.astronomy-planet-result {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.05rem 0;
+    font-size: 0.8rem;
+}
+
+.astronomy-planet-result .text-body-secondary {
+    color: var(--planet-muted-text-color, rgba(255, 255, 255, 0.8)) !important;
+}

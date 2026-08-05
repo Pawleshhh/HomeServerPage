@@ -1,0 +1,57 @@
+@using HomeServerPage.Data.Astronomy
+
+@inject IAstronomyService AstronomyService
+
+<div class="card h-100 shadow-sm">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+            <div>
+                <h2 class="h5 card-title mb-1">Astronomy</h2>
+                <p class="text-body-secondary small mb-0">Solar, planetary, and lunar visibility for Szczecin.</p>
+            </div>
+            <a class="btn btn-sm btn-outline-primary flex-shrink-0" href="/astronomy">View all</a>
+        </div>
+
+        @if (observations is null)
+        {
+            <p class="text-body-secondary mb-0" role="status">Loading celestial observations…</p>
+        }
+        else if (loadError is not null)
+        {
+            <p class="text-danger mb-0" role="alert">@loadError</p>
+        }
+        else
+        {
+            <p class="text-body-secondary small mb-2">
+                Rise and set times for @observationTime?.ToString("g")
+            </p>
+            <PlanetObservationList Observations="observations" RequestDateUtc="requestDateUtc" Compact="true" />
+        }
+    </div>
+</div>
+
+@code {
+    private IReadOnlyList<AstronomyObservation>? observations;
+    private DateTime requestDateUtc;
+    private DateTimeOffset? observationTime;
+    private string? loadError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var nowInPoland = TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, AstronomyDefaults.LocalTimeZone);
+        requestDateUtc = nowInPoland.UtcDateTime;
+        observationTime = nowInPoland;
+
+        try
+        {
+            observations = await AstronomyObservationLoader.LoadAsync(
+                AstronomyService,
+                requestDateUtc,
+                AstronomyDefaults.Location);
+        }
+        catch (Exception exception)
+        {
+            loadError = $"Unable to load celestial observations: {exception.Message}";
+        }
+    }
+}
