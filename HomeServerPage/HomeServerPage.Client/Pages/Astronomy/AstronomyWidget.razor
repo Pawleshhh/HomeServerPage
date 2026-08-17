@@ -44,7 +44,7 @@
 
         try
         {
-            observations = await AstronomyObservationLoader.LoadAsync(
+            observations = await AstronomyObservationLoader.LoadSolarSystemAsync(
                 AstronomyService,
                 requestDateUtc,
                 AstronomyDefaults.Location);

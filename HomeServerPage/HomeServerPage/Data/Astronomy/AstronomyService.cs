@@ -1,3 +1,4 @@
+using AstroCalc.Catalogs;
 using AstroCalc.Coordinates;
 using AstroCalc.Core;
 using AstroCalc.Corrections;
@@ -14,6 +15,22 @@ public class AstronomyService : IAstronomyService
     public Task<bool> IsAvailableAsync(CancellationToken cancellationToken = default)
     {
         return Task.FromResult(true);
+    }
+
+    public async Task<IEnumerable<MessierObject>> GetAllMessierObjects()
+    {
+        return await Task.Run(() =>
+        {
+            return MessierCatalog.GetAll();
+        });
+    }
+
+    public async Task<MessierObject> GetMessierObject(int messierId)
+    {
+        return await Task.Run(() =>
+        {
+            return MessierCatalog.Get(messierId);
+        });
     }
 
     public async Task<RiseTransitSetResult> GetPlanetRiseAndSetTime(DateTime dateTime, GeographicCoordinate location, Planet planet)

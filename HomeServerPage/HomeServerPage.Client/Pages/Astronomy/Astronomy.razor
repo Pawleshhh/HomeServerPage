@@ -48,6 +48,11 @@
                 <h2 id="astronomy-future-heading" class="h5">More astronomy tools</h2>
                 <p class="text-body-secondary mb-0">
                     Additional observing information will be added here.
+
+                    @foreach(var messier in messierObservations)
+                    {
+                        <span>@messier.Name, @messier.Result</span>
+                    }
                 </p>
             </section>
         </div>
@@ -76,7 +81,7 @@
             }
             else
             {
-                <PlanetObservationList Observations="observations" RequestDateUtc="requestDateUtc" />
+                <PlanetObservationList Observations="solarSystemObservations" RequestDateUtc="requestDateUtc" />
             }
         </section>
     </div>
@@ -88,7 +93,8 @@
 
     private DateTime selectedLocalDateTime;
 
-    private IReadOnlyList<AstronomyObservation> observations = [];
+    private IReadOnlyList<AstronomyObservation> solarSystemObservations = [];
+    private IReadOnlyList<AstronomyObservation> messierObservations = [];
     private DateTimeOffset? observationTime;
     private DateTime requestDateUtc;
     private bool isLoading = true;
@@ -128,7 +134,12 @@
 
         try
         {
-            observations = await AstronomyObservationLoader.LoadAsync(
+            solarSystemObservations = await AstronomyObservationLoader.LoadSolarSystemAsync(
+                AstronomyService,
+                requestDateUtc,
+                location);
+
+            messierObservations = await AstronomyObservationLoader.LoadMessierCatalogAsync(
                 AstronomyService,
                 requestDateUtc,
                 location);

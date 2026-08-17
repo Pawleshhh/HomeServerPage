@@ -1,11 +1,15 @@
+using AstroCalc.Catalogs;
 using AstroCalc.Core;
+using AstroCalc.Observation;
 using AstroCalc.SolarSystem;
+using AstroCalc.Time;
+using HomeServerPage.Shared.Extensions;
 
 namespace HomeServerPage.Data.Astronomy;
 
 public static class AstronomyObservationLoader
 {
-    public static async Task<IReadOnlyList<AstronomyObservation>> LoadAsync(
+    public static async Task<IReadOnlyList<AstronomyObservation>> LoadSolarSystemAsync(
         IAstronomyService astronomyService,
         DateTime requestDateUtc,
         GeographicCoordinate location)
@@ -45,5 +49,26 @@ public static class AstronomyObservationLoader
             "Sun",
             "sun",
             await astronomyService.GetSunRiseAndSetTime(requestDateUtc, location));
+    }
+
+    public static async Task<IReadOnlyList<AstronomyObservation>> LoadMessierCatalogAsync(
+        IAstronomyService astronomyService,
+        DateTime dateTime,
+        GeographicCoordinate location)
+    {
+        static string GetKey(MessierObject m) => $"M{m.Number}";
+        static string GetName(MessierObject m) => $"{GetKey(m)} {m.CommonName}";
+
+        RiseTransitSetResult GetRiseSetData(MessierObject m)
+            => RiseTransitSet.Calculate(m.Position, location, JulianDate.FromDateTime(dateTime));
+
+        var messierObjects = await astronomyService.GetAllMessierObjects();
+        var messierObservations = messierObjects.Select(m =>
+            new AstronomyObservation(
+                GetName(m),
+                GetKey(m),
+                GetRiseSetData(m)));
+
+        return [.. messierObservations];
     }
 }
