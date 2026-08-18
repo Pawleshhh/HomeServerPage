@@ -128,3 +128,37 @@
 .astronomy-planet-result .text-body-secondary {
     color: var(--planet-muted-text-color, rgba(255, 255, 255, 0.8)) !important;
 }
+
+@media (max-width: 576px) {
+    .astronomy-planet-items {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.35rem;
+    }
+
+    .astronomy-planet-item {
+        gap: 0.35rem;
+        padding: 0.35rem 0.4rem;
+    }
+
+    .astronomy-planet-icon {
+        flex-basis: 1.75rem;
+        width: 1.75rem;
+        height: 1.75rem;
+    }
+
+    .astronomy-planet-details h3 {
+        font-size: 0.8rem;
+        margin-bottom: 0.2rem !important;
+    }
+
+    .astronomy-planet-result {
+        gap: 0.35rem;
+        font-size: 0.7rem;
+    }
+}
+
+@media (max-width: 240px) {
+    .astronomy-planet-items {
+        grid-template-columns: 1fr;
+    }
+}

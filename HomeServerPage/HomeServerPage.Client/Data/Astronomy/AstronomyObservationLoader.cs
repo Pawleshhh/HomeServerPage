@@ -23,8 +23,8 @@ public static class AstronomyObservationLoader
 
         var observations = await Task.WhenAll(
             planetObservations
-                .Prepend(LoadSunAsync(astronomyService, requestDateUtc, location))
-                .Append(LoadMoonAsync(astronomyService, requestDateUtc, location)));
+                .Prepend(LoadMoonAsync(astronomyService, requestDateUtc, location))
+                .Prepend(LoadSunAsync(astronomyService, requestDateUtc, location)));
 
         return observations;
     }

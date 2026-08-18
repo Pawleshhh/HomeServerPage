@@ -12,7 +12,7 @@
             <a class="btn btn-sm btn-outline-primary flex-shrink-0" href="/astronomy">View all</a>
         </div>
 
-        @if (observations is null)
+        @if (solarSystemObservations is null)
         {
             <p class="text-body-secondary mb-0" role="status">Loading celestial observations…</p>
         }
@@ -25,7 +25,7 @@
             <p class="text-body-secondary small mb-2">
                 Rise and set times for @observationTime?.ToString("g")
             </p>
-            <PlanetObservationList Observations="observations" RequestDateUtc="requestDateUtc" Compact="true" />
+            <PlanetObservationList Observations="solarSystemObservations" RequestDateUtc="requestDateUtc" Compact="true" />
 
             @if (visibleMessierObservations.Count > 0)
             {
@@ -54,7 +54,7 @@
 </div>
 
 @code {
-    private IReadOnlyList<AstronomyObservation>? observations;
+    private IReadOnlyList<AstronomyObservation>? solarSystemObservations;
     private IReadOnlyList<AstronomyObservation> visibleMessierObservations = [];
     private DateTime requestDateUtc;
     private DateTimeOffset? observationTime;
@@ -77,8 +77,9 @@
                 requestDateUtc,
                 AstronomyDefaults.Location);
 
-            observations = await solarSystemObservationsTask;
-            var sunsetUtHours = observations.Single(observation => observation.Key == "sun").TransitResult.SetUT;
+            var solarObservations = await solarSystemObservationsTask;
+            solarSystemObservations = solarObservations.Where(p => p.Key != "uranus" && p.Key != "neptune").ToList();
+            var sunsetUtHours = solarSystemObservations.Single(observation => observation.Key == "sun").TransitResult.SetUT;
             var messierObservations = await messierObservationsTask;
 
             visibleMessierObservations = messierObservations
@@ -97,6 +98,11 @@
     {
         var riseUtHours = observation.TransitResult.RiseUT;
         var setUtHours = observation.TransitResult.SetUT;
+
+        if (setUtHours - utHours < 2d)
+        {
+            return false;
+        }
 
         return riseUtHours <= setUtHours
             ? utHours >= riseUtHours && utHours <= setUtHours
