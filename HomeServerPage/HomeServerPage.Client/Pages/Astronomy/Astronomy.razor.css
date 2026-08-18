@@ -1,6 +1,6 @@
 .astronomy-content {
     display: grid;
-    grid-template-columns: minmax(0, 520px) minmax(280px, 1fr);
+    grid-template-columns: minmax(380px, 0.75fr) minmax(420px, 1.25fr);
     gap: 1.5rem;
     align-items: start;
 }
@@ -16,13 +16,28 @@
     margin-bottom: 0.5rem;
 }
 
-.astronomy-future-panel {
-    min-height: 8rem;
-}
-
 .messier-observation-list {
     max-height: 24rem;
     overflow-y: auto;
+}
+
+.messier-observation-items {
+    display: grid;
+    gap: 0.5rem;
+}
+
+.messier-observation-times {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    width: 100%;
+    color: var(--bs-secondary-color);
+    font-size: 0.8rem;
+}
+
+.messier-observation-item {
+    display: grid;
+    gap: 0.25rem;
 }
 
 .celestial-body-list {
@@ -32,5 +47,11 @@
 @media (max-width: 900px) {
     .astronomy-content {
         grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 576px) {
+    .astronomy-panel {
+        padding: 1rem;
     }
 }

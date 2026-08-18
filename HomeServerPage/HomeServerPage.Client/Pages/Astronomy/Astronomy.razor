@@ -64,6 +64,34 @@
     {
         <div id="observations-panel" class="pt-4" role="tabpanel" aria-labelledby="observations-tab">
             <div class="astronomy-content">
+                <section class="astronomy-panel celestial-body-list" aria-labelledby="celestial-body-list-heading">
+                    <div class="d-flex justify-content-between align-items-baseline mb-3">
+                        <h2 id="celestial-body-list-heading" class="h4 mb-0">Celestial bodies</h2>
+
+                        @if (observationTime is not null)
+                        {
+                            <small class="text-body-secondary">
+                                @observationTime.Value.ToString("g")
+                            </small>
+                        }
+                    </div>
+
+                    @if (isLoading)
+                    {
+                        <p class="text-body-secondary">Loading celestial observations…</p>
+                    }
+                    else if (loadError is not null)
+                    {
+                        <div class="alert alert-danger" role="alert">
+                            @loadError
+                        </div>
+                    }
+                    else
+                    {
+                        <PlanetObservationList Observations="solarSystemObservations" RequestDateUtc="requestDateUtc" />
+                    }
+                </section>
+
                 <section class="astronomy-panel astronomy-future-panel" aria-labelledby="astronomy-future-heading">
                     <h2 id="astronomy-future-heading" class="h5">Visible Messier objects</h2>
 
@@ -90,44 +118,16 @@
                             <div class="messier-observation-items">
                                 @foreach (var messier in SortedMessierObservations)
                                 {
-                                    <article class="messier-observation-item">
+                                    <article class="astronomy-object-card messier-observation-item">
                                         <span class="messier-observation-name">@messier.Name</span>
-                                        <span class="messier-observation-times">
-                                            Rise @messier.TransitResult.RiseUT.FormatUtHours(requestDateUtc, AstronomyDefaults.LocalTimeZone)
-                                            · Sets @messier.TransitResult.SetUT.FormatUtHours(requestDateUtc, AstronomyDefaults.LocalTimeZone)
-                                        </span>
+                                        <div class="messier-observation-times">
+                                            <span>Rise @messier.TransitResult.RiseUT.FormatUtHours(requestDateUtc, AstronomyDefaults.LocalTimeZone)</span>
+                                            <span>Set @messier.TransitResult.SetUT.FormatUtHours(requestDateUtc, AstronomyDefaults.LocalTimeZone)</span>
+                                        </div>
                                     </article>
                                 }
                             </div>
                         </div>
-                    }
-                </section>
-
-                <section class="astronomy-panel celestial-body-list" aria-labelledby="celestial-body-list-heading">
-                    <div class="d-flex justify-content-between align-items-baseline mb-3">
-                        <h2 id="celestial-body-list-heading" class="h4 mb-0">Celestial bodies</h2>
-
-                        @if (observationTime is not null)
-                        {
-                            <small class="text-body-secondary">
-                                @observationTime.Value.ToString("g")
-                            </small>
-                        }
-                    </div>
-
-                    @if (isLoading)
-                    {
-                        <p class="text-body-secondary">Loading celestial observations…</p>
-                    }
-                    else if (loadError is not null)
-                    {
-                        <div class="alert alert-danger" role="alert">
-                            @loadError
-                        </div>
-                    }
-                    else
-                    {
-                        <PlanetObservationList Observations="solarSystemObservations" RequestDateUtc="requestDateUtc" />
                     }
                 </section>
             </div>

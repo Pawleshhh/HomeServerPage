@@ -38,9 +38,12 @@
                     <div class="messier-observation-items">
                         @foreach (var observation in visibleMessierObservations)
                         {
-                            <article class="messier-observation-item">
+                            <article class="astronomy-object-card messier-observation-item">
                                 <span class="messier-observation-name">@observation.Name</span>
-                                <span class="messier-observation-times">Sets @observation.TransitResult.SetUT.FormatUtHours(requestDateUtc, AstronomyDefaults.LocalTimeZone)</span>
+                                <div class="messier-observation-times">
+                                    <span>Rise @observation.TransitResult.RiseUT.FormatUtHours(requestDateUtc, AstronomyDefaults.LocalTimeZone)</span>
+                                    <span>Set @observation.TransitResult.SetUT.FormatUtHours(requestDateUtc, AstronomyDefaults.LocalTimeZone)</span>
+                                </div>
                             </article>
                         }
                     </div>

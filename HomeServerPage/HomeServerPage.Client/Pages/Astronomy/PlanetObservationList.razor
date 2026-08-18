@@ -4,7 +4,7 @@
 <div class="astronomy-planet-items @(Compact ? "astronomy-planet-items-compact" : null)">
     @foreach (var observation in VisibleObservations)
     {
-        <article class="astronomy-planet-item" data-planet="@observation.Key">
+        <article class="astronomy-object-card astronomy-planet-item" data-planet="@observation.Key">
             <img class="astronomy-planet-icon"
                  src="@GetObservationImageUrl(observation.Key)"
                  alt="@observation.Name" />
