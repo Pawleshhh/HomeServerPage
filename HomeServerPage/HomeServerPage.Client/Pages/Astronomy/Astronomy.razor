@@ -37,23 +37,53 @@
 
     <div class="astronomy-content">
         <div class="astronomy-overview">
-            <section class="astronomy-panel" aria-labelledby="astronomy-overview-heading">
-                <h2 id="astronomy-overview-heading" class="h4">Sky overview</h2>
-                <p class="text-body-secondary mb-0">
-                    Solar, planetary, and lunar rise and set times for the selected location.
-                </p>
-            </section>
-
             <section class="astronomy-panel astronomy-future-panel" aria-labelledby="astronomy-future-heading">
-                <h2 id="astronomy-future-heading" class="h5">More astronomy tools</h2>
-                <p class="text-body-secondary mb-0">
-                    Additional observing information will be added here.
-
-                    @foreach(var messier in messierObservations)
-                    {
-                        <span>@messier.Name, @messier.Result</span>
-                    }
+                <h2 id="astronomy-future-heading" class="h5">Visible Messier objects</h2>
+                <p class="text-body-secondary small mb-3">
+                    Catalog objects that rise and set at the selected location.
                 </p>
+
+                @if (isLoading)
+                {
+                    <p class="text-body-secondary mb-0" role="status">Loading Messier observations…</p>
+                }
+                else if (loadError is null && messierObservations.Count == 0)
+                {
+                    <p class="text-body-secondary mb-0">No Messier objects rise and set at this location.</p>
+                }
+                else if (loadError is null)
+                {
+                    <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                        <label class="small text-body-secondary" for="messier-sort">Sort by</label>
+                        <select id="messier-sort" class="form-select form-select-sm w-auto" @bind="messierSort">
+                            <option value="@MessierSort.Name">Name</option>
+                            <option value="@MessierSort.RiseTime">Rise time</option>
+                            <option value="@MessierSort.SetTime">Set time</option>
+                        </select>
+                    </div>
+
+                    <div class="table-responsive messier-observation-list">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Object</th>
+                                    <th scope="col" class="text-end">Rise</th>
+                                    <th scope="col" class="text-end">Set</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var messier in SortedMessierObservations)
+                                {
+                                    <tr>
+                                        <td class="fw-semibold">@messier.Name</td>
+                                        <td class="text-end text-nowrap">@FormatUtHours(messier.TransitResult.RiseUT)</td>
+                                        <td class="text-end text-nowrap">@FormatUtHours(messier.TransitResult.SetUT)</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
             </section>
         </div>
 
@@ -99,6 +129,14 @@
     private DateTime requestDateUtc;
     private bool isLoading = true;
     private string? loadError;
+    private MessierSort messierSort = MessierSort.Name;
+
+    private IEnumerable<AstronomyObservation> SortedMessierObservations => messierSort switch
+    {
+        MessierSort.RiseTime => messierObservations.OrderBy(observation => observation.TransitResult.RiseUT),
+        MessierSort.SetTime => messierObservations.OrderBy(observation => observation.TransitResult.SetUT),
+        _ => messierObservations.OrderBy(observation => observation.Name)
+    };
 
     protected override async Task OnInitializedAsync()
     {
@@ -152,6 +190,24 @@
         {
             isLoading = false;
         }
+    }
+
+    private string FormatUtHours(double utHours)
+    {
+        if (double.IsNaN(utHours))
+        {
+            return "—";
+        }
+
+        var utcDateTime = DateTime.SpecifyKind(requestDateUtc.Date.AddHours(utHours), DateTimeKind.Utc);
+        return TimeZoneInfo.ConvertTimeFromUtc(utcDateTime, AstronomyDefaults.LocalTimeZone).ToString("HH:mm");
+    }
+
+    private enum MessierSort
+    {
+        Name,
+        RiseTime,
+        SetTime
     }
 
 }

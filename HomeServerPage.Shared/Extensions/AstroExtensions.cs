@@ -1,6 +1,7 @@
 ﻿using AstroCalc.Catalogs;
 using AstroCalc.Coordinates;
 using AstroCalc.Core;
+using AstroCalc.Observation;
 using AstroCalc.Time;
 using System;
 using System.Collections.Generic;

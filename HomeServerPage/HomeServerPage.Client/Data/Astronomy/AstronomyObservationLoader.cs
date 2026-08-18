@@ -63,11 +63,13 @@ public static class AstronomyObservationLoader
             => RiseTransitSet.Calculate(m.Position, location, JulianDate.FromDateTime(dateTime));
 
         var messierObjects = await astronomyService.GetAllMessierObjects();
-        var messierObservations = messierObjects.Select(m =>
+        var messierObservations = messierObjects
+            .Select(m =>
             new AstronomyObservation(
                 GetName(m),
                 GetKey(m),
-                GetRiseSetData(m)));
+                GetRiseSetData(m)))
+            .Where(a => a.TransitResult.RisesAndSets);
 
         return [.. messierObservations];
     }

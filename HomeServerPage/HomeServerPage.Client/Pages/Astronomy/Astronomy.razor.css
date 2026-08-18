@@ -25,6 +25,18 @@
     min-height: 8rem;
 }
 
+.messier-observation-list {
+    max-height: 24rem;
+    overflow-y: auto;
+}
+
+.messier-observation-list thead {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--bs-body-bg);
+}
+
 .celestial-body-list {
     min-width: 0;
 }

@@ -12,7 +12,7 @@
             <div class="astronomy-planet-details">
                 <h3 class="h5 mb-2">@observation.Name</h3>
 
-                @foreach (var value in GetResultValues(observation.Result))
+                @foreach (var value in GetResultValues(observation.TransitResult))
                 {
                     <div class="astronomy-planet-result">
                         <span class="text-body-secondary">@value.Label</span>
