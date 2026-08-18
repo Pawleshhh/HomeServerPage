@@ -11,6 +11,17 @@ namespace HomeServerPage.Shared.Extensions;
 
 public static class AstroExtensions
 {
+    public static string FormatUtHours(this double utHours, DateTime requestDateUtc, TimeZoneInfo localTimeZone)
+    {
+        if (double.IsNaN(utHours))
+        {
+            return "—";
+        }
+
+        var utcDateTime = DateTime.SpecifyKind(requestDateUtc.Date.AddHours(utHours), DateTimeKind.Utc);
+        return TimeZoneInfo.ConvertTimeFromUtc(utcDateTime, localTimeZone).ToString("HH:mm");
+    }
+
     extension(MessierObject messierObject)
     {
         public HorizontalCoordinate HorizontalCoordinate(DateTime dateTime, GeographicCoordinate location)

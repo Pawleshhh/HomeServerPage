@@ -35,86 +35,110 @@
         </div>
     </section>
 
-    <div class="astronomy-content">
-        <div class="astronomy-overview">
-            <section class="astronomy-panel astronomy-future-panel" aria-labelledby="astronomy-future-heading">
-                <h2 id="astronomy-future-heading" class="h5">Visible Messier objects</h2>
-                <p class="text-body-secondary small mb-3">
-                    Catalog objects that rise and set at the selected location.
-                </p>
+    <ul class="nav nav-tabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button id="observations-tab"
+                    class='nav-link @(activeTab == "observations" ? "active" : null)'
+                    type="button"
+                    role="tab"
+                    aria-controls="observations-panel"
+                    aria-selected='@(activeTab == "observations")'
+                    @onclick="ShowObservations">
+                Observations
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button id="tools-tab"
+                    class='nav-link @(activeTab == "tools" ? "active" : null)'
+                    type="button"
+                    role="tab"
+                    aria-controls="tools-panel"
+                    aria-selected='@(activeTab == "tools")'
+                    @onclick="ShowTools">
+                Astronomy tools
+            </button>
+        </li>
+    </ul>
 
-                @if (isLoading)
-                {
-                    <p class="text-body-secondary mb-0" role="status">Loading Messier observations…</p>
-                }
-                else if (loadError is null && messierObservations.Count == 0)
-                {
-                    <p class="text-body-secondary mb-0">No Messier objects rise and set at this location.</p>
-                }
-                else if (loadError is null)
-                {
-                    <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
-                        <label class="small text-body-secondary" for="messier-sort">Sort by</label>
-                        <select id="messier-sort" class="form-select form-select-sm w-auto" @bind="messierSort">
-                            <option value="@MessierSort.Name">Name</option>
-                            <option value="@MessierSort.RiseTime">Rise time</option>
-                            <option value="@MessierSort.SetTime">Set time</option>
-                        </select>
-                    </div>
+    @if (activeTab == "observations")
+    {
+        <div id="observations-panel" class="pt-4" role="tabpanel" aria-labelledby="observations-tab">
+            <div class="astronomy-content">
+                <section class="astronomy-panel astronomy-future-panel" aria-labelledby="astronomy-future-heading">
+                    <h2 id="astronomy-future-heading" class="h5">Visible Messier objects</h2>
 
-                    <div class="table-responsive messier-observation-list">
-                        <table class="table table-sm align-middle mb-0">
-                            <thead>
-                                <tr>
-                                    <th scope="col">Object</th>
-                                    <th scope="col" class="text-end">Rise</th>
-                                    <th scope="col" class="text-end">Set</th>
-                                </tr>
-                            </thead>
-                            <tbody>
+                    @if (isLoading)
+                    {
+                        <p class="text-body-secondary mb-0" role="status">Loading Messier observations…</p>
+                    }
+                    else if (loadError is null && messierObservations.Count == 0)
+                    {
+                        <p class="text-body-secondary mb-0">No Messier objects rise and set at this location.</p>
+                    }
+                    else if (loadError is null)
+                    {
+                        <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                            <label class="small text-body-secondary" for="messier-sort">Sort by</label>
+                            <select id="messier-sort" class="form-select form-select-sm w-auto" @bind="messierSort">
+                                <option value="@MessierSort.Name">Name</option>
+                                <option value="@MessierSort.RiseTime">Rise time</option>
+                                <option value="@MessierSort.SetTime">Set time</option>
+                            </select>
+                        </div>
+
+                        <div class="messier-observation-list">
+                            <div class="messier-observation-items">
                                 @foreach (var messier in SortedMessierObservations)
                                 {
-                                    <tr>
-                                        <td class="fw-semibold">@messier.Name</td>
-                                        <td class="text-end text-nowrap">@FormatUtHours(messier.TransitResult.RiseUT)</td>
-                                        <td class="text-end text-nowrap">@FormatUtHours(messier.TransitResult.SetUT)</td>
-                                    </tr>
+                                    <article class="messier-observation-item">
+                                        <span class="messier-observation-name">@messier.Name</span>
+                                        <span class="messier-observation-times">
+                                            Rise @messier.TransitResult.RiseUT.FormatUtHours(requestDateUtc, AstronomyDefaults.LocalTimeZone)
+                                            · Sets @messier.TransitResult.SetUT.FormatUtHours(requestDateUtc, AstronomyDefaults.LocalTimeZone)
+                                        </span>
+                                    </article>
                                 }
-                            </tbody>
-                        </table>
+                            </div>
+                        </div>
+                    }
+                </section>
+
+                <section class="astronomy-panel celestial-body-list" aria-labelledby="celestial-body-list-heading">
+                    <div class="d-flex justify-content-between align-items-baseline mb-3">
+                        <h2 id="celestial-body-list-heading" class="h4 mb-0">Celestial bodies</h2>
+
+                        @if (observationTime is not null)
+                        {
+                            <small class="text-body-secondary">
+                                @observationTime.Value.ToString("g")
+                            </small>
+                        }
                     </div>
-                }
-            </section>
-        </div>
 
-        <section class="celestial-body-list" aria-labelledby="celestial-body-list-heading">
-            <div class="d-flex justify-content-between align-items-baseline mb-3">
-                <h2 id="celestial-body-list-heading" class="h4 mb-0">Celestial bodies</h2>
-
-                @if (observationTime is not null)
-                {
-                    <small class="text-body-secondary">
-                        @observationTime.Value.ToString("g")
-                    </small>
-                }
+                    @if (isLoading)
+                    {
+                        <p class="text-body-secondary">Loading celestial observations…</p>
+                    }
+                    else if (loadError is not null)
+                    {
+                        <div class="alert alert-danger" role="alert">
+                            @loadError
+                        </div>
+                    }
+                    else
+                    {
+                        <PlanetObservationList Observations="solarSystemObservations" RequestDateUtc="requestDateUtc" />
+                    }
+                </section>
             </div>
-
-            @if (isLoading)
-            {
-                <p class="text-body-secondary">Loading celestial observations…</p>
-            }
-            else if (loadError is not null)
-            {
-                <div class="alert alert-danger" role="alert">
-                    @loadError
-                </div>
-            }
-            else
-            {
-                <PlanetObservationList Observations="solarSystemObservations" RequestDateUtc="requestDateUtc" />
-            }
-        </section>
-    </div>
+        </div>
+    }
+    else
+    {
+        <div id="tools-panel" class="pt-4" role="tabpanel" aria-labelledby="tools-tab">
+            <p class="text-body-secondary mb-0">Astronomy tools are coming soon.</p>
+        </div>
+    }
 </div>
 
 @code {
@@ -130,6 +154,7 @@
     private bool isLoading = true;
     private string? loadError;
     private MessierSort messierSort = MessierSort.Name;
+    private string activeTab = "observations";
 
     private IEnumerable<AstronomyObservation> SortedMessierObservations => messierSort switch
     {
@@ -137,6 +162,10 @@
         MessierSort.SetTime => messierObservations.OrderBy(observation => observation.TransitResult.SetUT),
         _ => messierObservations.OrderBy(observation => observation.Name)
     };
+
+    private void ShowObservations() => activeTab = "observations";
+
+    private void ShowTools() => activeTab = "tools";
 
     protected override async Task OnInitializedAsync()
     {
@@ -190,17 +219,6 @@
         {
             isLoading = false;
         }
-    }
-
-    private string FormatUtHours(double utHours)
-    {
-        if (double.IsNaN(utHours))
-        {
-            return "—";
-        }
-
-        var utcDateTime = DateTime.SpecifyKind(requestDateUtc.Date.AddHours(utHours), DateTimeKind.Utc);
-        return TimeZoneInfo.ConvertTimeFromUtc(utcDateTime, AstronomyDefaults.LocalTimeZone).ToString("HH:mm");
     }
 
     private enum MessierSort

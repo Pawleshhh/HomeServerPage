@@ -5,14 +5,9 @@
     align-items: start;
 }
 
-.astronomy-overview {
-    display: grid;
-    gap: 1rem;
-}
-
 .astronomy-panel {
     padding: 1.25rem;
-    border: 1px solid var(--bs-border-color);
+    border: 0;
     border-radius: var(--bs-border-radius);
     background: var(--bs-body-bg);
 }
@@ -28,13 +23,6 @@
 .messier-observation-list {
     max-height: 24rem;
     overflow-y: auto;
-}
-
-.messier-observation-list thead {
-    position: sticky;
-    top: 0;
-    z-index: 1;
-    background: var(--bs-body-bg);
 }
 
 .celestial-body-list {

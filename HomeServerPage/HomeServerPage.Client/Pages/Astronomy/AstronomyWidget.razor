@@ -35,12 +35,12 @@
                         <span class="badge rounded-pill text-bg-dark">@visibleMessierObservations.Count visible</span>
                     </div>
 
-                    <div class="messier-widget-items">
+                    <div class="messier-observation-items">
                         @foreach (var observation in visibleMessierObservations)
                         {
-                            <article class="messier-widget-item">
-                                <span class="messier-widget-name">@observation.Name</span>
-                                <span class="messier-widget-set">Sets @FormatUtHours(observation.TransitResult.SetUT)</span>
+                            <article class="messier-observation-item">
+                                <span class="messier-observation-name">@observation.Name</span>
+                                <span class="messier-observation-times">Sets @observation.TransitResult.SetUT.FormatUtHours(requestDateUtc, AstronomyDefaults.LocalTimeZone)</span>
                             </article>
                         }
                     </div>
@@ -100,9 +100,4 @@
             : utHours >= riseUtHours || utHours <= setUtHours;
     }
 
-    private string FormatUtHours(double utHours)
-    {
-        var utcDateTime = DateTime.SpecifyKind(requestDateUtc.Date.AddHours(utHours), DateTimeKind.Utc);
-        return TimeZoneInfo.ConvertTimeFromUtc(utcDateTime, AstronomyDefaults.LocalTimeZone).ToString("HH:mm");
-    }
 }
