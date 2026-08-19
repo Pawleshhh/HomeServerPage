@@ -9,10 +9,18 @@ public class AstronomyDbContext(DbContextOptions<AstronomyDbContext> options) : 
 
     public DbSet<TelescopeEyepiece> Eyepieces { get; set; }
 
+    public DbSet<CameraItem> Cameras { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
+        AddTelescopes(modelBuilder);
+        AddEyepieces(modelBuilder);
+    }
+
+    private void AddTelescopes(ModelBuilder modelBuilder)
+    {
         modelBuilder.Entity<TelescopeItem>().HasData(
             new TelescopeItem(
                 Id: 1,
@@ -36,6 +44,20 @@ public class AstronomyDbContext(DbContextOptions<AstronomyDbContext> options) : 
                 FocalLength: 900,
                 ApertureSpeed: 6.9));
 
+    }
+
+    private void AddEyepieces(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<TelescopeEyepiece>().HasData(
+            new TelescopeEyepiece(
+                Id: 1,
+                FocalLength: 25,
+                FieldOfView: 52,
+                BarrelDiameter: 1.25));
+    }
+
+    private void AddCameras(ModelBuilder modelBuilder)
+    {
         modelBuilder.Entity<TelescopeEyepiece>().HasData(
             new TelescopeEyepiece(
                 Id: 1,
