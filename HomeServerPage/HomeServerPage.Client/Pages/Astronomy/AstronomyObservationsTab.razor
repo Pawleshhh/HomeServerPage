@@ -1,0 +1,149 @@
+@using AstroCalc.Core
+@using HomeServerPage.Data.Astronomy
+
+@inject IAstronomyService AstronomyService
+
+<div class="pt-4" role="tabpanel" aria-labelledby="observations-tab">
+    <div class="astronomy-content">
+        <section class="astronomy-panel celestial-body-list" aria-labelledby="celestial-body-list-heading">
+            <div class="d-flex justify-content-between align-items-baseline mb-3">
+                <h2 id="celestial-body-list-heading" class="h4 mb-0">Celestial bodies</h2>
+
+                @if (observationTime is not null)
+                {
+                    <small class="text-body-secondary">
+                        @observationTime.Value.ToString("g")
+                    </small>
+                }
+            </div>
+
+            @if (isLoading)
+            {
+                <p class="text-body-secondary">Loading celestial observations…</p>
+            }
+            else if (loadError is not null)
+            {
+                <div class="alert alert-danger" role="alert">
+                    @loadError
+                </div>
+            }
+            else
+            {
+                <PlanetObservationList Observations="solarSystemObservations" RequestDateUtc="RequestDateUtc" />
+            }
+        </section>
+
+        <section class="astronomy-panel astronomy-future-panel" aria-labelledby="astronomy-future-heading">
+            <h2 id="astronomy-future-heading" class="h5">Visible Messier objects</h2>
+
+            @if (isLoading)
+            {
+                <p class="text-body-secondary mb-0" role="status">Loading Messier observations…</p>
+            }
+            else if (loadError is null && messierObservations.Count == 0)
+            {
+                <p class="text-body-secondary mb-0">No Messier objects rise and set at this location.</p>
+            }
+            else if (loadError is null)
+            {
+                <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                    <label class="small text-body-secondary" for="messier-sort">Sort by</label>
+                    <select id="messier-sort" class="form-select form-select-sm w-auto" @bind="messierSort">
+                        <option value="@MessierSort.Name">Name</option>
+                        <option value="@MessierSort.RiseTime">Rise time</option>
+                        <option value="@MessierSort.SetTime">Set time</option>
+                    </select>
+                </div>
+
+                <div class="messier-observation-list">
+                    <div class="messier-observation-items">
+                        @foreach (var messier in SortedMessierObservations)
+                        {
+                            <article class="astronomy-object-card messier-observation-item">
+                                <span class="messier-observation-name">@messier.Name</span>
+                                <div class="messier-observation-times">
+                                    <span>Rise @messier.TransitResult.RiseUT.FormatUtHours(RequestDateUtc, AstronomyDefaults.LocalTimeZone)</span>
+                                    <span>Set @messier.TransitResult.SetUT.FormatUtHours(RequestDateUtc, AstronomyDefaults.LocalTimeZone)</span>
+                                </div>
+                            </article>
+                        }
+                    </div>
+                </div>
+            }
+        </section>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public GeographicCoordinate Location { get; set; }
+
+    [Parameter, EditorRequired]
+    public DateTime RequestDateUtc { get; set; }
+
+    private IReadOnlyList<AstronomyObservation> solarSystemObservations = [];
+    private IReadOnlyList<AstronomyObservation> messierObservations = [];
+    private DateTimeOffset? observationTime;
+    private bool isLoading = true;
+    private string? loadError;
+    private MessierSort messierSort = MessierSort.Name;
+    private GeographicCoordinate? loadedLocation;
+    private DateTime loadedRequestDateUtc;
+
+    private IEnumerable<AstronomyObservation> SortedMessierObservations => messierSort switch
+    {
+        MessierSort.RiseTime => messierObservations.OrderBy(observation => observation.TransitResult.RiseUT),
+        MessierSort.SetTime => messierObservations.OrderBy(observation => observation.TransitResult.SetUT),
+        _ => messierObservations.OrderBy(observation => observation.Name)
+    };
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (loadedLocation is not null && loadedLocation.Equals(Location) && loadedRequestDateUtc == RequestDateUtc)
+        {
+            return;
+        }
+
+        loadedLocation = Location;
+        loadedRequestDateUtc = RequestDateUtc;
+        observationTime = TimeZoneInfo.ConvertTime(
+            new DateTimeOffset(RequestDateUtc, TimeSpan.Zero),
+            AstronomyDefaults.LocalTimeZone);
+
+        await LoadObservationsAsync();
+    }
+
+    private async Task LoadObservationsAsync()
+    {
+        isLoading = true;
+        loadError = null;
+
+        try
+        {
+            solarSystemObservations = await AstronomyObservationLoader.LoadSolarSystemAsync(
+                AstronomyService,
+                RequestDateUtc,
+                Location);
+
+            messierObservations = await AstronomyObservationLoader.LoadMessierCatalogAsync(
+                AstronomyService,
+                RequestDateUtc,
+                Location);
+        }
+        catch (Exception exception)
+        {
+            loadError = $"Unable to load celestial observations: {exception.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private enum MessierSort
+    {
+        Name,
+        RiseTime,
+        SetTime
+    }
+}

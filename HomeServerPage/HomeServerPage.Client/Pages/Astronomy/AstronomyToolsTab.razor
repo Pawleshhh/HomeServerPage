@@ -1,0 +1,110 @@
+@using HomeServerPage.Client.Data.Astronomy.Telescopes
+
+@inject ITelescopeService TelescopeService
+
+<div class="pt-4" role="tabpanel" aria-labelledby="tools-tab">
+    <section class="astronomy-panel setup-panel" aria-labelledby="setup-heading">
+        <div class="mb-4">
+            <h2 id="setup-heading" class="h4 mb-1">Observation setup</h2>
+            <p class="text-body-secondary mb-0">Choose the equipment for your observing session.</p>
+        </div>
+
+        @if (setupLoadError is not null)
+        {
+            <div class="alert alert-danger mb-0" role="alert">
+                @setupLoadError
+            </div>
+        }
+        else
+        {
+            <EditForm Model="this">
+                <div class="row g-3 setup-form">
+                    <div class="col-12 col-xl-3 setup-field">
+                        <label class="form-label" for="setup-telescope">Telescope</label>
+                        <select id="setup-telescope" class="form-select" @bind="selectedTelescopeId" required>
+                            <option value="">Select a telescope</option>
+                            @foreach (var telescope in telescopes)
+                            {
+                                <option value="@telescope.Id">@telescope.Name</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="col-12 col-xl-3 setup-field">
+                        <label class="form-label" for="setup-lens">Lens <span class="text-body-secondary">(optional)</span></label>
+                        <select id="setup-lens" class="form-select" @bind="selectedLensId">
+                            <option value="">No lens</option>
+                            @foreach (var lens in lenses)
+                            {
+                                <option value="@lens.Id">@lens.Name</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="col-12 col-xl-3 setup-field">
+                        <label class="form-label" for="setup-eyepiece">Eyepiece</label>
+                        <select id="setup-eyepiece" class="form-select" @bind="selectedEyepieceId">
+                            <option value="">Select an eyepiece</option>
+                            @foreach (var eyepiece in eyepieces)
+                            {
+                                <option value="@eyepiece.Id">@eyepiece.Name</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="col-12 col-xl-3 setup-field">
+                        <label class="form-label" for="setup-sensor">Sensor</label>
+                        <select id="setup-sensor" class="form-select" @bind="selectedSensorId">
+                            <option value="">Select a sensor</option>
+                            @foreach (var sensor in sensors)
+                            {
+                                <option value="@sensor.Id">@sensor.Name</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+            </EditForm>
+        }
+    </section>
+</div>
+
+@code {
+    private IReadOnlyList<TelescopeItem> telescopes = [];
+    private IReadOnlyList<TelescopeEyepiece> eyepieces = [];
+    private IReadOnlyList<TelescopeLens> lenses = [];
+    private IReadOnlyList<SensorItem> sensors = [];
+    private string? setupLoadError;
+    private int? selectedTelescopeId;
+    private int? selectedLensId;
+    private int? selectedEyepieceId;
+    private int? selectedSensorId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadSetupItemsAsync();
+    }
+
+    private async Task LoadSetupItemsAsync()
+    {
+        setupLoadError = null;
+
+        try
+        {
+            var telescopesTask = TelescopeService.GetTelescopesAsync();
+            var eyepiecesTask = TelescopeService.GetEyepiecesAsync();
+            var lensesTask = TelescopeService.GetLensesAsync();
+            var sensorsTask = TelescopeService.GetSensorsAsync();
+
+            await Task.WhenAll(telescopesTask, eyepiecesTask, lensesTask, sensorsTask);
+
+            telescopes = telescopesTask.Result.ToList();
+            eyepieces = eyepiecesTask.Result.ToList();
+            lenses = lensesTask.Result.ToList();
+            sensors = sensorsTask.Result.ToList();
+        }
+        catch (Exception exception)
+        {
+            setupLoadError = $"Unable to load telescope equipment: {exception.Message}";
+        }
+    }
+}

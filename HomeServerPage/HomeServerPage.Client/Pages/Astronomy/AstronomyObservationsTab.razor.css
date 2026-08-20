@@ -1,0 +1,38 @@
+.astronomy-content {
+    display: grid;
+    grid-template-columns: minmax(380px, 0.75fr) minmax(420px, 1.25fr);
+    gap: 1.5rem;
+    align-items: start;
+}
+
+.astronomy-panel {
+    padding: 1.25rem;
+    border: 0;
+    border-radius: var(--bs-border-radius);
+    background: var(--bs-body-bg);
+}
+
+.astronomy-panel h2 {
+    margin-bottom: 0.5rem;
+}
+
+.messier-observation-list {
+    max-height: 24rem;
+    overflow-y: auto;
+}
+
+.celestial-body-list {
+    min-width: 0;
+}
+
+@media (max-width: 900px) {
+    .astronomy-content {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 576px) {
+    .astronomy-panel {
+        padding: 1rem;
+    }
+}
