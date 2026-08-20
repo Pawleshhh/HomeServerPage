@@ -153,8 +153,8 @@
                 else
                 {
                     <EditForm Model="this">
-                        <div class="row g-3">
-                            <div class="col-12 col-lg-6">
+                        <div class="row g-3 setup-form">
+                            <div class="col-12 col-xl-3 setup-field">
                                 <label class="form-label" for="setup-telescope">Telescope</label>
                                 <select id="setup-telescope" class="form-select" @bind="selectedTelescopeId" required>
                                     <option value="">Select a telescope</option>
@@ -165,7 +165,7 @@
                                 </select>
                             </div>
 
-                            <div class="col-12 col-lg-6">
+                            <div class="col-12 col-xl-3 setup-field">
                                 <label class="form-label" for="setup-lens">Lens <span class="text-body-secondary">(optional)</span></label>
                                 <select id="setup-lens" class="form-select" @bind="selectedLensId">
                                     <option value="">No lens</option>
@@ -176,55 +176,26 @@
                                 </select>
                             </div>
 
-                            <div class="col-12">
-                                <fieldset>
-                                    <legend class="col-form-label pt-0">Output device</legend>
-                                    <div class="d-flex flex-wrap gap-3">
-                                        <div class="form-check">
-                                            <input id="setup-eyepiece-type"
-                                                   class="form-check-input"
-                                                   type="radio"
-                                                   name="setup-device-type"
-                                                   checked="@(selectedDeviceType == SetupDeviceType.Eyepiece)"
-                                                   @onchange="@(() => selectedDeviceType = SetupDeviceType.Eyepiece)" />
-                                            <label class="form-check-label" for="setup-eyepiece-type">Eyepiece</label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input id="setup-sensor-type"
-                                                   class="form-check-input"
-                                                   type="radio"
-                                                   name="setup-device-type"
-                                                   checked="@(selectedDeviceType == SetupDeviceType.Sensor)"
-                                                   @onchange="@(() => selectedDeviceType = SetupDeviceType.Sensor)" />
-                                            <label class="form-check-label" for="setup-sensor-type">Sensor</label>
-                                        </div>
-                                    </div>
-                                </fieldset>
+                            <div class="col-12 col-xl-3 setup-field">
+                                <label class="form-label" for="setup-eyepiece">Eyepiece</label>
+                                <select id="setup-eyepiece" class="form-select" @bind="selectedEyepieceId">
+                                    <option value="">Select an eyepiece</option>
+                                    @foreach (var eyepiece in eyepieces)
+                                    {
+                                        <option value="@eyepiece.Id">@eyepiece.Name</option>
+                                    }
+                                </select>
                             </div>
 
-                            <div class="col-12 col-lg-6">
-                                @if (selectedDeviceType == SetupDeviceType.Eyepiece)
-                                {
-                                    <label class="form-label" for="setup-eyepiece">Eyepiece</label>
-                                    <select id="setup-eyepiece" class="form-select" @bind="selectedEyepieceId" required>
-                                        <option value="">Select an eyepiece</option>
-                                        @foreach (var eyepiece in eyepieces)
-                                        {
-                                            <option value="@eyepiece.Id">@eyepiece.Name</option>
-                                        }
-                                    </select>
-                                }
-                                else
-                                {
-                                    <label class="form-label" for="setup-sensor">Sensor</label>
-                                    <select id="setup-sensor" class="form-select" @bind="selectedSensorId" required>
-                                        <option value="">Select a sensor</option>
-                                        @foreach (var sensor in sensors)
-                                        {
-                                            <option value="@sensor.Id">@sensor.Name</option>
-                                        }
-                                    </select>
-                                }
+                            <div class="col-12 col-xl-3 setup-field">
+                                <label class="form-label" for="setup-sensor">Sensor</label>
+                                <select id="setup-sensor" class="form-select" @bind="selectedSensorId">
+                                    <option value="">Select a sensor</option>
+                                    @foreach (var sensor in sensors)
+                                    {
+                                        <option value="@sensor.Id">@sensor.Name</option>
+                                    }
+                                </select>
                             </div>
                         </div>
                     </EditForm>
@@ -257,7 +228,6 @@
     private int? selectedLensId;
     private int? selectedEyepieceId;
     private int? selectedSensorId;
-    private SetupDeviceType selectedDeviceType = SetupDeviceType.Eyepiece;
 
     private IEnumerable<AstronomyObservation> SortedMessierObservations => messierSort switch
     {
@@ -354,12 +324,6 @@
         Name,
         RiseTime,
         SetTime
-    }
-
-    private enum SetupDeviceType
-    {
-        Eyepiece,
-        Sensor
     }
 
 }
