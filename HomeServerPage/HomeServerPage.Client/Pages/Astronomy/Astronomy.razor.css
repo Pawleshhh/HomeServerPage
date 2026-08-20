@@ -25,6 +25,14 @@
     min-width: 0;
 }
 
+.setup-panel {
+    max-width: 56rem;
+}
+
+.setup-panel fieldset {
+    margin: 0;
+}
+
 @media (max-width: 900px) {
     .astronomy-content {
         grid-template-columns: 1fr;

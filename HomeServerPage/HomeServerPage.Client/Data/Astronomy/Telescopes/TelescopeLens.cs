@@ -3,7 +3,7 @@
 public record TelescopeLens(
     string Name,
     double Multiplier,
-    BarellSizes BarellSize)
+    BarellSize BarellSize)
 {
     public int Id { get; set; }
 

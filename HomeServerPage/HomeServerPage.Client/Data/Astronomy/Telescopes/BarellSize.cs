@@ -1,20 +1,20 @@
 ﻿namespace HomeServerPage.Client.Data.Astronomy.Telescopes;
 
-public class BarellSizes
+public enum BarellSize
 {
+    Size125Inches,
+    Size2Inches 
+}
 
-    public double Value { get; set; }
-
-    private BarellSizes(double v)
+public static class BarellSizesExtensions
+{
+    extension(BarellSize barellSize)
     {
-        Value = v;
+        public double Size => barellSize switch
+        {
+            BarellSize.Size125Inches => 1.25,
+            BarellSize.Size2Inches => 2,
+            _ => double.NaN
+        };
     }
-
-    public static BarellSizes Size125Inches => new(1.25);
-    public static BarellSizes Size2Inches => new(2.0);
-
-    public static implicit operator double(BarellSizes size) => size.Value;
-
-    public static explicit operator BarellSizes(double value) => new(value);
-
 }

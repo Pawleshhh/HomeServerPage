@@ -2,8 +2,10 @@
 
 @using AstroCalc.Core
 @using HomeServerPage.Data.Astronomy
+@using HomeServerPage.Client.Data.Astronomy.Telescopes
 
 @inject IAstronomyService AstronomyService
+@inject ITelescopeService TelescopeService
 
 <PageTitle>Astronomy</PageTitle>
 
@@ -136,7 +138,98 @@
     else
     {
         <div id="tools-panel" class="pt-4" role="tabpanel" aria-labelledby="tools-tab">
-            <p class="text-body-secondary mb-0">Astronomy tools are coming soon.</p>
+            <section class="astronomy-panel setup-panel" aria-labelledby="setup-heading">
+                <div class="mb-4">
+                    <h2 id="setup-heading" class="h4 mb-1">Observation setup</h2>
+                    <p class="text-body-secondary mb-0">Choose the equipment for your observing session.</p>
+                </div>
+
+                @if (setupLoadError is not null)
+                {
+                    <div class="alert alert-danger mb-0" role="alert">
+                        @setupLoadError
+                    </div>
+                }
+                else
+                {
+                    <EditForm Model="this">
+                        <div class="row g-3">
+                            <div class="col-12 col-lg-6">
+                                <label class="form-label" for="setup-telescope">Telescope</label>
+                                <select id="setup-telescope" class="form-select" @bind="selectedTelescopeId" required>
+                                    <option value="">Select a telescope</option>
+                                    @foreach (var telescope in telescopes)
+                                    {
+                                        <option value="@telescope.Id">@telescope.Name</option>
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="col-12 col-lg-6">
+                                <label class="form-label" for="setup-lens">Lens <span class="text-body-secondary">(optional)</span></label>
+                                <select id="setup-lens" class="form-select" @bind="selectedLensId">
+                                    <option value="">No lens</option>
+                                    @foreach (var lens in lenses)
+                                    {
+                                        <option value="@lens.Id">@lens.Name</option>
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="col-12">
+                                <fieldset>
+                                    <legend class="col-form-label pt-0">Output device</legend>
+                                    <div class="d-flex flex-wrap gap-3">
+                                        <div class="form-check">
+                                            <input id="setup-eyepiece-type"
+                                                   class="form-check-input"
+                                                   type="radio"
+                                                   name="setup-device-type"
+                                                   checked="@(selectedDeviceType == SetupDeviceType.Eyepiece)"
+                                                   @onchange="@(() => selectedDeviceType = SetupDeviceType.Eyepiece)" />
+                                            <label class="form-check-label" for="setup-eyepiece-type">Eyepiece</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input id="setup-sensor-type"
+                                                   class="form-check-input"
+                                                   type="radio"
+                                                   name="setup-device-type"
+                                                   checked="@(selectedDeviceType == SetupDeviceType.Sensor)"
+                                                   @onchange="@(() => selectedDeviceType = SetupDeviceType.Sensor)" />
+                                            <label class="form-check-label" for="setup-sensor-type">Sensor</label>
+                                        </div>
+                                    </div>
+                                </fieldset>
+                            </div>
+
+                            <div class="col-12 col-lg-6">
+                                @if (selectedDeviceType == SetupDeviceType.Eyepiece)
+                                {
+                                    <label class="form-label" for="setup-eyepiece">Eyepiece</label>
+                                    <select id="setup-eyepiece" class="form-select" @bind="selectedEyepieceId" required>
+                                        <option value="">Select an eyepiece</option>
+                                        @foreach (var eyepiece in eyepieces)
+                                        {
+                                            <option value="@eyepiece.Id">@eyepiece.Name</option>
+                                        }
+                                    </select>
+                                }
+                                else
+                                {
+                                    <label class="form-label" for="setup-sensor">Sensor</label>
+                                    <select id="setup-sensor" class="form-select" @bind="selectedSensorId" required>
+                                        <option value="">Select a sensor</option>
+                                        @foreach (var sensor in sensors)
+                                        {
+                                            <option value="@sensor.Id">@sensor.Name</option>
+                                        }
+                                    </select>
+                                }
+                            </div>
+                        </div>
+                    </EditForm>
+                }
+            </section>
         </div>
     }
 </div>
@@ -155,6 +248,16 @@
     private string? loadError;
     private MessierSort messierSort = MessierSort.Name;
     private string activeTab = "observations";
+    private IReadOnlyList<TelescopeItem> telescopes = [];
+    private IReadOnlyList<TelescopeEyepiece> eyepieces = [];
+    private IReadOnlyList<TelescopeLens> lenses = [];
+    private IReadOnlyList<SensorItem> sensors = [];
+    private string? setupLoadError;
+    private int? selectedTelescopeId;
+    private int? selectedLensId;
+    private int? selectedEyepieceId;
+    private int? selectedSensorId;
+    private SetupDeviceType selectedDeviceType = SetupDeviceType.Eyepiece;
 
     private IEnumerable<AstronomyObservation> SortedMessierObservations => messierSort switch
     {
@@ -173,6 +276,7 @@
         selectedLocalDateTime = nowInPoland.DateTime;
 
         await LoadObservationsAsync();
+        await LoadSetupItemsAsync();
     }
 
     private async Task OnLocationChanged(GeographicCoordinate newLocation)
@@ -221,11 +325,41 @@
         }
     }
 
+    private async Task LoadSetupItemsAsync()
+    {
+        setupLoadError = null;
+
+        try
+        {
+            var telescopesTask = TelescopeService.GetTelescopesAsync();
+            var eyepiecesTask = TelescopeService.GetEyepiecesAsync();
+            var lensesTask = TelescopeService.GetLensesAsync();
+            var sensorsTask = TelescopeService.GetSensorsAsync();
+
+            await Task.WhenAll(telescopesTask, eyepiecesTask, lensesTask, sensorsTask);
+
+            telescopes = telescopesTask.Result.ToList();
+            eyepieces = eyepiecesTask.Result.ToList();
+            lenses = lensesTask.Result.ToList();
+            sensors = sensorsTask.Result.ToList();
+        }
+        catch (Exception exception)
+        {
+            setupLoadError = $"Unable to load telescope equipment: {exception.Message}";
+        }
+    }
+
     private enum MessierSort
     {
         Name,
         RiseTime,
         SetTime
+    }
+
+    private enum SetupDeviceType
+    {
+        Eyepiece,
+        Sensor
     }
 
 }

@@ -63,7 +63,7 @@ public class AstronomyDbContext(DbContextOptions<AstronomyDbContext> options) : 
                 Name: "Sky-Watcher 28mm LET 2\"",
                 FocalLength: 28,
                 FieldOfView: 56,
-                BarellSize: BarellSizes.Size2Inches)
+                BarellSize: BarellSize.Size2Inches)
             {
                 Id = 1
             },
@@ -71,7 +71,7 @@ public class AstronomyDbContext(DbContextOptions<AstronomyDbContext> options) : 
                 Name: "SUPER 10mm",
                 FocalLength: 10,
                 FieldOfView: 52,
-                BarellSize: BarellSizes.Size125Inches)
+                BarellSize: BarellSize.Size125Inches)
             {
                 Id = 2
             },
@@ -79,7 +79,7 @@ public class AstronomyDbContext(DbContextOptions<AstronomyDbContext> options) : 
                 Name: "SUPER 25mm",
                 FocalLength: 25,
                 FieldOfView: 52,
-                BarellSize: BarellSizes.Size125Inches)
+                BarellSize: BarellSize.Size125Inches)
             {
                 Id = 3
             });
@@ -91,14 +91,14 @@ public class AstronomyDbContext(DbContextOptions<AstronomyDbContext> options) : 
             new TelescopeLens(
                 Name: "Sky-Watcher 2x Barlow Lens",
                 Multiplier: 2,
-                BarellSize: BarellSizes.Size125Inches)
+                BarellSize: BarellSize.Size125Inches)
             {
                 Id = 1
             },
             new TelescopeLens(
                 Name: "DO-GSO 0.5x 2\"",
                 Multiplier: 0.5,
-                BarellSize: BarellSizes.Size2Inches)
+                BarellSize: BarellSize.Size2Inches)
             {
                 Id = 2
             });
