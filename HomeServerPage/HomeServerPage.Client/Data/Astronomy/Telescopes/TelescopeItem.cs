@@ -7,17 +7,5 @@ public record TelescopeItem(
     double FocalLength,
     double ApertureSpeed)
 {
-    public int Id { get; init; }
-
-    public TelescopeItem(
-        int Id, 
-        string Name,
-        TelescopeType Type,
-        double Aperture,
-        double FocalLength,
-        double ApertureSpeed)
-        : this(Name, Type, Aperture, FocalLength, ApertureSpeed)
-    {
-        this.Id = Id;
-    }
+    public int Id { get; set; }
 }

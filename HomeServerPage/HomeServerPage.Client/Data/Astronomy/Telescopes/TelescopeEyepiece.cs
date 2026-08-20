@@ -1,19 +1,10 @@
 ﻿namespace HomeServerPage.Client.Data.Astronomy.Telescopes;
 
 public record TelescopeEyepiece(
+    string Name,
     double FocalLength,
     double FieldOfView,
-    double BarrelDiameter)
+    BarellSizes BarellSize)
 {
-    public int Id { get; init; }
-
-    public TelescopeEyepiece(
-        int Id,
-        double FocalLength,
-        double FieldOfView,
-        double BarrelDiameter)
-        : this(FocalLength, FieldOfView, BarrelDiameter)
-    {
-        this.Id = Id;
-    }
+    public int Id { get; set; }
 }

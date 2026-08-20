@@ -9,7 +9,9 @@ public class AstronomyDbContext(DbContextOptions<AstronomyDbContext> options) : 
 
     public DbSet<TelescopeEyepiece> Eyepieces { get; set; }
 
-    public DbSet<CameraItem> Cameras { get; set; }
+    public DbSet<TelescopeLens> Lenses { get; set; }
+
+    public DbSet<SensorItem> Sensors { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -17,32 +19,40 @@ public class AstronomyDbContext(DbContextOptions<AstronomyDbContext> options) : 
 
         AddTelescopes(modelBuilder);
         AddEyepieces(modelBuilder);
+        AddLenses(modelBuilder);
+        AddSensors(modelBuilder);
     }
 
     private void AddTelescopes(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<TelescopeItem>().HasData(
             new TelescopeItem(
-                Id: 1,
                 Name: "Sky-Watcher BKMAK 127 OTAW",
                 Type: TelescopeType.MaksutovCassegrain,
                 Aperture: 127,
                 FocalLength: 1500,
-                ApertureSpeed: 11.8),
+                ApertureSpeed: 11.8)
+            {
+                Id = 1
+            },
             new TelescopeItem(
-                Id: 2,
                 Name: "Sky-Watcher Evostar 72ED 72/420 F6",
                 Type: TelescopeType.Refractor,
                 Aperture: 72,
                 FocalLength: 420,
-                ApertureSpeed: 5.8),
+                ApertureSpeed: 5.8)
+            {
+                Id = 2
+            },
             new TelescopeItem(
-                Id: 2,
                 Name: "Sky-Watcher BK 1309 130/900",
                 Type: TelescopeType.Newtonian,
                 Aperture: 130,
                 FocalLength: 900,
-                ApertureSpeed: 6.9));
+                ApertureSpeed: 6.9)
+            {
+                Id = 3
+            });
 
     }
 
@@ -50,19 +60,72 @@ public class AstronomyDbContext(DbContextOptions<AstronomyDbContext> options) : 
     {
         modelBuilder.Entity<TelescopeEyepiece>().HasData(
             new TelescopeEyepiece(
-                Id: 1,
+                Name: "Sky-Watcher 28mm LET 2\"",
+                FocalLength: 28,
+                FieldOfView: 56,
+                BarellSize: BarellSizes.Size2Inches)
+            {
+                Id = 1
+            },
+            new TelescopeEyepiece(
+                Name: "SUPER 10mm",
+                FocalLength: 10,
+                FieldOfView: 52,
+                BarellSize: BarellSizes.Size125Inches)
+            {
+                Id = 2
+            },
+            new TelescopeEyepiece(
+                Name: "SUPER 25mm",
                 FocalLength: 25,
                 FieldOfView: 52,
-                BarrelDiameter: 1.25));
+                BarellSize: BarellSizes.Size125Inches)
+            {
+                Id = 3
+            });
     }
 
-    private void AddCameras(ModelBuilder modelBuilder)
+    private void AddLenses(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<TelescopeEyepiece>().HasData(
-            new TelescopeEyepiece(
-                Id: 1,
-                FocalLength: 25,
-                FieldOfView: 52,
-                BarrelDiameter: 1.25));
+        modelBuilder.Entity<TelescopeLens>().HasData(
+            new TelescopeLens(
+                Name: "Sky-Watcher 2x Barlow Lens",
+                Multiplier: 2,
+                BarellSize: BarellSizes.Size125Inches)
+            {
+                Id = 1
+            },
+            new TelescopeLens(
+                Name: "DO-GSO 0.5x 2\"",
+                Multiplier: 0.5,
+                BarellSize: BarellSizes.Size2Inches)
+            {
+                Id = 2
+            });
+    }
+
+    private void AddSensors(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<SensorItem>().HasData(
+            new SensorItem(
+                Name: "Canon EOS 1100D",
+                ResolutionWidthPx: 4272,
+                ResolutionHeightPx: 2848,
+                PixelSizeUm: 5.19,
+                SensorWidthMm: 22.2,
+                SensorHeightMm: 14.8)
+            {
+                Id = 1
+            },
+            new SensorItem(
+                Name: "ZWO ASI678MC",
+                ResolutionWidthPx: 3840,
+                ResolutionHeightPx: 2160,
+                PixelSizeUm: 2,
+                SensorWidthMm: 7.68,
+                SensorHeightMm: 4.32)
+            {
+                Id = 2
+            });
     }
 }
