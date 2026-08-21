@@ -1,5 +1,7 @@
 ﻿using HomeServerPage.Client.Data.Astronomy.Telescopes;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
+using System.Text.Json;
 
 namespace HomeServerPage.Data.Astronomy;
 
@@ -13,6 +15,8 @@ public class AstronomyDbContext(DbContextOptions<AstronomyDbContext> options) : 
 
     public DbSet<SensorItem> Sensors { get; set; }
 
+    public DbSet<DeepSkyObject> DeepSkyObjects { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -21,6 +25,7 @@ public class AstronomyDbContext(DbContextOptions<AstronomyDbContext> options) : 
         AddEyepieces(modelBuilder);
         AddLenses(modelBuilder);
         AddSensors(modelBuilder);
+        AddDeepSkyObjects(modelBuilder);
     }
 
     private void AddTelescopes(ModelBuilder modelBuilder)
@@ -127,5 +132,33 @@ public class AstronomyDbContext(DbContextOptions<AstronomyDbContext> options) : 
             {
                 Id = 2
             });
+    }
+
+    private void AddDeepSkyObjects(ModelBuilder modelBuilder)
+    {
+        var jsonPath = Path.Combine(AppContext.BaseDirectory, "wwwroot", "data", "deepSkyObjects.json");
+        using var document = JsonDocument.Parse(File.ReadAllText(jsonPath));
+
+        var deepSkyObjects = document.RootElement
+            .EnumerateArray()
+            .Select((element, index) =>
+            {
+                var sizeParts = element.GetProperty("Size").GetString()!.Split('x');
+                var width = double.Parse(sizeParts[0], CultureInfo.InvariantCulture);
+                var height = sizeParts.Length == 1
+                    ? width
+                    : double.Parse(sizeParts[1], CultureInfo.InvariantCulture);
+
+                return new DeepSkyObject(
+                    Symbol: element.GetProperty("Symbol").GetString()!,
+                    Catalog: element.GetProperty("Catalog").GetString()!,
+                    Width: width,
+                    Height: height)
+                {
+                    Id = index + 1
+                };
+            });
+
+        modelBuilder.Entity<DeepSkyObject>().HasData(deepSkyObjects);
     }
 }
