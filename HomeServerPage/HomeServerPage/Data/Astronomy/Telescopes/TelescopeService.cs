@@ -29,6 +29,12 @@ public class TelescopeService(IDbContextFactory<AstronomyDbContext> dbContextFac
         return await dbContext.Sensors.AsNoTracking().ToListAsync(cancellationToken);
     }
 
+    public async Task<IEnumerable<DeepSkyObject>> GetDeepSkyObjectsAsync(CancellationToken cancellationToken = default)
+    {
+        await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        return await dbContext.DeepSkyObjects.AsNoTracking().ToListAsync(cancellationToken);
+    }
+
     public Task<bool> IsAvailableAsync(CancellationToken cancellationToken = default)
     {
         return Task.FromResult(true);

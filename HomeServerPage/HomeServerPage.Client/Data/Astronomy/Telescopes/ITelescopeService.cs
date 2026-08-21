@@ -10,6 +10,8 @@ public interface ITelescopeService
 
     Task<IEnumerable<SensorItem>> GetSensorsAsync(CancellationToken cancellationToken = default);
 
+    Task<IEnumerable<DeepSkyObject>> GetDeepSkyObjectsAsync(CancellationToken cancellationToken = default);
+
     Task<bool> IsAvailableAsync(CancellationToken cancellationToken = default);
 
 }

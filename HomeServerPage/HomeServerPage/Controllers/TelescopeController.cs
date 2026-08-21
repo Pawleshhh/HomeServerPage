@@ -32,6 +32,12 @@ public class TelescopeController(ITelescopeService telescopeService) : Controlle
         return Ok(await telescopeService.GetSensorsAsync(cancellationToken));
     }
 
+    [HttpGet("deep-sky-objects")]
+    public async Task<ActionResult<IEnumerable<DeepSkyObject>>> GetDeepSkyObjects(CancellationToken cancellationToken)
+    {
+        return Ok(await telescopeService.GetDeepSkyObjectsAsync(cancellationToken));
+    }
+
     [HttpGet("status")]
     public async Task<ActionResult<bool>> GetStatus(CancellationToken cancellationToken)
     {

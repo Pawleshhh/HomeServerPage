@@ -25,6 +25,11 @@ public class TelescopeHttpService(HttpClient httpClient) : ITelescopeService
         return await httpClient.GetFromJsonAsync<IEnumerable<SensorItem>>("api/telescope/sensors", cancellationToken) ?? [];
     }
 
+    public async Task<IEnumerable<DeepSkyObject>> GetDeepSkyObjectsAsync(CancellationToken cancellationToken = default)
+    {
+        return await httpClient.GetFromJsonAsync<IEnumerable<DeepSkyObject>>("api/telescope/deep-sky-objects", cancellationToken) ?? [];
+    }
+
     public async Task<bool> IsAvailableAsync(CancellationToken cancellationToken = default)
     {
         return await httpClient.GetFromJsonAsync<bool>("api/telescope/status", cancellationToken);
