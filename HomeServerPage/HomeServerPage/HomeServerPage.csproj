@@ -28,6 +28,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="wwwroot\data\deepSkyObjects.json" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Update="wwwroot\images\astronomy\solarsystem\earth.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

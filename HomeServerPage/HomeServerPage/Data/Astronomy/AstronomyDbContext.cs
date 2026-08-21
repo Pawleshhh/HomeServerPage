@@ -136,8 +136,16 @@ public class AstronomyDbContext(DbContextOptions<AstronomyDbContext> options) : 
 
     private void AddDeepSkyObjects(ModelBuilder modelBuilder)
     {
-        var jsonPath = Path.Combine(AppContext.BaseDirectory, "wwwroot", "data", "deepSkyObjects.json");
-        using var document = JsonDocument.Parse(File.ReadAllText(jsonPath));
+        using var stream = typeof(AstronomyDbContext).Assembly.GetManifestResourceStream(
+            "HomeServerPage.wwwroot.data.deepSkyObjects.json");
+
+        if (stream is null)
+        {
+            return;
+        }
+
+        using var reader = new StreamReader(stream);
+        using var document = JsonDocument.Parse(reader.ReadToEnd());
 
         var deepSkyObjects = document.RootElement
             .EnumerateArray()
