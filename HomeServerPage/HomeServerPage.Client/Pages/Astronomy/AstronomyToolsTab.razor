@@ -89,7 +89,7 @@
                     else
                     {
                         <p class="text-body-secondary">True field of view: @visualFieldOfViewArcmin?.ToString("0.##") arcmin</p>
-                        @if (visualObjects.Count == 0)
+                        @if (visualObjects.Count == 0 && visualPartialObjects.Count == 0)
                         {
                             <p class="text-body-secondary">No deep sky objects fit within this field of view.</p>
                         }
@@ -99,9 +99,20 @@
                                 @foreach (var dso in visualObjects)
                                 {
                                     <li class="list-group-item d-flex justify-content-between align-items-center">
-                                        <span>@dso.Catalog @dso.Symbol</span>
+                                        <span>@dso.Symbol @dso.Catalog</span>
                                         <span class="text-body-secondary">@dso.Width x @dso.Height arcmin</span>
                                     </li>
+                                }
+                                @if (visualPartialObjects.Count > 0)
+                                {
+                                    <li class="list-group-item list-group-item-secondary">Objects with at least 90% of their size in the field of view</li>
+                                    @foreach (var dso in visualPartialObjects)
+                                    {
+                                        <li class="list-group-item d-flex justify-content-between align-items-center" style="@GetVisualPartialObjectStyle(dso)">
+                                            <span>@dso.Symbol @dso.Catalog</span>
+                                            <span class="text-body-secondary">@dso.Width x @dso.Height arcmin</span>
+                                        </li>
+                                    }
                                 }
                             </ul>
                         }
@@ -119,7 +130,7 @@
                         <p class="text-body-secondary">
                             Field of view: @photoFieldOfViewWidthArcmin?.ToString("0.##") x @photoFieldOfViewHeightArcmin?.ToString("0.##") arcmin
                         </p>
-                        @if (photoObjects.Count == 0)
+                        @if (photoObjects.Count == 0 && photoPartialObjects.Count == 0)
                         {
                             <p class="text-body-secondary">No deep sky objects fit within this field of view.</p>
                         }
@@ -129,9 +140,20 @@
                                 @foreach (var dso in photoObjects)
                                 {
                                     <li class="list-group-item d-flex justify-content-between align-items-center">
-                                        <span>@dso.Catalog @dso.Symbol</span>
+                                        <span>@dso.Symbol @dso.Catalog</span>
                                         <span class="text-body-secondary">@dso.Width x @dso.Height arcmin</span>
                                     </li>
+                                }
+                                @if (photoPartialObjects.Count > 0)
+                                {
+                                    <li class="list-group-item list-group-item-secondary">Objects with at least 90% of their size in the frame</li>
+                                    @foreach (var dso in photoPartialObjects)
+                                    {
+                                        <li class="list-group-item d-flex justify-content-between align-items-center" style="@GetPhotoPartialObjectStyle(dso)">
+                                            <span>@dso.Symbol @dso.Catalog</span>
+                                            <span class="text-body-secondary">@dso.Width x @dso.Height arcmin</span>
+                                        </li>
+                                    }
                                 }
                             </ul>
                         }
@@ -157,7 +179,10 @@
     private int? selectedSensorId;
 
     private List<DeepSkyObject> visualObjects = [];
+    private List<DeepSkyObject> visualPartialObjects = [];
     private List<DeepSkyObject> photoObjects = [];
+    private List<DeepSkyObject> photoPartialObjects = [];
+    private const double VisibleSizeThreshold = 0.9;
     private double? visualFieldOfViewArcmin;
     private double? photoFieldOfViewWidthArcmin;
     private double? photoFieldOfViewHeightArcmin;
@@ -202,7 +227,9 @@
     private void RecalculateResults()
     {
         visualObjects = [];
+        visualPartialObjects = [];
         photoObjects = [];
+        photoPartialObjects = [];
         visualFieldOfViewArcmin = null;
         photoFieldOfViewWidthArcmin = null;
         photoFieldOfViewHeightArcmin = null;
@@ -222,8 +249,15 @@
             var trueFieldOfViewDegrees = calculator.CalculateTFov(telescope, eyepiece, lens);
             visualFieldOfViewArcmin = trueFieldOfViewDegrees * 60;
 
-            visualObjects = deepSkyObjects
+            var visualObjectsWithThreshold = deepSkyObjects
+                .Where(dso => Math.Max(dso.Width, dso.Height) <= visualFieldOfViewArcmin / VisibleSizeThreshold)
+                .ToList();
+
+            visualObjects = visualObjectsWithThreshold
                 .Where(dso => Math.Max(dso.Width, dso.Height) <= visualFieldOfViewArcmin)
+                .ToList();
+            visualPartialObjects = visualObjectsWithThreshold
+                .Except(visualObjects)
                 .ToList();
         }
 
@@ -233,9 +267,43 @@
             photoFieldOfViewWidthArcmin = fov.Width * 60;
             photoFieldOfViewHeightArcmin = fov.Height * 60;
 
-            photoObjects = deepSkyObjects
+            var photoObjectsWithThreshold = deepSkyObjects
+                .Where(dso => dso.Width <= photoFieldOfViewWidthArcmin / VisibleSizeThreshold
+                    && dso.Height <= photoFieldOfViewHeightArcmin / VisibleSizeThreshold)
+                .ToList();
+
+            photoObjects = photoObjectsWithThreshold
                 .Where(dso => dso.Width <= photoFieldOfViewWidthArcmin && dso.Height <= photoFieldOfViewHeightArcmin)
                 .ToList();
+            photoPartialObjects = photoObjectsWithThreshold
+                .Except(photoObjects)
+                .ToList();
         }
+    }
+
+    private string GetVisualPartialObjectStyle(DeepSkyObject deepSkyObject)
+    {
+        var visibleRatio = visualFieldOfViewArcmin!.Value / Math.Max(deepSkyObject.Width, deepSkyObject.Height);
+        return GetPartialObjectStyle(visibleRatio);
+    }
+
+    private string GetPhotoPartialObjectStyle(DeepSkyObject deepSkyObject)
+    {
+        var widthVisibleRatio = photoFieldOfViewWidthArcmin!.Value / deepSkyObject.Width;
+        var heightVisibleRatio = photoFieldOfViewHeightArcmin!.Value / deepSkyObject.Height;
+        return GetPartialObjectStyle(Math.Min(widthVisibleRatio, heightVisibleRatio));
+    }
+
+    private static string GetPartialObjectStyle(double visibleRatio)
+    {
+        var progress = Math.Clamp(
+            (visibleRatio - VisibleSizeThreshold) / (1 - VisibleSizeThreshold),
+            0,
+            1);
+        var red = (int)Math.Round(220 + 35 * progress);
+        var green = (int)Math.Round(53 + 140 * progress);
+        var blue = (int)Math.Round(69 - 62 * progress);
+
+        return $"background-color: rgba({red}, {green}, {blue}, 0.2);";
     }
 }
