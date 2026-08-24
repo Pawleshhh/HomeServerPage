@@ -21,7 +21,7 @@
                 <div class="row g-3 setup-form">
                     <div class="col-12 col-xl-3 setup-field">
                         <label class="form-label" for="setup-telescope">Telescope</label>
-                        <select id="setup-telescope" class="form-select" @bind="selectedTelescopeId" required>
+                        <select id="setup-telescope" class="form-select" @bind="selectedTelescopeId" @bind:after="RecalculateResults" required>
                             <option value="">Select a telescope</option>
                             @foreach (var telescope in telescopes)
                             {
@@ -32,7 +32,7 @@
 
                     <div class="col-12 col-xl-3 setup-field">
                         <label class="form-label" for="setup-lens">Lens <span class="text-body-secondary">(optional)</span></label>
-                        <select id="setup-lens" class="form-select" @bind="selectedLensId">
+                        <select id="setup-lens" class="form-select" @bind="selectedLensId" @bind:after="RecalculateResults">
                             <option value="">No lens</option>
                             @foreach (var lens in lenses)
                             {
@@ -43,7 +43,7 @@
 
                     <div class="col-12 col-xl-3 setup-field">
                         <label class="form-label" for="setup-eyepiece">Eyepiece</label>
-                        <select id="setup-eyepiece" class="form-select" @bind="selectedEyepieceId">
+                        <select id="setup-eyepiece" class="form-select" @bind="selectedEyepieceId" @bind:after="RecalculateResults">
                             <option value="">Select an eyepiece</option>
                             @foreach (var eyepiece in eyepieces)
                             {
@@ -54,7 +54,7 @@
 
                     <div class="col-12 col-xl-3 setup-field">
                         <label class="form-label" for="setup-sensor">Sensor</label>
-                        <select id="setup-sensor" class="form-select" @bind="selectedSensorId">
+                        <select id="setup-sensor" class="form-select" @bind="selectedSensorId" @bind:after="RecalculateResults">
                             <option value="">Select a sensor</option>
                             @foreach (var sensor in sensors)
                             {
@@ -66,22 +66,111 @@
             </EditForm>
         }
     </section>
+
+    <section class="astronomy-panel results-panel mt-4" aria-labelledby="dso-heading">
+        <div class="mb-4">
+            <h2 id="dso-heading" class="h4 mb-1">Observable deep sky objects</h2>
+            <p class="text-body-secondary mb-0">Objects that fit within the field of view of your current setup.</p>
+        </div>
+
+        @if (selectedTelescope is null)
+        {
+            <p class="text-body-secondary mb-0">Select a telescope to see which deep sky objects fit your setup.</p>
+        }
+        else
+        {
+            <div class="row g-4">
+                <div class="col-12 col-xl-6">
+                    <h3 class="h5">Visual observation</h3>
+                    @if (selectedEyepiece is null)
+                    {
+                        <p class="text-body-secondary">Select an eyepiece to list objects visible through the eyepiece.</p>
+                    }
+                    else
+                    {
+                        <p class="text-body-secondary">True field of view: @visualFieldOfViewArcmin?.ToString("0.##") arcmin</p>
+                        @if (visualObjects.Count == 0)
+                        {
+                            <p class="text-body-secondary">No deep sky objects fit within this field of view.</p>
+                        }
+                        else
+                        {
+                            <ul class="list-group">
+                                @foreach (var dso in visualObjects)
+                                {
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        <span>@dso.Catalog @dso.Symbol</span>
+                                        <span class="text-body-secondary">@dso.Width x @dso.Height arcmin</span>
+                                    </li>
+                                }
+                            </ul>
+                        }
+                    }
+                </div>
+
+                <div class="col-12 col-xl-6">
+                    <h3 class="h5">Astrophotography</h3>
+                    @if (selectedSensor is null)
+                    {
+                        <p class="text-body-secondary">Select a sensor to list objects that fit within the camera frame.</p>
+                    }
+                    else
+                    {
+                        <p class="text-body-secondary">
+                            Field of view: @photoFieldOfViewWidthArcmin?.ToString("0.##") x @photoFieldOfViewHeightArcmin?.ToString("0.##") arcmin
+                        </p>
+                        @if (photoObjects.Count == 0)
+                        {
+                            <p class="text-body-secondary">No deep sky objects fit within this field of view.</p>
+                        }
+                        else
+                        {
+                            <ul class="list-group">
+                                @foreach (var dso in photoObjects)
+                                {
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        <span>@dso.Catalog @dso.Symbol</span>
+                                        <span class="text-body-secondary">@dso.Width x @dso.Height arcmin</span>
+                                    </li>
+                                }
+                            </ul>
+                        }
+                    }
+                </div>
+            </div>
+        }
+    </section>
 </div>
 
 @code {
+    private static readonly TelescopeCalculator calculator = new();
+
     private IReadOnlyList<TelescopeItem> telescopes = [];
     private IReadOnlyList<TelescopeEyepiece> eyepieces = [];
     private IReadOnlyList<TelescopeLens> lenses = [];
     private IReadOnlyList<SensorItem> sensors = [];
+    private IReadOnlyList<DeepSkyObject> deepSkyObjects = [];
     private string? setupLoadError;
     private int? selectedTelescopeId;
     private int? selectedLensId;
     private int? selectedEyepieceId;
     private int? selectedSensorId;
 
+    private List<DeepSkyObject> visualObjects = [];
+    private List<DeepSkyObject> photoObjects = [];
+    private double? visualFieldOfViewArcmin;
+    private double? photoFieldOfViewWidthArcmin;
+    private double? photoFieldOfViewHeightArcmin;
+
+    private TelescopeItem? selectedTelescope => telescopes.FirstOrDefault(t => t.Id == selectedTelescopeId);
+    private TelescopeLens? selectedLens => lenses.FirstOrDefault(l => l.Id == selectedLensId);
+    private TelescopeEyepiece? selectedEyepiece => eyepieces.FirstOrDefault(e => e.Id == selectedEyepieceId);
+    private SensorItem? selectedSensor => sensors.FirstOrDefault(s => s.Id == selectedSensorId);
+
     protected override async Task OnInitializedAsync()
     {
         await LoadSetupItemsAsync();
+        RecalculateResults();
     }
 
     private async Task LoadSetupItemsAsync()
@@ -94,17 +183,59 @@
             var eyepiecesTask = TelescopeService.GetEyepiecesAsync();
             var lensesTask = TelescopeService.GetLensesAsync();
             var sensorsTask = TelescopeService.GetSensorsAsync();
+            var deepSkyObjectsTask = TelescopeService.GetDeepSkyObjectsAsync();
 
-            await Task.WhenAll(telescopesTask, eyepiecesTask, lensesTask, sensorsTask);
+            await Task.WhenAll(telescopesTask, eyepiecesTask, lensesTask, sensorsTask, deepSkyObjectsTask);
 
             telescopes = telescopesTask.Result.ToList();
             eyepieces = eyepiecesTask.Result.ToList();
             lenses = lensesTask.Result.ToList();
             sensors = sensorsTask.Result.ToList();
+            deepSkyObjects = deepSkyObjectsTask.Result.ToList();
         }
         catch (Exception exception)
         {
             setupLoadError = $"Unable to load telescope equipment: {exception.Message}";
+        }
+    }
+
+    private void RecalculateResults()
+    {
+        visualObjects = [];
+        photoObjects = [];
+        visualFieldOfViewArcmin = null;
+        photoFieldOfViewWidthArcmin = null;
+        photoFieldOfViewHeightArcmin = null;
+
+        var telescope = selectedTelescope;
+        if (telescope is null)
+        {
+            return;
+        }
+
+        var lens = selectedLens;
+        var eyepiece = selectedEyepiece;
+        var sensor = selectedSensor;
+
+        if (eyepiece is not null)
+        {
+            var trueFieldOfViewDegrees = calculator.CalculateTFov(telescope, eyepiece, lens);
+            visualFieldOfViewArcmin = trueFieldOfViewDegrees * 60;
+
+            visualObjects = deepSkyObjects
+                .Where(dso => Math.Max(dso.Width, dso.Height) <= visualFieldOfViewArcmin)
+                .ToList();
+        }
+
+        if (sensor is not null)
+        {
+            var fov = calculator.CalculateAstrofotoFov(telescope, sensor, lens);
+            photoFieldOfViewWidthArcmin = fov.Width * 60;
+            photoFieldOfViewHeightArcmin = fov.Height * 60;
+
+            photoObjects = deepSkyObjects
+                .Where(dso => dso.Width <= photoFieldOfViewWidthArcmin && dso.Height <= photoFieldOfViewHeightArcmin)
+                .ToList();
         }
     }
 }
