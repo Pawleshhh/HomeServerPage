@@ -81,7 +81,13 @@
         {
             <div class="row g-4">
                 <div class="col-12 col-xl-6">
-                    <h3 class="h5">Visual observation</h3>
+                    <div class="result-column-heading">
+                        <h3 class="h5 mb-0">Visual observation</h3>
+                        @if (selectedEyepiece is not null)
+                        {
+                            <span class="result-count">@(visualObjects.Count + visualPartialObjects.Count) objects</span>
+                        }
+                    </div>
                     @if (selectedEyepiece is null)
                     {
                         <p class="text-body-secondary">Select an eyepiece to list objects visible through the eyepiece.</p>
@@ -95,32 +101,42 @@
                         }
                         else
                         {
-                            <ul class="list-group">
+                            <ul class="object-grid" aria-label="Objects fully visible through the eyepiece">
                                 @foreach (var dso in visualObjects)
                                 {
-                                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                                        <span>@dso.Symbol @dso.Catalog</span>
-                                        <span class="text-body-secondary">@dso.Width x @dso.Height arcmin</span>
+                                    <li class="object-card">
+                                        <span class="object-name">@dso.Symbol @dso.Catalog</span>
+                                        <span class="object-size">@dso.Width x @dso.Height <small>arcmin</small></span>
                                     </li>
                                 }
-                                @if (visualPartialObjects.Count > 0)
-                                {
-                                    <li class="list-group-item list-group-item-secondary">Objects with at least 90% of their size in the field of view</li>
-                                    @foreach (var dso in visualPartialObjects)
-                                    {
-                                        <li class="list-group-item d-flex justify-content-between align-items-center" style="@GetVisualPartialObjectStyle(dso)">
-                                            <span>@dso.Symbol @dso.Catalog</span>
-                                            <span class="text-body-secondary">@dso.Width x @dso.Height arcmin</span>
-                                        </li>
-                                    }
-                                }
                             </ul>
+                            @if (visualPartialObjects.Count > 0)
+                            {
+                                <div class="partial-results">
+                                    <p class="partial-results-heading">At least 90% of the object fits</p>
+                                    <ul class="object-grid" aria-label="Objects mostly visible through the eyepiece">
+                                        @foreach (var dso in visualPartialObjects)
+                                        {
+                                            <li class="object-card" style="@GetVisualPartialObjectStyle(dso)">
+                                                <span class="object-name">@dso.Symbol @dso.Catalog</span>
+                                                <span class="object-size">@dso.Width x @dso.Height <small>arcmin</small></span>
+                                            </li>
+                                        }
+                                    </ul>
+                                </div>
+                            }
                         }
                     }
                 </div>
 
                 <div class="col-12 col-xl-6">
-                    <h3 class="h5">Astrophotography</h3>
+                    <div class="result-column-heading">
+                        <h3 class="h5 mb-0">Astrophotography</h3>
+                        @if (selectedSensor is not null)
+                        {
+                            <span class="result-count">@(photoObjects.Count + photoPartialObjects.Count) objects</span>
+                        }
+                    </div>
                     @if (selectedSensor is null)
                     {
                         <p class="text-body-secondary">Select a sensor to list objects that fit within the camera frame.</p>
@@ -136,26 +152,30 @@
                         }
                         else
                         {
-                            <ul class="list-group">
+                            <ul class="object-grid" aria-label="Objects fully visible in the camera frame">
                                 @foreach (var dso in photoObjects)
                                 {
-                                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                                        <span>@dso.Symbol @dso.Catalog</span>
-                                        <span class="text-body-secondary">@dso.Width x @dso.Height arcmin</span>
+                                    <li class="object-card">
+                                        <span class="object-name">@dso.Symbol @dso.Catalog</span>
+                                        <span class="object-size">@dso.Width x @dso.Height <small>arcmin</small></span>
                                     </li>
                                 }
-                                @if (photoPartialObjects.Count > 0)
-                                {
-                                    <li class="list-group-item list-group-item-secondary">Objects with at least 90% of their size in the frame</li>
-                                    @foreach (var dso in photoPartialObjects)
-                                    {
-                                        <li class="list-group-item d-flex justify-content-between align-items-center" style="@GetPhotoPartialObjectStyle(dso)">
-                                            <span>@dso.Symbol @dso.Catalog</span>
-                                            <span class="text-body-secondary">@dso.Width x @dso.Height arcmin</span>
-                                        </li>
-                                    }
-                                }
                             </ul>
+                            @if (photoPartialObjects.Count > 0)
+                            {
+                                <div class="partial-results">
+                                    <p class="partial-results-heading">At least 90% of the object fits</p>
+                                    <ul class="object-grid" aria-label="Objects mostly visible in the camera frame">
+                                        @foreach (var dso in photoPartialObjects)
+                                        {
+                                            <li class="object-card" style="@GetPhotoPartialObjectStyle(dso)">
+                                                <span class="object-name">@dso.Symbol @dso.Catalog</span>
+                                                <span class="object-size">@dso.Width x @dso.Height <small>arcmin</small></span>
+                                            </li>
+                                        }
+                                    </ul>
+                                </div>
+                            }
                         }
                     }
                 </div>
