@@ -73,6 +73,15 @@
             <p class="text-body-secondary mb-0">Objects that fit within the field of view of your current setup.</p>
         </div>
 
+        <div class="result-view-selector">
+            <label class="form-label" for="result-view">Show</label>
+            <select id="result-view" class="form-select" @bind="resultViewMode">
+                <option value="@ResultViewMode.Both">Both lists</option>
+                <option value="@ResultViewMode.Visual">Visual observation</option>
+                <option value="@ResultViewMode.Photography">Astrophotography</option>
+            </select>
+        </div>
+
         @if (selectedTelescope is null)
         {
             <p class="text-body-secondary mb-0">Select a telescope to see which deep sky objects fit your setup.</p>
@@ -80,7 +89,9 @@
         else
         {
             <div class="row g-4">
-                <div class="col-12 col-xl-6">
+                @if (resultViewMode is ResultViewMode.Both or ResultViewMode.Visual)
+                {
+                <div class="@(resultViewMode == ResultViewMode.Visual ? "col-12" : "col-12 col-xl-6")">
                     <div class="result-column-heading">
                         <h3 class="h5 mb-0">Visual observation</h3>
                         @if (selectedEyepiece is not null)
@@ -129,7 +140,11 @@
                     }
                 </div>
 
-                <div class="col-12 col-xl-6">
+                }
+
+                @if (resultViewMode is ResultViewMode.Both or ResultViewMode.Photography)
+                {
+                <div class="@(resultViewMode == ResultViewMode.Photography ? "col-12" : "col-12 col-xl-6")">
                     <div class="result-column-heading">
                         <h3 class="h5 mb-0">Astrophotography</h3>
                         @if (selectedSensor is not null)
@@ -179,12 +194,20 @@
                         }
                     }
                 </div>
+                }
             </div>
         }
     </section>
 </div>
 
 @code {
+    private enum ResultViewMode
+    {
+        Both,
+        Visual,
+        Photography
+    }
+
     private static readonly TelescopeCalculator calculator = new();
 
     private IReadOnlyList<TelescopeItem> telescopes = [];
@@ -197,6 +220,7 @@
     private int? selectedLensId;
     private int? selectedEyepieceId;
     private int? selectedSensorId;
+    private ResultViewMode resultViewMode = ResultViewMode.Both;
 
     private List<DeepSkyObject> visualObjects = [];
     private List<DeepSkyObject> visualPartialObjects = [];
