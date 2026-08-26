@@ -14,18 +14,18 @@ public class AstronomyHttpService(HttpClient httpClient) : IAstronomyService
         return await httpClient.GetFromJsonAsync<bool>("api/astronomy/status", cancellationToken);
     }
 
-    public Task<IEnumerable<MessierObject>> GetAllMessierObjects()
+    public async Task<IEnumerable<MessierObject>> GetAllMessierObjects()
     {
         var requestUri =
             "api/astronomy/messier/";
-        throw new NotImplementedException();
+        return await httpClient.GetFromJsonAsync<IEnumerable<MessierObject>>(requestUri) ?? [];
     }
 
-    public Task<MessierObject> GetMessierObject(int messierId)
+    public async Task<MessierObject> GetMessierObject(int messierId)
     {
         var requestUri =
             $"api/astronomy/messier/{messierId}";
-        throw new NotImplementedException();
+        return (await httpClient.GetFromJsonAsync<MessierObject>(requestUri))!;
     }
 
     public async Task<RiseTransitSetResult> GetPlanetRiseAndSetTime(DateTime dateTime, GeographicCoordinate location, Planet planet)
