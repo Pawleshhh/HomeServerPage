@@ -3,8 +3,6 @@
 @using AstroCalc.Core
 @using HomeServerPage.Data.Astronomy
 
-@inject IAstronomyService AstronomyService
-
 <PageTitle>Astronomy</PageTitle>
 
 <div class="container-fluid astronomy-page">
@@ -35,112 +33,80 @@
         </div>
     </section>
 
-    <div class="astronomy-content">
-        <div class="astronomy-overview">
-            <section class="astronomy-panel" aria-labelledby="astronomy-overview-heading">
-                <h2 id="astronomy-overview-heading" class="h4">Sky overview</h2>
-                <p class="text-body-secondary mb-0">
-                    Solar, planetary, and lunar rise and set times for the selected location.
-                </p>
-            </section>
+    <ul class="nav nav-tabs" role="tablist">
+        @foreach (var tab in astronomyTabs)
+        {
+            <li class="nav-item" role="presentation">
+                <button id="@tab.Key-tab"
+                        class='nav-link @(IsActive(tab) ? "active" : null)'
+                        type="button"
+                        role="tab"
+                        aria-controls="@tab.PanelId"
+                        aria-selected="@IsActive(tab)"
+                        @onclick="() => ShowTab(tab.Key)">
+                    @tab.Label
+                </button>
+            </li>
+        }
+    </ul>
 
-            <section class="astronomy-panel astronomy-future-panel" aria-labelledby="astronomy-future-heading">
-                <h2 id="astronomy-future-heading" class="h5">More astronomy tools</h2>
-                <p class="text-body-secondary mb-0">
-                    Additional observing information will be added here.
-                </p>
-            </section>
-        </div>
-
-        <section class="celestial-body-list" aria-labelledby="celestial-body-list-heading">
-            <div class="d-flex justify-content-between align-items-baseline mb-3">
-                <h2 id="celestial-body-list-heading" class="h4 mb-0">Celestial bodies</h2>
-
-                @if (observationTime is not null)
-                {
-                    <small class="text-body-secondary">
-                        @observationTime.Value.ToString("g")
-                    </small>
-                }
-            </div>
-
-            @if (isLoading)
-            {
-                <p class="text-body-secondary">Loading celestial observations…</p>
-            }
-            else if (loadError is not null)
-            {
-                <div class="alert alert-danger" role="alert">
-                    @loadError
-                </div>
-            }
-            else
-            {
-                <PlanetObservationList Observations="observations" RequestDateUtc="requestDateUtc" />
-            }
-        </section>
-    </div>
+    <DynamicComponent @key="CurrentTab.Key"
+                      Type="CurrentTab.ComponentType"
+                      Parameters="CurrentTabParameters" />
 </div>
 
 @code {
-    private GeographicCoordinate location =
-        AstronomyDefaults.Location;
+    private static readonly IReadOnlyList<IAstronomyTab> astronomyTabs =
+    [
+        new AstronomyTab("observations", "Observations", "observations-panel", typeof(AstronomyObservationsTab)),
+        new AstronomyTab("tools", "Astronomy tools", "tools-panel", typeof(AstronomyToolsTab))
+    ];
 
+    private GeographicCoordinate location = AstronomyDefaults.Location;
     private DateTime selectedLocalDateTime;
-
-    private IReadOnlyList<AstronomyObservation> observations = [];
-    private DateTimeOffset? observationTime;
     private DateTime requestDateUtc;
-    private bool isLoading = true;
-    private string? loadError;
+    private string activeTab = astronomyTabs[0].Key;
+
+    private IAstronomyTab CurrentTab => astronomyTabs.First(tab => tab.Key == activeTab);
+
+    private IDictionary<string, object> CurrentTabParameters =>
+        CurrentTab.ComponentType == typeof(AstronomyObservationsTab)
+            ? new Dictionary<string, object>
+            {
+                [nameof(AstronomyObservationsTab.Location)] = location,
+                [nameof(AstronomyObservationsTab.RequestDateUtc)] = requestDateUtc
+            }
+            : new Dictionary<string, object>();
+
+    private bool IsActive(IAstronomyTab tab) => tab.Key == activeTab;
+
+    private void ShowTab(string tabKey) => activeTab = tabKey;
 
     protected override async Task OnInitializedAsync()
     {
         var nowInPoland = TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, AstronomyDefaults.LocalTimeZone);
         selectedLocalDateTime = nowInPoland.DateTime;
+        UpdateRequestDate();
 
-        await LoadObservationsAsync();
+        await Task.CompletedTask;
     }
 
     private async Task OnLocationChanged(GeographicCoordinate newLocation)
     {
         location = newLocation;
-        await LoadObservationsAsync();
+        await Task.CompletedTask;
     }
 
     private async Task OnSelectedDateTimeChanged()
     {
-        await LoadObservationsAsync();
+        UpdateRequestDate();
+        await Task.CompletedTask;
     }
 
-    private async Task LoadObservationsAsync()
+    private void UpdateRequestDate()
     {
-        isLoading = true;
-        loadError = null;
-        StateHasChanged();
-
         requestDateUtc = TimeZoneInfo.ConvertTimeToUtc(
             DateTime.SpecifyKind(selectedLocalDateTime, DateTimeKind.Unspecified),
             AstronomyDefaults.LocalTimeZone);
-        observationTime = TimeZoneInfo.ConvertTime(
-            new DateTimeOffset(requestDateUtc, TimeSpan.Zero),
-            AstronomyDefaults.LocalTimeZone);
-
-        try
-        {
-            observations = await AstronomyObservationLoader.LoadAsync(
-                AstronomyService,
-                requestDateUtc,
-                location);
-        }
-        catch (Exception exception)
-        {
-            loadError = $"Unable to load celestial observations: {exception.Message}";
-        }
-        finally
-        {
-            isLoading = false;
-        }
     }
-
 }

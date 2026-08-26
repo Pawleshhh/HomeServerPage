@@ -1,38 +1,32 @@
 .astronomy-planet-items {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
     gap: 0.5rem;
 }
 
 .astronomy-planet-item {
-    display: flex;
-    gap: 0.6rem;
-    align-items: center;
-    padding: 0.5rem 0.65rem;
-    border: 1px solid var(--bs-border-color);
-    border-radius: var(--bs-border-radius);
-    background-color: var(--bs-body-bg);
     background-image: linear-gradient(135deg, var(--planet-color-start, var(--bs-body-bg)) 0%, var(--planet-color-end, var(--bs-body-bg)) 100%);
     color: var(--planet-text-color, #fff);
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
-    flex: 1 1 220px;
-    max-width: 260px;
 }
 
 .astronomy-planet-items-compact {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 180px), 1fr));
     gap: 0.5rem;
 }
 
 .astronomy-planet-items-compact .astronomy-planet-item {
-    flex-basis: 180px;
-    max-width: none;
+    position: relative;
     padding: 0.4rem 0.5rem;
+    padding-right: 2.8rem;
 }
 
 .astronomy-planet-items-compact .astronomy-planet-icon {
+    position: absolute;
+    top: 0.4rem;
+    right: 0.5rem;
     width: 1.8rem;
     height: 1.8rem;
-    flex-basis: 1.8rem;
 }
 
 .astronomy-planet-items-compact .astronomy-planet-details h3 {
@@ -133,4 +127,38 @@
 
 .astronomy-planet-result .text-body-secondary {
     color: var(--planet-muted-text-color, rgba(255, 255, 255, 0.8)) !important;
+}
+
+@media (max-width: 576px) {
+    .astronomy-planet-items {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.35rem;
+    }
+
+    .astronomy-planet-item {
+        gap: 0.35rem;
+        padding: 0.35rem 0.4rem;
+    }
+
+    .astronomy-planet-icon {
+        flex-basis: 1.75rem;
+        width: 1.75rem;
+        height: 1.75rem;
+    }
+
+    .astronomy-planet-details h3 {
+        font-size: 0.8rem;
+        margin-bottom: 0.2rem !important;
+    }
+
+    .astronomy-planet-result {
+        gap: 0.35rem;
+        font-size: 0.7rem;
+    }
+}
+
+@media (max-width: 240px) {
+    .astronomy-planet-items {
+        grid-template-columns: 1fr;
+    }
 }

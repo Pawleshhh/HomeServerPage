@@ -1,0 +1,353 @@
+@using HomeServerPage.Client.Data.Astronomy.Telescopes
+
+@inject ITelescopeService TelescopeService
+
+<div class="pt-4" role="tabpanel" aria-labelledby="tools-tab">
+    <section class="astronomy-panel setup-panel" aria-labelledby="setup-heading">
+        <div class="mb-4">
+            <h2 id="setup-heading" class="h4 mb-1">Observation setup</h2>
+            <p class="text-body-secondary mb-0">Choose the equipment for your observing session.</p>
+        </div>
+
+        @if (setupLoadError is not null)
+        {
+            <div class="alert alert-danger mb-0" role="alert">
+                @setupLoadError
+            </div>
+        }
+        else
+        {
+            <EditForm Model="this">
+                <div class="row g-3 setup-form">
+                    <div class="col-12 col-xl-3 setup-field">
+                        <label class="form-label" for="setup-telescope">Telescope</label>
+                        <select id="setup-telescope" class="form-select" @bind="selectedTelescopeId" @bind:after="RecalculateResults" required>
+                            <option value="">Select a telescope</option>
+                            @foreach (var telescope in telescopes)
+                            {
+                                <option value="@telescope.Id">@telescope.Name</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="col-12 col-xl-3 setup-field">
+                        <label class="form-label" for="setup-lens">Lens <span class="text-body-secondary">(optional)</span></label>
+                        <select id="setup-lens" class="form-select" @bind="selectedLensId" @bind:after="RecalculateResults">
+                            <option value="">No lens</option>
+                            @foreach (var lens in lenses)
+                            {
+                                <option value="@lens.Id">@lens.Name</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="col-12 col-xl-3 setup-field">
+                        <label class="form-label" for="setup-eyepiece">Eyepiece</label>
+                        <select id="setup-eyepiece" class="form-select" @bind="selectedEyepieceId" @bind:after="RecalculateResults">
+                            <option value="">Select an eyepiece</option>
+                            @foreach (var eyepiece in eyepieces)
+                            {
+                                <option value="@eyepiece.Id">@eyepiece.Name</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="col-12 col-xl-3 setup-field">
+                        <label class="form-label" for="setup-sensor">Sensor</label>
+                        <select id="setup-sensor" class="form-select" @bind="selectedSensorId" @bind:after="RecalculateResults">
+                            <option value="">Select a sensor</option>
+                            @foreach (var sensor in sensors)
+                            {
+                                <option value="@sensor.Id">@sensor.Name</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+            </EditForm>
+        }
+    </section>
+
+    <section class="astronomy-panel results-panel mt-4" aria-labelledby="dso-heading">
+        <div class="mb-4">
+            <h2 id="dso-heading" class="h4 mb-1">Observable deep sky objects</h2>
+            <p class="text-body-secondary mb-0">Objects that fit within the field of view of your current setup.</p>
+        </div>
+
+        <div class="result-view-selector">
+            <label class="form-label" for="result-view">Show</label>
+            <select id="result-view" class="form-select" @bind="resultViewMode">
+                <option value="@ResultViewMode.Both">Both lists</option>
+                <option value="@ResultViewMode.Visual">Visual observation</option>
+                <option value="@ResultViewMode.Photography">Astrophotography</option>
+            </select>
+        </div>
+
+        @if (selectedTelescope is null)
+        {
+            <p class="text-body-secondary mb-0">Select a telescope to see which deep sky objects fit your setup.</p>
+        }
+        else
+        {
+            <div class="row g-4">
+                @if (resultViewMode is ResultViewMode.Both or ResultViewMode.Visual)
+                {
+                <div class="@(resultViewMode == ResultViewMode.Visual ? "col-12" : "col-12 col-xl-6")">
+                    <div class="result-column-heading">
+                        <h3 class="h5 mb-0">Visual observation</h3>
+                        @if (selectedEyepiece is not null)
+                        {
+                            <span class="result-count">@(visualObjects.Count + visualPartialObjects.Count) objects</span>
+                        }
+                    </div>
+                    @if (selectedEyepiece is null)
+                    {
+                        <p class="text-body-secondary">Select an eyepiece to list objects visible through the eyepiece.</p>
+                    }
+                    else
+                    {
+                        <p class="text-body-secondary">True field of view: @visualFieldOfViewArcmin?.ToString("0.##") arcmin</p>
+                        @if (visualObjects.Count == 0 && visualPartialObjects.Count == 0)
+                        {
+                            <p class="text-body-secondary">No deep sky objects fit within this field of view.</p>
+                        }
+                        else
+                        {
+                            <ul class="object-grid" aria-label="Objects fully visible through the eyepiece">
+                                @foreach (var dso in visualObjects)
+                                {
+                                    <li class="object-card">
+                                        <span class="object-name">@dso.Symbol @dso.Catalog</span>
+                                        <span class="object-size">@dso.Width x @dso.Height <small>arcmin</small></span>
+                                    </li>
+                                }
+                            </ul>
+                            @if (visualPartialObjects.Count > 0)
+                            {
+                                <div class="partial-results">
+                                    <p class="partial-results-heading">At least 90% of the object fits</p>
+                                    <ul class="object-grid" aria-label="Objects mostly visible through the eyepiece">
+                                        @foreach (var dso in visualPartialObjects)
+                                        {
+                                            <li class="object-card" style="@GetVisualPartialObjectStyle(dso)">
+                                                <span class="object-name">@dso.Symbol @dso.Catalog</span>
+                                                <span class="object-size">@dso.Width x @dso.Height <small>arcmin</small></span>
+                                            </li>
+                                        }
+                                    </ul>
+                                </div>
+                            }
+                        }
+                    }
+                </div>
+
+                }
+
+                @if (resultViewMode is ResultViewMode.Both or ResultViewMode.Photography)
+                {
+                <div class="@(resultViewMode == ResultViewMode.Photography ? "col-12" : "col-12 col-xl-6")">
+                    <div class="result-column-heading">
+                        <h3 class="h5 mb-0">Astrophotography</h3>
+                        @if (selectedSensor is not null)
+                        {
+                            <span class="result-count">@(photoObjects.Count + photoPartialObjects.Count) objects</span>
+                        }
+                    </div>
+                    @if (selectedSensor is null)
+                    {
+                        <p class="text-body-secondary">Select a sensor to list objects that fit within the camera frame.</p>
+                    }
+                    else
+                    {
+                        <p class="text-body-secondary">
+                            Field of view: @photoFieldOfViewWidthArcmin?.ToString("0.##") x @photoFieldOfViewHeightArcmin?.ToString("0.##") arcmin
+                        </p>
+                        @if (photoObjects.Count == 0 && photoPartialObjects.Count == 0)
+                        {
+                            <p class="text-body-secondary">No deep sky objects fit within this field of view.</p>
+                        }
+                        else
+                        {
+                            <ul class="object-grid" aria-label="Objects fully visible in the camera frame">
+                                @foreach (var dso in photoObjects)
+                                {
+                                    <li class="object-card">
+                                        <span class="object-name">@dso.Symbol @dso.Catalog</span>
+                                        <span class="object-size">@dso.Width x @dso.Height <small>arcmin</small></span>
+                                    </li>
+                                }
+                            </ul>
+                            @if (photoPartialObjects.Count > 0)
+                            {
+                                <div class="partial-results">
+                                    <p class="partial-results-heading">At least 90% of the object fits</p>
+                                    <ul class="object-grid" aria-label="Objects mostly visible in the camera frame">
+                                        @foreach (var dso in photoPartialObjects)
+                                        {
+                                            <li class="object-card" style="@GetPhotoPartialObjectStyle(dso)">
+                                                <span class="object-name">@dso.Symbol @dso.Catalog</span>
+                                                <span class="object-size">@dso.Width x @dso.Height <small>arcmin</small></span>
+                                            </li>
+                                        }
+                                    </ul>
+                                </div>
+                            }
+                        }
+                    }
+                </div>
+                }
+            </div>
+        }
+    </section>
+</div>
+
+@code {
+    private enum ResultViewMode
+    {
+        Both,
+        Visual,
+        Photography
+    }
+
+    private static readonly TelescopeCalculator calculator = new();
+
+    private IReadOnlyList<TelescopeItem> telescopes = [];
+    private IReadOnlyList<TelescopeEyepiece> eyepieces = [];
+    private IReadOnlyList<TelescopeLens> lenses = [];
+    private IReadOnlyList<SensorItem> sensors = [];
+    private IReadOnlyList<DeepSkyObject> deepSkyObjects = [];
+    private string? setupLoadError;
+    private int? selectedTelescopeId;
+    private int? selectedLensId;
+    private int? selectedEyepieceId;
+    private int? selectedSensorId;
+    private ResultViewMode resultViewMode = ResultViewMode.Both;
+
+    private List<DeepSkyObject> visualObjects = [];
+    private List<DeepSkyObject> visualPartialObjects = [];
+    private List<DeepSkyObject> photoObjects = [];
+    private List<DeepSkyObject> photoPartialObjects = [];
+    private const double VisibleSizeThreshold = 0.9;
+    private double? visualFieldOfViewArcmin;
+    private double? photoFieldOfViewWidthArcmin;
+    private double? photoFieldOfViewHeightArcmin;
+
+    private TelescopeItem? selectedTelescope => telescopes.FirstOrDefault(t => t.Id == selectedTelescopeId);
+    private TelescopeLens? selectedLens => lenses.FirstOrDefault(l => l.Id == selectedLensId);
+    private TelescopeEyepiece? selectedEyepiece => eyepieces.FirstOrDefault(e => e.Id == selectedEyepieceId);
+    private SensorItem? selectedSensor => sensors.FirstOrDefault(s => s.Id == selectedSensorId);
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadSetupItemsAsync();
+        RecalculateResults();
+    }
+
+    private async Task LoadSetupItemsAsync()
+    {
+        setupLoadError = null;
+
+        try
+        {
+            var telescopesTask = TelescopeService.GetTelescopesAsync();
+            var eyepiecesTask = TelescopeService.GetEyepiecesAsync();
+            var lensesTask = TelescopeService.GetLensesAsync();
+            var sensorsTask = TelescopeService.GetSensorsAsync();
+            var deepSkyObjectsTask = TelescopeService.GetDeepSkyObjectsAsync();
+
+            await Task.WhenAll(telescopesTask, eyepiecesTask, lensesTask, sensorsTask, deepSkyObjectsTask);
+
+            telescopes = telescopesTask.Result.ToList();
+            eyepieces = eyepiecesTask.Result.ToList();
+            lenses = lensesTask.Result.ToList();
+            sensors = sensorsTask.Result.ToList();
+            deepSkyObjects = deepSkyObjectsTask.Result.ToList();
+        }
+        catch (Exception exception)
+        {
+            setupLoadError = $"Unable to load telescope equipment: {exception.Message}";
+        }
+    }
+
+    private void RecalculateResults()
+    {
+        visualObjects = [];
+        visualPartialObjects = [];
+        photoObjects = [];
+        photoPartialObjects = [];
+        visualFieldOfViewArcmin = null;
+        photoFieldOfViewWidthArcmin = null;
+        photoFieldOfViewHeightArcmin = null;
+
+        var telescope = selectedTelescope;
+        if (telescope is null)
+        {
+            return;
+        }
+
+        var lens = selectedLens;
+        var eyepiece = selectedEyepiece;
+        var sensor = selectedSensor;
+
+        if (eyepiece is not null)
+        {
+            var trueFieldOfViewDegrees = calculator.CalculateTFov(telescope, eyepiece, lens);
+            visualFieldOfViewArcmin = trueFieldOfViewDegrees * 60;
+
+            var visualObjectsWithThreshold = deepSkyObjects
+                .Where(dso => Math.Max(dso.Width, dso.Height) <= visualFieldOfViewArcmin / VisibleSizeThreshold)
+                .ToList();
+
+            visualObjects = visualObjectsWithThreshold
+                .Where(dso => Math.Max(dso.Width, dso.Height) <= visualFieldOfViewArcmin)
+                .ToList();
+            visualPartialObjects = visualObjectsWithThreshold
+                .Except(visualObjects)
+                .ToList();
+        }
+
+        if (sensor is not null)
+        {
+            var fov = calculator.CalculateAstrofotoFov(telescope, sensor, lens);
+            photoFieldOfViewWidthArcmin = fov.Width * 60;
+            photoFieldOfViewHeightArcmin = fov.Height * 60;
+
+            var photoObjectsWithThreshold = deepSkyObjects
+                .Where(dso => dso.Width <= photoFieldOfViewWidthArcmin / VisibleSizeThreshold
+                    && dso.Height <= photoFieldOfViewHeightArcmin / VisibleSizeThreshold)
+                .ToList();
+
+            photoObjects = photoObjectsWithThreshold
+                .Where(dso => dso.Width <= photoFieldOfViewWidthArcmin && dso.Height <= photoFieldOfViewHeightArcmin)
+                .ToList();
+            photoPartialObjects = photoObjectsWithThreshold
+                .Except(photoObjects)
+                .ToList();
+        }
+    }
+
+    private string GetVisualPartialObjectStyle(DeepSkyObject deepSkyObject)
+    {
+        var visibleRatio = visualFieldOfViewArcmin!.Value / Math.Max(deepSkyObject.Width, deepSkyObject.Height);
+        return GetPartialObjectStyle(visibleRatio);
+    }
+
+    private string GetPhotoPartialObjectStyle(DeepSkyObject deepSkyObject)
+    {
+        var widthVisibleRatio = photoFieldOfViewWidthArcmin!.Value / deepSkyObject.Width;
+        var heightVisibleRatio = photoFieldOfViewHeightArcmin!.Value / deepSkyObject.Height;
+        return GetPartialObjectStyle(Math.Min(widthVisibleRatio, heightVisibleRatio));
+    }
+
+    private static string GetPartialObjectStyle(double visibleRatio)
+    {
+        var progress = Math.Clamp(
+            (visibleRatio - VisibleSizeThreshold) / (1 - VisibleSizeThreshold),
+            0,
+            1);
+        var red = (int)Math.Round(220 + 35 * progress);
+        var green = (int)Math.Round(53 + 140 * progress);
+        var blue = (int)Math.Round(69 - 62 * progress);
+
+        return $"background-color: rgba({red}, {green}, {blue}, 0.2);";
+    }
+}

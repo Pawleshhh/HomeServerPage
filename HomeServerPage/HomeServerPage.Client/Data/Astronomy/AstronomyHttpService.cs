@@ -1,7 +1,9 @@
-using System.Net.Http.Json;
+using AstroCalc.Catalogs;
 using AstroCalc.Core;
 using AstroCalc.Observation;
 using AstroCalc.SolarSystem;
+using System.Net.Http.Json;
+using System.Numerics;
 
 namespace HomeServerPage.Data.Astronomy;
 
@@ -10,6 +12,20 @@ public class AstronomyHttpService(HttpClient httpClient) : IAstronomyService
     public async Task<bool> IsAvailableAsync(CancellationToken cancellationToken = default)
     {
         return await httpClient.GetFromJsonAsync<bool>("api/astronomy/status", cancellationToken);
+    }
+
+    public Task<IEnumerable<MessierObject>> GetAllMessierObjects()
+    {
+        var requestUri =
+            "api/astronomy/messier/";
+        throw new NotImplementedException();
+    }
+
+    public Task<MessierObject> GetMessierObject(int messierId)
+    {
+        var requestUri =
+            $"api/astronomy/messier/{messierId}";
+        throw new NotImplementedException();
     }
 
     public async Task<RiseTransitSetResult> GetPlanetRiseAndSetTime(DateTime dateTime, GeographicCoordinate location, Planet planet)

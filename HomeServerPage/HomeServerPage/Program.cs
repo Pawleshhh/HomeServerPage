@@ -1,6 +1,8 @@
+using HomeServerPage.Client.Data.Astronomy.Telescopes;
 using HomeServerPage.Client.Pages;
 using HomeServerPage.Components;
 using HomeServerPage.Data.Astronomy;
+using HomeServerPage.Data.Astronomy.Telescopes;
 using HomeServerPage.Data.Fridge;
 using HomeServerPage.Data.PublicTransport;
 using Microsoft.EntityFrameworkCore;
@@ -15,10 +17,14 @@ builder.Services.AddRazorComponents()
 builder.Services.AddControllers();
 
 var fridgeConnection = builder.Configuration.GetConnectionString("FridgeDbConnection");
+var astronomyConnection = builder.Configuration.GetConnectionString("AstronomyDbConnection");
 
 builder.Services.AddDbContextFactory<FridgeDbContext>(op => op.UseSqlite(fridgeConnection));
 builder.Services.AddScoped<IFridgeService, FridgeService>();
+
+builder.Services.AddDbContextFactory<AstronomyDbContext>(op => op.UseSqlite(astronomyConnection));
 builder.Services.AddScoped<IAstronomyService, AstronomyService>();
+builder.Services.AddScoped<ITelescopeService, TelescopeService>();
 
 if (builder.Environment.IsDevelopment())
 {
@@ -36,9 +42,21 @@ var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
-    var dbFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<FridgeDbContext>>();
-    using var db = dbFactory.CreateDbContext();
-    db.Database.Migrate();
+    var fridgeDbFactory = scope.ServiceProvider
+        .GetRequiredService<IDbContextFactory<FridgeDbContext>>();
+
+    using (var fridgeDb = fridgeDbFactory.CreateDbContext())
+    {
+        fridgeDb.Database.Migrate();
+    }
+
+    var astronomyDbFactory = scope.ServiceProvider
+        .GetRequiredService<IDbContextFactory<AstronomyDbContext>>();
+
+    using (var astronomyDb = astronomyDbFactory.CreateDbContext())
+    {
+        astronomyDb.Database.Migrate();
+    }
 }
 
 // Configure the HTTP request pipeline.

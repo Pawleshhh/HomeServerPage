@@ -4,7 +4,7 @@
 <div class="astronomy-planet-items @(Compact ? "astronomy-planet-items-compact" : null)">
     @foreach (var observation in VisibleObservations)
     {
-        <article class="astronomy-planet-item" data-planet="@observation.Key">
+        <article class="astronomy-object-card astronomy-planet-item" data-planet="@observation.Key">
             <img class="astronomy-planet-icon"
                  src="@GetObservationImageUrl(observation.Key)"
                  alt="@observation.Name" />
@@ -12,7 +12,7 @@
             <div class="astronomy-planet-details">
                 <h3 class="h5 mb-2">@observation.Name</h3>
 
-                @foreach (var value in GetResultValues(observation.Result))
+                @foreach (var value in GetResultValues(observation.TransitResult))
                 {
                     <div class="astronomy-planet-result">
                         <span class="text-body-secondary">@value.Label</span>
@@ -42,31 +42,19 @@
 
     private IEnumerable<(string Label, string Value)> GetResultValues(RiseTransitSetResult result)
     {
-        yield return ("Rise", FormatUtHours(result.RiseUT));
+        yield return ("Rise", result.RiseUT.FormatUtHours(RequestDateUtc, AstronomyDefaults.LocalTimeZone));
 
         if (!Compact)
         {
-            yield return ("Transit", FormatUtHours(result.TransitUT));
+            yield return ("Transit", result.TransitUT.FormatUtHours(RequestDateUtc, AstronomyDefaults.LocalTimeZone));
         }
 
-        yield return ("Set", FormatUtHours(result.SetUT));
+        yield return ("Set", result.SetUT.FormatUtHours(RequestDateUtc, AstronomyDefaults.LocalTimeZone));
 
         if (!Compact && result.RisesAndSets)
         {
             yield return ("Above horizon", FormatDuration(result.HoursAboveHorizon));
         }
-    }
-
-    private string FormatUtHours(double utHours)
-    {
-        if (double.IsNaN(utHours))
-        {
-            return "—";
-        }
-
-        var utcDateTime = DateTime.SpecifyKind(RequestDateUtc.Date.AddHours(utHours), DateTimeKind.Utc);
-        var localDateTime = TimeZoneInfo.ConvertTimeFromUtc(utcDateTime, AstronomyDefaults.LocalTimeZone);
-        return localDateTime.ToString("HH:mm");
     }
 
     private static string FormatDuration(double hours)

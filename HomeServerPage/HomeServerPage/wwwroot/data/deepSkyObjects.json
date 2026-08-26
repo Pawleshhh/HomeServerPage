@@ -1,0 +1,632 @@
+﻿[
+  {
+    "Symbol": "M31",
+    "Catalog": "NGC224",
+    "Size": "190x60"
+  },
+  {
+    "Symbol": "C41",
+    "Catalog": "Mel25",
+    "Size": "185"
+  },
+  {
+    "Symbol": "IC2118",
+    "Catalog": "NGC1909",
+    "Size": "180x60"
+  },
+  {
+    "Symbol": "C20",
+    "Catalog": "NGC7000",
+    "Size": "120x30"
+  },
+  {
+    "Symbol": "C34",
+    "Catalog": "NGC6960",
+    "Size": "110x15"
+  },
+  {
+    "Symbol": "C33",
+    "Catalog": "NGC6992",
+    "Size": "100x25"
+  },
+  {
+    "Symbol": "M45",
+    "Catalog": "",
+    "Size": "100"
+  },
+  {
+    "Symbol": "M42",
+    "Catalog": "NGC1976",
+    "Size": "90x60"
+  },
+  {
+    "Symbol": "M24",
+    "Catalog": "IC4715",
+    "Size": "90"
+  },
+  {
+    "Symbol": "IC1396",
+    "Catalog": "IC1396",
+    "Size": "89"
+  },
+  {
+    "Symbol": "C49",
+    "Catalog": "NGC2237",
+    "Size": "80x60"
+  },
+  {
+    "Symbol": "M33",
+    "Catalog": "NGC598",
+    "Size": "79x42"
+  },
+  {
+    "Symbol": "IC1805",
+    "Catalog": "IC1805",
+    "Size": "60"
+  },
+  {
+    "Symbol": "C9",
+    "Catalog": "Sh2-155",
+    "Size": "50x30"
+  },
+  {
+    "Symbol": "C31",
+    "Catalog": "IC405",
+    "Size": "50x30"
+  },
+  {
+    "Symbol": "M8",
+    "Catalog": "NGC6523",
+    "Size": "45x30"
+  },
+  {
+    "Symbol": "NGC6974",
+    "Catalog": "NGC6974",
+    "Size": "45x30"
+  },
+  {
+    "Symbol": "IC5070",
+    "Catalog": "IC5070",
+    "Size": "40x30"
+  },
+  {
+    "Symbol": "IC1848",
+    "Catalog": "IC1848",
+    "Size": "40x10"
+  },
+  {
+    "Symbol": "NGC281",
+    "Catalog": "NGC281",
+    "Size": "35x30"
+  },
+  {
+    "Symbol": "NGC281",
+    "Catalog": "NGC281",
+    "Size": "35x30"
+  },
+  {
+    "Symbol": "C14",
+    "Catalog": "NGC869",
+    "Size": "30"
+  },
+  {
+    "Symbol": "C14",
+    "Catalog": "NGC884",
+    "Size": "30"
+  },
+  {
+    "Symbol": "NGC2024",
+    "Catalog": "NGC2024",
+    "Size": "30"
+  },
+  {
+    "Symbol": "M101",
+    "Catalog": "NGC5457",
+    "Size": "28.4"
+  },
+  {
+    "Symbol": "M20",
+    "Catalog": "NGC6514",
+    "Size": "28"
+  },
+  {
+    "Symbol": "C65",
+    "Catalog": "NGC253",
+    "Size": "26.4x6"
+  },
+  {
+    "Symbol": "M81",
+    "Catalog": "NGC3031",
+    "Size": "25x12"
+  },
+  {
+    "Symbol": "M13",
+    "Catalog": "NGC6205",
+    "Size": "23.2"
+  },
+  {
+    "Symbol": "C19",
+    "Catalog": "IC5146",
+    "Size": "20x10"
+  },
+  {
+    "Symbol": "C27",
+    "Catalog": "NGC6888",
+    "Size": "20x10"
+  },
+  {
+    "Symbol": "M6",
+    "Catalog": "NGC6405",
+    "Size": "20"
+  },
+  {
+    "Symbol": "M43",
+    "Catalog": "NGC1982",
+    "Size": "20"
+  },
+  {
+    "Symbol": "NGC2264",
+    "Catalog": "NGC2264",
+    "Size": "20"
+  },
+  {
+    "Symbol": "IC2177",
+    "Catalog": "IC2177",
+    "Size": "20"
+  },
+  {
+    "Symbol": "M5",
+    "Catalog": "NGC5904",
+    "Size": "19.9"
+  },
+  {
+    "Symbol": "M110",
+    "Catalog": "NGC205",
+    "Size": "19.5x11.5"
+  },
+  {
+    "Symbol": "M55",
+    "Catalog": "NGC6809",
+    "Size": "19.1"
+  },
+  {
+    "Symbol": "M3",
+    "Catalog": "NGC5272",
+    "Size": "18.6"
+  },
+  {
+    "Symbol": "M106",
+    "Catalog": "NGC4258",
+    "Size": "17.4x7"
+  },
+  {
+    "Symbol": "M22",
+    "Catalog": "NGC6656",
+    "Size": "17"
+  },
+  {
+    "Symbol": "C51",
+    "Catalog": "IC1613",
+    "Size": "16.6x14.9"
+  },
+  {
+    "Symbol": "C63",
+    "Catalog": "NGC7293",
+    "Size": "16x12"
+  },
+  {
+    "Symbol": "M50",
+    "Catalog": "NGC2323",
+    "Size": "16"
+  },
+  {
+    "Symbol": "C10",
+    "Catalog": "NGC663",
+    "Size": "16"
+  },
+  {
+    "Symbol": "C26",
+    "Catalog": "NGC4244",
+    "Size": "15.9x1.8"
+  },
+  {
+    "Symbol": "C57",
+    "Catalog": "NGC6822",
+    "Size": "15.4x14.2"
+  },
+  {
+    "Symbol": "C32",
+    "Catalog": "NGC4631",
+    "Size": "15.2x2.8"
+  },
+  {
+    "Symbol": "C11",
+    "Catalog": "NGC7635",
+    "Size": "15x8"
+  },
+  {
+    "Symbol": "M26",
+    "Catalog": "NGC6694",
+    "Size": "15"
+  },
+  {
+    "Symbol": "M28",
+    "Catalog": "NGC6626",
+    "Size": "15"
+  },
+  {
+    "Symbol": "C38",
+    "Catalog": "NGC4565",
+    "Size": "14.9x2"
+  },
+  {
+    "Symbol": "M53",
+    "Catalog": "NGC5024",
+    "Size": "14.4"
+  },
+  {
+    "Symbol": "M62",
+    "Catalog": "NGC6266",
+    "Size": "14.1"
+  },
+  {
+    "Symbol": "M11",
+    "Catalog": "NGC6705",
+    "Size": "14"
+  },
+  {
+    "Symbol": "C1",
+    "Catalog": "NGC6705",
+    "Size": "14"
+  },
+  {
+    "Symbol": "C17",
+    "Catalog": "NGC147",
+    "Size": "13.5x8.2"
+  },
+  {
+    "Symbol": "C23",
+    "Catalog": "NGC891",
+    "Size": "13.1x2.8"
+  },
+  {
+    "Symbol": "M83",
+    "Catalog": "NGC5236",
+    "Size": "13x12"
+  },
+  {
+    "Symbol": "M21",
+    "Catalog": "NGC6531",
+    "Size": "13"
+  },
+  {
+    "Symbol": "M52",
+    "Catalog": "NGC7654",
+    "Size": "13"
+  },
+  {
+    "Symbol": "C13",
+    "Catalog": "NGC457",
+    "Size": "13"
+  },
+  {
+    "Symbol": "C58",
+    "Catalog": "NGC2360",
+    "Size": "13"
+  },
+  {
+    "Symbol": "M63",
+    "Catalog": "NGC5055",
+    "Size": "12.6x7"
+  },
+  {
+    "Symbol": "C18",
+    "Catalog": "NGC185",
+    "Size": "12.5x10.4"
+  },
+  {
+    "Symbol": "M15",
+    "Catalog": "NGC7078",
+    "Size": "12.3"
+  },
+  {
+    "Symbol": "M10",
+    "Catalog": "NGC6254",
+    "Size": "12.2"
+  },
+  {
+    "Symbol": "M12",
+    "Catalog": "NGC6218",
+    "Size": "12.2"
+  },
+  {
+    "Symbol": "M92",
+    "Catalog": "NGC6341",
+    "Size": "12.2"
+  },
+  {
+    "Symbol": "M94",
+    "Catalog": "NGC4736",
+    "Size": "12x11"
+  },
+  {
+    "Symbol": "M36",
+    "Catalog": "NGC1960",
+    "Size": "12"
+  },
+  {
+    "Symbol": "NGC5907",
+    "Catalog": "NGC5907",
+    "Size": "11.8x1.3"
+  },
+  {
+    "Symbol": "M2",
+    "Catalog": "NGC7089",
+    "Size": "11.7"
+  },
+  {
+    "Symbol": "C12",
+    "Catalog": "NGC6946",
+    "Size": "11.2x9.8"
+  },
+  {
+    "Symbol": "M51",
+    "Catalog": "NGC5194",
+    "Size": "11x6.6"
+  },
+  {
+    "Symbol": "C36",
+    "Catalog": "NGC4559",
+    "Size": "11x4.9"
+  },
+  {
+    "Symbol": "M17",
+    "Catalog": "NGC6618",
+    "Size": "11"
+  },
+  {
+    "Symbol": "M82",
+    "Catalog": "NGC3034",
+    "Size": "10.5x5"
+  },
+  {
+    "Symbol": "M64",
+    "Catalog": "NGC4826",
+    "Size": "10.3x5"
+  },
+  {
+    "Symbol": "C30",
+    "Catalog": "NGC7331",
+    "Size": "10.2x4.2"
+  },
+  {
+    "Symbol": "M74",
+    "Catalog": "NGC628",
+    "Size": "10x9.4"
+  },
+  {
+    "Symbol": "NGC2359",
+    "Catalog": "NGC2359",
+    "Size": "10x5"
+  },
+  {
+    "Symbol": "M90",
+    "Catalog": "NGC4569",
+    "Size": "9.9x4.4"
+  },
+  {
+    "Symbol": "M49",
+    "Catalog": "NGC4472",
+    "Size": "9.8x8.2"
+  },
+  {
+    "Symbol": "M86",
+    "Catalog": "NGC4406",
+    "Size": "9.8x6.3"
+  },
+  {
+    "Symbol": "M68",
+    "Catalog": "NGC4590",
+    "Size": "9.8"
+  },
+  {
+    "Symbol": "C67",
+    "Catalog": "NGC1097",
+    "Size": "9.4x6.6"
+  },
+  {
+    "Symbol": "M66",
+    "Catalog": "NGC3627",
+    "Size": "9.4x4.1"
+  },
+  {
+    "Symbol": "M98",
+    "Catalog": "NGC4192",
+    "Size": "9.4x2.3"
+  },
+  {
+    "Symbol": "M54",
+    "Catalog": "NGC6715",
+    "Size": "9.1"
+  },
+  {
+    "Symbol": "M65",
+    "Catalog": "NGC3623",
+    "Size": "9x2.3"
+  },
+  {
+    "Symbol": "M18",
+    "Catalog": "NGC6613",
+    "Size": "9"
+  },
+  {
+    "Symbol": "M30",
+    "Catalog": "NGC7099",
+    "Size": "8.9"
+  },
+  {
+    "Symbol": "M87",
+    "Catalog": "NGC4486",
+    "Size": "8.7x6.6"
+  },
+  {
+    "Symbol": "M104",
+    "Catalog": "NGC4594",
+    "Size": "8.6x4.2"
+  },
+  {
+    "Symbol": "M108",
+    "Catalog": "NGC3556",
+    "Size": "8.6x2.4"
+  },
+  {
+    "Symbol": "M32",
+    "Catalog": "NGC221",
+    "Size": "8.5x6.5"
+  },
+  {
+    "Symbol": "IC434",
+    "Catalog": "IC434",
+    "Size": "8x6"
+  },
+  {
+    "Symbol": "M1",
+    "Catalog": "NGC1952",
+    "Size": "8x4"
+  },
+  {
+    "Symbol": "M78",
+    "Catalog": "NGC2068",
+    "Size": "8"
+  },
+  {
+    "Symbol": "C64",
+    "Catalog": "NGC2362",
+    "Size": "8"
+  },
+  {
+    "Symbol": "M96",
+    "Catalog": "NGC3368",
+    "Size": "7.8x5.2"
+  },
+  {
+    "Symbol": "M70",
+    "Catalog": "NGC6681",
+    "Size": "7.8"
+  },
+  {
+    "Symbol": "M79",
+    "Catalog": "NGC1904",
+    "Size": "7.8"
+  },
+  {
+    "Symbol": "C54",
+    "Catalog": "NGC2506",
+    "Size": "7.6x7"
+  },
+  {
+    "Symbol": "M60",
+    "Catalog": "NGC4649",
+    "Size": "7.6x6.2"
+  },
+  {
+    "Symbol": "M100",
+    "Catalog": "NGC4321",
+    "Size": "7.5x6.1"
+  },
+  {
+    "Symbol": "M109",
+    "Catalog": "NGC3992",
+    "Size": "7.5x4.4"
+  },
+  {
+    "Symbol": "M85",
+    "Catalog": "NGC4382",
+    "Size": "7.4x5.9"
+  },
+  {
+    "Symbol": "M77",
+    "Catalog": "NGC1068",
+    "Size": "7.3x6.3"
+  },
+  {
+    "Symbol": "M95",
+    "Catalog": "NGC3351",
+    "Size": "7.3x4.4"
+  },
+  {
+    "Symbol": "C53",
+    "Catalog": "NGC3115",
+    "Size": "7.3x3.4"
+  },
+  {
+    "Symbol": "M69",
+    "Catalog": "NGC6637",
+    "Size": "7.1"
+  },
+  {
+    "Symbol": "M16",
+    "Catalog": "NGC6611",
+    "Size": "7"
+  },
+  {
+    "Symbol": "M29",
+    "Catalog": "NGC6913",
+    "Size": "7"
+  },
+  {
+    "Symbol": "C37",
+    "Catalog": "NGC6882",
+    "Size": "7"
+  },
+  {
+    "Symbol": "M88",
+    "Catalog": "NGC4501",
+    "Size": "6.8x3.7"
+  },
+  {
+    "Symbol": "M84",
+    "Catalog": "NGC4374",
+    "Size": "6.7x6"
+  },
+  {
+    "Symbol": "M14",
+    "Catalog": "NGC6402",
+    "Size": "6.7"
+  },
+  {
+    "Symbol": "M61",
+    "Catalog": "NGC4303",
+    "Size": "6.5x5.9"
+  },
+  {
+    "Symbol": "M102",
+    "Catalog": "NGC5866",
+    "Size": "6.5x3.1"
+  },
+  {
+    "Symbol": "C21",
+    "Catalog": "NGC4449",
+    "Size": "6.2x4.9"
+  },
+  {
+    "Symbol": "C52",
+    "Catalog": "NGC4697",
+    "Size": "6.2x4.5"
+  },
+  {
+    "Symbol": "C25",
+    "Catalog": "NGC2419",
+    "Size": "6.2"
+  },
+  {
+    "Symbol": "C47",
+    "Catalog": "NGC6934",
+    "Size": "6.2"
+  },
+  {
+    "Symbol": "M71",
+    "Catalog": "NGC6838",
+    "Size": "6.1"
+  }
+]

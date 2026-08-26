@@ -1,3 +1,4 @@
+using AstroCalc.Catalogs;
 using AstroCalc.Core;
 using AstroCalc.Observation;
 using AstroCalc.SolarSystem;
@@ -55,6 +56,20 @@ public class AstronomyController(IAstronomyService astronomyService) : Controlle
     {
         var location = GeographicCoordinate.FromDegrees(latitude, longitude, elevationMeters);
         var result = await astronomyService.GetSunRiseAndSetTime(dateTime, location);
+        return Ok(result);
+    }
+
+    [HttpGet("messier")]
+    public async Task<ActionResult<IEnumerable<MessierObject>>> GetAllMessierObjects()
+    {
+        var result = await astronomyService.GetAllMessierObjects();
+        return Ok(result);
+    }
+
+    [HttpGet("messier/{messierId:int}")]
+    public async Task<ActionResult<MessierObject>> GetMessierObject(int messierId)
+    {
+        var result = await astronomyService.GetMessierObject(messierId);
         return Ok(result);
     }
 }

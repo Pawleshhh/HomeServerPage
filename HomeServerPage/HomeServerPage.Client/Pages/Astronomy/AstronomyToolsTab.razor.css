@@ -1,0 +1,186 @@
+.astronomy-panel {
+    padding: 1.25rem;
+    border: 0;
+    border-radius: var(--bs-border-radius);
+    background: var(--bs-body-bg);
+}
+
+.astronomy-panel h2 {
+    margin-bottom: 0.5rem;
+}
+
+.setup-panel {
+    width: 100%;
+}
+
+.setup-field {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 0;
+}
+
+.setup-field .form-label,
+.setup-field legend {
+    flex: 0 0 auto;
+    margin-bottom: 0;
+    white-space: nowrap;
+}
+
+.setup-field .form-select {
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.result-view-selector {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.6rem;
+    margin-bottom: 1.25rem;
+}
+
+.result-view-selector .form-label {
+    margin-bottom: 0;
+    white-space: nowrap;
+}
+
+.result-view-selector .form-select {
+    width: auto;
+    min-width: 12rem;
+}
+
+.result-column-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.result-count {
+    flex: 0 0 auto;
+    padding: 0.25rem 0.55rem;
+    border-radius: 999px;
+    background: var(--bs-secondary-bg);
+    color: var(--bs-secondary-color);
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.object-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
+    gap: 0.5rem;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+}
+
+.object-card {
+    display: flex;
+    min-width: 0;
+    min-height: 3.5rem;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.15rem;
+    padding: 0.6rem 0.7rem;
+    border: 1px solid var(--bs-border-color-translucent);
+    border-radius: var(--bs-border-radius);
+    background: var(--bs-tertiary-bg);
+}
+
+.object-name {
+    overflow: hidden;
+    color: var(--bs-emphasis-color);
+    font-weight: 600;
+    line-height: 1.25;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.object-size {
+    color: var(--bs-secondary-color);
+    font-size: 0.8rem;
+    line-height: 1.2;
+}
+
+.object-size small {
+    font-size: 0.85em;
+}
+
+.partial-results {
+    margin-top: 1rem;
+    padding-top: 0.85rem;
+    border-top: 1px solid var(--bs-border-color-translucent);
+}
+
+.partial-results-heading {
+    margin: 0 0 0.55rem;
+    color: var(--bs-secondary-color);
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+@media (max-width: 1199.98px) {
+    .setup-field {
+        flex-wrap: wrap;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .setup-field {
+        display: block;
+    }
+
+    .setup-field .form-label,
+    .setup-field legend {
+        display: block;
+        margin-bottom: 0.5rem;
+        white-space: normal;
+    }
+
+    .setup-field .form-select {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .setup-radio-group {
+        display: flex;
+    }
+
+    .setup-device-type fieldset {
+        display: block;
+    }
+}
+
+@media (max-width: 576px) {
+    .astronomy-panel {
+        padding: 1rem;
+    }
+
+    .result-column-heading {
+        align-items: flex-start;
+    }
+
+    .result-view-selector {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 0.4rem;
+        justify-content: flex-start;
+    }
+
+    .result-view-selector .form-select {
+        width: 100%;
+    }
+
+    .object-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .object-card {
+        min-height: 3.75rem;
+        padding: 0.65rem;
+    }
+}

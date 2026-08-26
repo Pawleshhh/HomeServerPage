@@ -5,4 +5,4 @@ namespace HomeServerPage.Data.Astronomy;
 public sealed record AstronomyObservation(
     string Name,
     string Key,
-    RiseTransitSetResult Result);
+    RiseTransitSetResult TransitResult);
