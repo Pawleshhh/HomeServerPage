@@ -1,0 +1,76 @@
+.astronomy-panel {
+    padding: 1.25rem;
+    border: 0;
+    border-radius: var(--bs-border-radius);
+    background: var(--bs-body-bg);
+}
+
+.astronomy-panel h2 {
+    margin-bottom: 0.5rem;
+}
+
+.equipment-groups {
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+}
+
+.equipment-category-heading {
+    margin-bottom: 0.85rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--bs-border-color-translucent);
+}
+
+.spec-table-wrapper {
+    overflow-x: auto;
+    border: 1px solid var(--bs-border-color-translucent);
+    border-radius: var(--bs-border-radius);
+}
+
+.spec-table {
+    width: 100%;
+    margin-bottom: 0;
+    white-space: nowrap;
+}
+
+.spec-table thead th {
+    border-bottom-width: 1px;
+    color: var(--bs-secondary-color);
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.spec-table th,
+.spec-table td {
+    padding: 0.65rem 0.9rem;
+    vertical-align: middle;
+}
+
+.spec-table tbody th {
+    color: var(--bs-emphasis-color);
+    font-weight: 600;
+    white-space: normal;
+}
+
+.spec-table tbody td {
+    color: var(--bs-body-color);
+}
+
+.spec-table tbody tr:last-child th,
+.spec-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+@media (max-width: 576px) {
+    .astronomy-panel {
+        padding: 1rem;
+    }
+
+    .spec-table th,
+    .spec-table td {
+        padding: 0.55rem 0.65rem;
+        font-size: 0.9rem;
+    }
+}

@@ -1,0 +1,222 @@
+@using HomeServerPage.Client.Data.Astronomy.Telescopes
+
+@inject ITelescopeService TelescopeService
+
+<div class="pt-4" role="tabpanel" aria-labelledby="equipment-tab">
+    <section class="astronomy-panel equipment-panel" aria-labelledby="equipment-heading">
+        <div class="mb-4">
+            <h2 id="equipment-heading" class="h4 mb-1">Equipment specifications</h2>
+            <p class="text-body-secondary mb-0">Browse the specs of your available telescopes, lenses, eyepieces and sensors.</p>
+        </div>
+
+        @if (loadError is not null)
+        {
+            <div class="alert alert-danger mb-0" role="alert">
+                @loadError
+            </div>
+        }
+        else if (isLoading)
+        {
+            <p class="text-body-secondary mb-0">Loading equipment...</p>
+        }
+        else
+        {
+            <div class="equipment-groups">
+                <div class="equipment-category">
+                    <h3 class="h5 equipment-category-heading">Telescopes</h3>
+                    @if (telescopes.Count == 0)
+                    {
+                        <p class="text-body-secondary">No telescopes available.</p>
+                    }
+                    else
+                    {
+                        <div class="spec-table-wrapper">
+                            <table class="table spec-table" aria-label="Telescopes">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Name</th>
+                                        <th scope="col">Type</th>
+                                        <th scope="col">Aperture</th>
+                                        <th scope="col">Focal length</th>
+                                        <th scope="col">Focal ratio</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var telescope in telescopes)
+                                    {
+                                        <tr>
+                                            <th scope="row">@telescope.Name</th>
+                                            <td>@FormatEnum(telescope.Type)</td>
+                                            <td>@telescope.Aperture.ToString("0.##") mm</td>
+                                            <td>@telescope.FocalLength.ToString("0.##") mm</td>
+                                            <td>f/@telescope.ApertureSpeed.ToString("0.##")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+
+                <div class="equipment-category">
+                    <h3 class="h5 equipment-category-heading">Lenses</h3>
+                    @if (lenses.Count == 0)
+                    {
+                        <p class="text-body-secondary">No lenses available.</p>
+                    }
+                    else
+                    {
+                        <div class="spec-table-wrapper">
+                            <table class="table spec-table" aria-label="Lenses">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Name</th>
+                                        <th scope="col">Type</th>
+                                        <th scope="col">Multiplier</th>
+                                        <th scope="col">Barrel size</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var lens in lenses)
+                                    {
+                                        <tr>
+                                            <th scope="row">@lens.Name</th>
+                                            <td>@FormatEnum(lens.Type)</td>
+                                            <td>@lens.Multiplier.ToString("0.##")x</td>
+                                            <td>@lens.BarellSize.Size"</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+
+                <div class="equipment-category">
+                    <h3 class="h5 equipment-category-heading">Eyepieces</h3>
+                    @if (eyepieces.Count == 0)
+                    {
+                        <p class="text-body-secondary">No eyepieces available.</p>
+                    }
+                    else
+                    {
+                        <div class="spec-table-wrapper">
+                            <table class="table spec-table" aria-label="Eyepieces">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Name</th>
+                                        <th scope="col">Focal length</th>
+                                        <th scope="col">Field of view</th>
+                                        <th scope="col">Barrel size</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var eyepiece in eyepieces)
+                                    {
+                                        <tr>
+                                            <th scope="row">@eyepiece.Name</th>
+                                            <td>@eyepiece.FocalLength.ToString("0.##") mm</td>
+                                            <td>@eyepiece.FieldOfView.ToString("0.##")&deg;</td>
+                                            <td>@eyepiece.BarellSize.Size"</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+
+                <div class="equipment-category">
+                    <h3 class="h5 equipment-category-heading">Sensors</h3>
+                    @if (sensors.Count == 0)
+                    {
+                        <p class="text-body-secondary">No sensors available.</p>
+                    }
+                    else
+                    {
+                        <div class="spec-table-wrapper">
+                            <table class="table spec-table" aria-label="Sensors">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Name</th>
+                                        <th scope="col">Resolution</th>
+                                        <th scope="col">Pixel size</th>
+                                        <th scope="col">Sensor size</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var sensor in sensors)
+                                    {
+                                        <tr>
+                                            <th scope="row">@sensor.Name</th>
+                                            <td>@sensor.ResolutionWidthPx x @sensor.ResolutionHeightPx px</td>
+                                            <td>@sensor.PixelSizeUm.ToString("0.##") &micro;m</td>
+                                            <td>@sensor.SensorWidthMm.ToString("0.##") x @sensor.SensorHeightMm.ToString("0.##") mm</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </section>
+</div>
+
+@code {
+    private IReadOnlyList<TelescopeItem> telescopes = [];
+    private IReadOnlyList<TelescopeEyepiece> eyepieces = [];
+    private IReadOnlyList<TelescopeLens> lenses = [];
+    private IReadOnlyList<SensorItem> sensors = [];
+    private string? loadError;
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        loadError = null;
+        isLoading = true;
+
+        try
+        {
+            var telescopesTask = TelescopeService.GetTelescopesAsync();
+            var eyepiecesTask = TelescopeService.GetEyepiecesAsync();
+            var lensesTask = TelescopeService.GetLensesAsync();
+            var sensorsTask = TelescopeService.GetSensorsAsync();
+
+            await Task.WhenAll(telescopesTask, eyepiecesTask, lensesTask, sensorsTask);
+
+            telescopes = telescopesTask.Result.ToList();
+            eyepieces = eyepiecesTask.Result.ToList();
+            lenses = lensesTask.Result.ToList();
+            sensors = sensorsTask.Result.ToList();
+        }
+        catch (Exception exception)
+        {
+            loadError = $"Unable to load equipment: {exception.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private static string FormatEnum<TEnum>(TEnum value) where TEnum : Enum
+    {
+        var text = value.ToString();
+        var sb = new System.Text.StringBuilder();
+
+        for (var i = 0; i < text.Length; i++)
+        {
+            var c = text[i];
+            if (i > 0 && char.IsUpper(c) && !char.IsUpper(text[i - 1]))
+            {
+                sb.Append(' ');
+            }
+
+            sb.Append(c);
+        }
+
+        return sb.ToString();
+    }
+}

@@ -59,7 +59,8 @@
     private static readonly IReadOnlyList<IAstronomyTab> astronomyTabs =
     [
         new AstronomyTab("observations", "Observations", "observations-panel", typeof(AstronomyObservationsTab)),
-        new AstronomyTab("tools", "Astronomy tools", "tools-panel", typeof(AstronomyToolsTab))
+        new AstronomyTab("tools", "Astronomy tools", "tools-panel", typeof(AstronomyToolsTab)),
+        new AstronomyTab("equipment", "Equipment", "equipment-panel", typeof(AstronomyEquipmentTab))
     ];
 
     private GeographicCoordinate location = AstronomyDefaults.Location;
