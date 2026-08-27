@@ -3,7 +3,7 @@ namespace HomeServerPage.Data.PublicTransport;
 /// <summary>
 /// Provides fake departure board data for local development/testing so the real ZDiTM API is not called.
 /// </summary>
-public class PublicTransportMockService : IPublicTransportService
+public class PublicTransportMockService(IDateTimeService dateTimeService) : IPublicTransportService
 {
     private static readonly (int Number, int StopNumber)[] Stops = [(12811, 1), (12812, 2)];
 
@@ -23,9 +23,9 @@ public class PublicTransportMockService : IPublicTransportService
         return boards;
     }
 
-    private static DepartureBoard CreateBoard(int stopNumber, int limit)
+    private DepartureBoard CreateBoard(int stopNumber, int limit)
     {
-        var now = DateTimeOffset.Now;
+        var now = dateTimeService.Now;
         var stop = new Stop("Lubomirskiego", stopNumber.ToString());
 
         var timetable = new (string Line, string VehicleType, string Headsign, int MinutesFromNow, bool RealTime)[]

@@ -13,10 +13,10 @@ public static class FridgeLabels
         };
     }
 
-    public static string GetDaysLeftText(FridgeItem item)
+    public static string GetDaysLeftText(FridgeItem item, DateTime now)
     {
         var effectiveExpirationDate = GetEffectiveExpirationDate(item);
-        var daysLeft = (effectiveExpirationDate.Date - DateTime.Now.Date).Days;
+        var daysLeft = (effectiveExpirationDate.Date - now.Date).Days;
 
         return daysLeft switch
         {
@@ -27,10 +27,10 @@ public static class FridgeLabels
         };
     }
 
-    public static string GetDaysLeftBadgeClass(FridgeItem item)
+    public static string GetDaysLeftBadgeClass(FridgeItem item, DateTime now)
     {
         var effectiveExpirationDate = GetEffectiveExpirationDate(item);
-        var daysLeft = (effectiveExpirationDate.Date - DateTime.Now.Date).Days;
+        var daysLeft = (effectiveExpirationDate.Date - now.Date).Days;
 
         return daysLeft switch
         {

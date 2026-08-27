@@ -3,6 +3,7 @@
 @using HomeServerPage.Data.Fridge
 @using HomeServerPage.Shared.Extensions
 @inject IFridgeService FridgeService
+@inject HomeServerPage.Data.IDateTimeService DateTimeService
 
 <PageTitle>My Fridge</PageTitle>
 
@@ -127,7 +128,7 @@
                                     <td class="d-none d-xl-table-cell">@(item.OpenDate.HasValue ? item.OpenDate.Value.ToString("d") : "-")</td>
                                     <td>@item.ExpirationDate.ToString("d")</td>
                                     <td>
-                                        <span class="badge @FridgeLabels.GetDaysLeftBadgeClass(item)">@FridgeLabels.GetDaysLeftText(item)</span>
+                                        <span class="badge @FridgeLabels.GetDaysLeftBadgeClass(item, DateTimeService.Now)">@FridgeLabels.GetDaysLeftText(item, DateTimeService.Now)</span>
                                     </td>
                                     <td class="d-none d-xl-table-cell">@(item.TimeAfterOpen.Value()?.TotalHours)</td>
                                     <td>
@@ -150,7 +151,7 @@
 
 @code {
 
-    public FridgeItemModel EditedFridgeItem { get; set; } = FridgeItemModel.CreateClearEditedFridgeItem();
+    public FridgeItemModel EditedFridgeItem { get; set; } = FridgeItemModel.CreateClearEditedFridgeItem(DateTime.Now);
     public List<FridgeItem> Items { get; set; } = [];
     public int? SelectedItemId { get; set; }
 
@@ -230,6 +231,8 @@
 
     protected override async Task OnInitializedAsync()
     {
+        await DateTimeService.SyncAsync();
+        EditedFridgeItem = FridgeItemModel.CreateClearEditedFridgeItem(DateTimeService.Now);
         Items = await FridgeService.GetItemsAsync();
         await base.OnInitializedAsync();
     }
@@ -252,7 +255,7 @@
     private void ClearSelection()
     {
         SelectedItemId = null;
-        EditedFridgeItem = FridgeItemModel.CreateClearEditedFridgeItem();
+        EditedFridgeItem = FridgeItemModel.CreateClearEditedFridgeItem(DateTimeService.Now);
     }
 
     private void SelectItem(FridgeItem item)
@@ -292,7 +295,7 @@
 
     private async Task CopyItemAsync(FridgeItem item)
     {
-        var cloned = item with { Id = 0, AddedDate = DateTime.Now.Date };
+        var cloned = item with { Id = 0, AddedDate = DateTimeService.Now.Date };
         var created = await FridgeService.AddItemAsync(cloned);
 
         Items = await FridgeService.GetItemsAsync();

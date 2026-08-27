@@ -1,5 +1,6 @@
 @using HomeServerPage.Data.Fridge
 @inject IFridgeService FridgeService
+@inject HomeServerPage.Data.IDateTimeService DateTimeService
 
 <div class="card h-100 shadow-sm">
     <div class="card-body">
@@ -29,7 +30,7 @@
                             <div class="fw-semibold text-truncate">@item.Name</div>
                             <small class="text-body-secondary">@item.QuantityValue @item.QuantityType · Expires @FridgeLabels.GetEffectiveExpirationDate(item).ToString("d")</small>
                         </div>
-                        <span class="badge rounded-pill @FridgeLabels.GetDaysLeftBadgeClass(item) flex-shrink-0">@FridgeLabels.GetDaysLeftText(item)</span>
+                        <span class="badge rounded-pill @FridgeLabels.GetDaysLeftBadgeClass(item, DateTimeService.Now) flex-shrink-0">@FridgeLabels.GetDaysLeftText(item, DateTimeService.Now)</span>
                     </div>
                 }
             </div>
@@ -42,6 +43,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+        await DateTimeService.SyncAsync();
         var items = await FridgeService.GetItemsAsync();
         Items = items
             .OrderBy(FridgeLabels.GetEffectiveExpirationDate)

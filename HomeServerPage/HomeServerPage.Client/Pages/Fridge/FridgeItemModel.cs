@@ -22,15 +22,15 @@ public class FridgeItemModel : IValidatableObject
 
     public int? TimeAfterOpen { get; set; }
 
-    public static FridgeItemModel CreateClearEditedFridgeItem()
+    public static FridgeItemModel CreateClearEditedFridgeItem(DateTime now)
         => new FridgeItemModel
             {
                 Name = "Name",
                 QuanitityValue = 1,
                 QuantityType = QuantityType.Unit,
-                AddedDate = DateTime.Now,
+                AddedDate = now,
                 OpenDate = null,
-                ExpirationDate = DateTime.Now.AddDays(1),
+                ExpirationDate = now.AddDays(1),
                 TimeAfterOpen = 0
             };
 

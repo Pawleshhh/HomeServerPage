@@ -1,6 +1,7 @@
 using HomeServerPage.Client.Data.Astronomy.Telescopes;
 using HomeServerPage.Client.Pages;
 using HomeServerPage.Components;
+using HomeServerPage.Data;
 using HomeServerPage.Data.Astronomy;
 using HomeServerPage.Data.Astronomy.Telescopes;
 using HomeServerPage.Data.Fridge;
@@ -15,6 +16,8 @@ builder.Services.AddRazorComponents()
     .AddInteractiveWebAssemblyComponents();
 
 builder.Services.AddControllers();
+
+builder.Services.AddSingleton<IDateTimeService, DateTimeService>();
 
 var fridgeConnection = builder.Configuration.GetConnectionString("FridgeDbConnection");
 var astronomyConnection = builder.Configuration.GetConnectionString("AstronomyDbConnection");
