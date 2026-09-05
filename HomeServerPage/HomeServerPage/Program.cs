@@ -27,6 +27,7 @@ builder.Services.AddScoped<IFridgeService, FridgeService>();
 
 builder.Services.AddDbContextFactory<AstronomyDbContext>(op => op.UseSqlite(astronomyConnection));
 builder.Services.AddScoped<IAstronomyService, AstronomyService>();
+builder.Services.AddScoped<IObservationPointService, ObservationPointService>();
 builder.Services.AddScoped<ITelescopeService, TelescopeService>();
 
 if (builder.Environment.IsDevelopment())

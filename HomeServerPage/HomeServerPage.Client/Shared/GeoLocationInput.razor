@@ -2,7 +2,7 @@
 
 <div class="geo-location-input">
     <div class="row g-2">
-        <div class="col-4">
+        <div class="@(ShowElevation ? "col-4" : "col-6")">
             <label class="form-label" for="@_latitudeId">Latitude</label>
             <input id="@_latitudeId"
                    type="number"
@@ -14,7 +14,7 @@
                    @onchange="OnLatitudeChanged" />
         </div>
 
-        <div class="col-4">
+        <div class="@(ShowElevation ? "col-4" : "col-6")">
             <label class="form-label" for="@_longitudeId">Longitude</label>
             <input id="@_longitudeId"
                    type="number"
@@ -26,15 +26,18 @@
                    @onchange="OnLongitudeChanged" />
         </div>
 
-        <div class="col-4">
-            <label class="form-label" for="@_elevationId">Elevation (m)</label>
-            <input id="@_elevationId"
-                   type="number"
-                   class="form-control form-control-sm"
-                   step="1"
-                   value="@Value.ElevationMeters"
-                   @onchange="OnElevationChanged" />
-        </div>
+        @if (ShowElevation)
+        {
+            <div class="col-4">
+                <label class="form-label" for="@_elevationId">Elevation (m)</label>
+                <input id="@_elevationId"
+                       type="number"
+                       class="form-control form-control-sm"
+                       step="1"
+                       value="@Value.ElevationMeters"
+                       @onchange="OnElevationChanged" />
+            </div>
+        }
     </div>
 </div>
 
@@ -50,6 +53,9 @@
 
     [Parameter]
     public EventCallback<GeographicCoordinate> ValueChanged { get; set; }
+
+    [Parameter]
+    public bool ShowElevation { get; set; } = true;
 
     private Task OnLatitudeChanged(ChangeEventArgs e) =>
         UpdateValue(latitude: ParseDouble(e.Value, Value.Latitude.Degrees));

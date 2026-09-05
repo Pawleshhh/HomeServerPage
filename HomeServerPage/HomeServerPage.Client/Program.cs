@@ -11,6 +11,7 @@ builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.
 builder.Services.AddScoped<IDateTimeService, ClientDateTimeService>();
 builder.Services.AddScoped<IFridgeService, FridgeHttpService>();
 builder.Services.AddScoped<IAstronomyService, AstronomyHttpService>();
+builder.Services.AddScoped<IObservationPointService, ObservationPointHttpService>();
 builder.Services.AddScoped<ITelescopeService, TelescopeHttpService>();
 
 if (builder.HostEnvironment.IsDevelopment())
