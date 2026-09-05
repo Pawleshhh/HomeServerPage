@@ -17,6 +17,8 @@ public class AstronomyDbContext(DbContextOptions<AstronomyDbContext> options) : 
 
     public DbSet<DeepSkyObject> DeepSkyObjects { get; set; }
 
+    public DbSet<ObservationPoint> ObservationPoints { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -26,6 +28,7 @@ public class AstronomyDbContext(DbContextOptions<AstronomyDbContext> options) : 
         AddLenses(modelBuilder);
         AddSensors(modelBuilder);
         AddDeepSkyObjects(modelBuilder);
+        AddObservationPoints(modelBuilder);
     }
 
     private void AddTelescopes(ModelBuilder modelBuilder)
@@ -168,5 +171,35 @@ public class AstronomyDbContext(DbContextOptions<AstronomyDbContext> options) : 
             });
 
         modelBuilder.Entity<DeepSkyObject>().HasData(deepSkyObjects);
+    }
+
+    private void AddObservationPoints(ModelBuilder modelBuilder)
+    {
+        var entity = modelBuilder.Entity<ObservationPoint>();
+
+        entity.Property(point => point.Name)
+            .IsRequired()
+            .HasMaxLength(100);
+
+        entity.HasIndex(point => point.Name);
+
+        entity.ToTable(table => table.HasCheckConstraint(
+            "CK_ObservationPoints_Latitude",
+            "Latitude >= -90 AND Latitude <= 90"));
+
+        entity.ToTable(table => table.HasCheckConstraint(
+            "CK_ObservationPoints_Longitude",
+            "Longitude >= -180 AND Longitude <= 180"));
+
+        entity.ToTable(table => table.HasCheckConstraint(
+            "CK_ObservationPoints_HorizonAltitudes",
+            "HorizonNorth >= 0 AND HorizonNorth <= 90 " +
+            "AND HorizonNorthEast >= 0 AND HorizonNorthEast <= 90 " +
+            "AND HorizonEast >= 0 AND HorizonEast <= 90 " +
+            "AND HorizonSouthEast >= 0 AND HorizonSouthEast <= 90 " +
+            "AND HorizonSouth >= 0 AND HorizonSouth <= 90 " +
+            "AND HorizonSouthWest >= 0 AND HorizonSouthWest <= 90 " +
+            "AND HorizonWest >= 0 AND HorizonWest <= 90 " +
+            "AND HorizonNorthWest >= 0 AND HorizonNorthWest <= 90"));
     }
 }

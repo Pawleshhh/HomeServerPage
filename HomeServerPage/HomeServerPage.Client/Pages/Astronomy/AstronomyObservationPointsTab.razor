@@ -1,0 +1,546 @@
+@using AstroCalc.Core
+@using HomeServerPage.Data.Astronomy
+
+@implements IDisposable
+
+@inject IAstronomyService AstronomyService
+@inject IObservationPointService ObservationPointService
+
+<div id="observation-points-panel"
+     class="pt-4 observation-points-tab"
+     role="tabpanel"
+     aria-labelledby="observation-points-tab">
+    <div class="row g-4">
+        <div class="col-12 col-xl-5">
+            <section class="astronomy-panel" aria-labelledby="observation-point-editor-heading">
+                <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+                    <div>
+                        <h2 id="observation-point-editor-heading" class="h4 mb-1">Observation point</h2>
+                        <p class="text-body-secondary mb-0">Save a location and describe its local horizon.</p>
+                    </div>
+
+                    <button type="button"
+                            class="btn btn-outline-secondary btn-sm"
+                            @onclick="StartNewPoint"
+                            disabled="@isSaving || isDeleting">
+                        New
+                    </button>
+                </div>
+
+                @if (editorError is not null)
+                {
+                    <div class="alert alert-danger" role="alert">@editorError</div>
+                }
+
+                <div class="mb-3">
+                    <label class="form-label" for="observation-point-editor-select">Saved point</label>
+                    <select id="observation-point-editor-select"
+                            class="form-select"
+                            @bind="editorPointId"
+                            @bind:after="OnEditorPointSelected">
+                        <option value="">New observation point</option>
+                        @foreach (var observationPoint in ObservationPoints)
+                        {
+                            <option value="@observationPoint.Id">@observationPoint.Name</option>
+                        }
+                    </select>
+                </div>
+
+                <EditForm Model="editPoint" OnValidSubmit="SaveObservationPointAsync">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary class="text-danger small" />
+
+                    <div class="mb-3">
+                        <label class="form-label" for="observation-point-name">Name</label>
+                        <InputText id="observation-point-name"
+                                   class="form-control"
+                                   @bind-Value="editPoint.Name" />
+                        <ValidationMessage For="@(() => editPoint.Name)" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Coordinates</label>
+                        <GeoLocationInput Value="editLocation"
+                                          ValueChanged="OnEditLocationChanged"
+                                          ShowElevation="false" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="observation-point-elevation">Elevation (m) <span class="text-body-secondary">(optional)</span></label>
+                        <InputNumber id="observation-point-elevation"
+                                     class="form-control"
+                                     @bind-Value="editPoint.ElevationMeters" />
+                    </div>
+
+                    <fieldset class="mb-3">
+                        <legend class="h6">Minimum visible altitude</legend>
+                        <p class="form-text mt-0">Set the altitude above the horizon at which the sky becomes visible in each direction.</p>
+                        <div class="row g-2">
+                            <div class="col-6 col-md-3">
+                                <label class="form-label" for="horizon-north">N (°)</label>
+                                <InputNumber id="horizon-north" class="form-control" @bind-Value="editPoint.HorizonNorth" />
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <label class="form-label" for="horizon-north-east">NE (°)</label>
+                                <InputNumber id="horizon-north-east" class="form-control" @bind-Value="editPoint.HorizonNorthEast" />
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <label class="form-label" for="horizon-east">E (°)</label>
+                                <InputNumber id="horizon-east" class="form-control" @bind-Value="editPoint.HorizonEast" />
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <label class="form-label" for="horizon-south-east">SE (°)</label>
+                                <InputNumber id="horizon-south-east" class="form-control" @bind-Value="editPoint.HorizonSouthEast" />
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <label class="form-label" for="horizon-south">S (°)</label>
+                                <InputNumber id="horizon-south" class="form-control" @bind-Value="editPoint.HorizonSouth" />
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <label class="form-label" for="horizon-south-west">SW (°)</label>
+                                <InputNumber id="horizon-south-west" class="form-control" @bind-Value="editPoint.HorizonSouthWest" />
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <label class="form-label" for="horizon-west">W (°)</label>
+                                <InputNumber id="horizon-west" class="form-control" @bind-Value="editPoint.HorizonWest" />
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <label class="form-label" for="horizon-north-west">NW (°)</label>
+                                <InputNumber id="horizon-north-west" class="form-control" @bind-Value="editPoint.HorizonNorthWest" />
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <div class="d-flex flex-wrap gap-2">
+                        <button type="submit" class="btn btn-primary" disabled="@isSaving">
+                            @(isSaving ? "Saving..." : "Save point")
+                        </button>
+                        <button type="button"
+                                class="btn btn-outline-danger"
+                                @onclick="DeleteObservationPointAsync"
+                                disabled="@(editPoint.Id == 0 || isSaving || isDeleting)">
+                            @(isDeleting ? "Deleting..." : "Delete")
+                        </button>
+                    </div>
+                </EditForm>
+            </section>
+        </div>
+
+        <div class="col-12 col-xl-7">
+            <section class="astronomy-panel" aria-labelledby="visibility-filters-heading">
+                <div class="mb-3">
+                    <h2 id="visibility-filters-heading" class="h4 mb-1">Visible objects</h2>
+                    <p class="text-body-secondary mb-0">Find objects that clear the saved horizon during the selected range.</p>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-12 col-md-6">
+                        <label class="form-label" for="visibility-from">From (local time)</label>
+                        <InputDate id="visibility-from"
+                                   class="form-control"
+                                   Type="InputDateType.DateTimeLocal"
+                                   @bind-Value="rangeStartLocal"
+                                   @bind-Value:after="OnRangeChanged" />
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label" for="visibility-to">To (local time)</label>
+                        <InputDate id="visibility-to"
+                                   class="form-control"
+                                   Type="InputDateType.DateTimeLocal"
+                                   @bind-Value="rangeEndLocal"
+                                   @bind-Value:after="OnRangeChanged" />
+                    </div>
+                </div>
+
+                <fieldset class="filter-group mb-3">
+                    <legend class="h6">Directions</legend>
+                    <div class="d-flex flex-wrap gap-2">
+                        @foreach (var direction in Directions)
+                        {
+                            <label class="form-check form-check-inline direction-filter">
+                                <input class="form-check-input"
+                                       type="checkbox"
+                                       checked="@IsDirectionSelected(direction)"
+                                       @onchange="eventArgs => SetDirectionSelection(direction, eventArgs)" />
+                                <span class="form-check-label">@FormatDirection(direction)</span>
+                            </label>
+                        }
+                    </div>
+                </fieldset>
+
+                <fieldset class="filter-group mb-4">
+                    <legend class="h6">Object types</legend>
+                    <div class="d-flex flex-wrap gap-2">
+                        @foreach (var objectType in ObjectTypes)
+                        {
+                            <label class="form-check form-check-inline object-type-filter">
+                                <input class="form-check-input"
+                                       type="checkbox"
+                                       checked="@IsObjectTypeSelected(objectType)"
+                                       @onchange="eventArgs => SetObjectTypeSelection(objectType, eventArgs)" />
+                                <span class="form-check-label">@FormatObjectType(objectType)</span>
+                            </label>
+                        }
+                    </div>
+                </fieldset>
+
+                @if (calculationError is not null)
+                {
+                    <div class="alert alert-danger" role="alert">@calculationError</div>
+                }
+                else if (isCalculating)
+                {
+                    <p class="text-body-secondary" role="status">Calculating visible objects...</p>
+                }
+                else if (FilteredVisibleObjects.Count == 0)
+                {
+                    <p class="text-body-secondary mb-0">No objects match the selected filters and time range.</p>
+                }
+                else
+                {
+                    <div class="visibility-results">
+                        @foreach (var observation in FilteredVisibleObjects)
+                        {
+                            <article class="visibility-object-card">
+                                <div class="d-flex justify-content-between align-items-start gap-3 mb-2">
+                                    <div>
+                                        <h3 class="h5 mb-1">@observation.Name</h3>
+                                        <span class="text-body-secondary small">@FormatObjectType(observation.ObjectType)</span>
+                                    </div>
+                                    <span class="visibility-total">@FormatDuration(observation.TotalVisibleDuration)</span>
+                                </div>
+
+                                <div class="visibility-windows">
+                                    @foreach (var window in observation.Windows)
+                                    {
+                                        <div class="visibility-window">
+                                            <span class="visibility-direction">@FormatDirection(window.Direction)</span>
+                                            <span>@FormatLocalTime(window.StartUtc) – @FormatLocalTime(window.EndUtc)</span>
+                                            <span class="text-body-secondary">@FormatDuration(window.Duration)</span>
+                                        </div>
+                                    }
+                                </div>
+                            </article>
+                        }
+                    </div>
+                }
+            </section>
+        </div>
+    </div>
+</div>
+
+@code {
+    private static readonly HorizonDirection[] Directions = Enum.GetValues<HorizonDirection>();
+    private static readonly AstronomyObjectType[] ObjectTypes = Enum.GetValues<AstronomyObjectType>();
+    private static readonly ObservationPointVisibilityCalculator VisibilityCalculator = new();
+
+    [Parameter, EditorRequired]
+    public GeographicCoordinate Location { get; set; }
+
+    [Parameter, EditorRequired]
+    public DateTime SelectedLocalDateTime { get; set; }
+
+    [Parameter]
+    public IReadOnlyList<ObservationPoint> ObservationPoints { get; set; } = [];
+
+    [Parameter]
+    public ObservationPoint? SelectedObservationPoint { get; set; }
+
+    [Parameter]
+    public EventCallback<ObservationPoint> ObservationPointSaved { get; set; }
+
+    [Parameter]
+    public EventCallback<int> ObservationPointDeleted { get; set; }
+
+    [Parameter]
+    public EventCallback<int?> ObservationPointSelected { get; set; }
+
+    private readonly HashSet<HorizonDirection> selectedDirections = Enum.GetValues<HorizonDirection>().ToHashSet();
+    private readonly HashSet<AstronomyObjectType> selectedObjectTypes = Enum.GetValues<AstronomyObjectType>().ToHashSet();
+
+    private readonly ObservationPointVisibilityCalculator visibilityCalculator = VisibilityCalculator;
+    private ObservationPoint editPoint = new();
+    private GeographicCoordinate editLocation = AstronomyDefaults.Location;
+    private int? editorPointId;
+    private DateTime rangeStartLocal;
+    private DateTime rangeEndLocal;
+    private DateTime rangeDate;
+    private bool hasEditorState;
+    private bool hasRange;
+    private bool isSaving;
+    private bool isDeleting;
+    private bool isCalculating;
+    private string? editorError;
+    private string? calculationError;
+    private IReadOnlyList<VisibleAstronomyObject> visibleObjects = [];
+    private CancellationTokenSource? calculationCancellation;
+
+    private IReadOnlyList<VisibleAstronomyObject> FilteredVisibleObjects =>
+        visibleObjects
+            .Select(observation => new VisibleAstronomyObject(
+                observation.Key,
+                observation.Name,
+                observation.ObjectType,
+                observation.Windows
+                    .Where(window => selectedDirections.Contains(window.Direction))
+                    .ToList()))
+            .Where(observation => selectedObjectTypes.Contains(observation.ObjectType))
+            .Where(observation => observation.Windows.Count > 0)
+            .ToList();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var selectedId = SelectedObservationPoint?.Id;
+        if (!hasEditorState || editorPointId != selectedId)
+        {
+            LoadEditor(SelectedObservationPoint);
+            hasEditorState = true;
+        }
+
+        var selectedDate = SelectedLocalDateTime.Date;
+        if (!hasRange || rangeDate != selectedDate)
+        {
+            rangeStartLocal = selectedDate;
+            rangeEndLocal = selectedDate.AddDays(1);
+            rangeDate = selectedDate;
+            hasRange = true;
+        }
+
+        await CalculateVisibilityAsync();
+    }
+
+    private async Task SaveObservationPointAsync()
+    {
+        isSaving = true;
+        editorError = null;
+
+        try
+        {
+            var savedPoint = await ObservationPointService.SaveObservationPointAsync(editPoint);
+            await ObservationPointSaved.InvokeAsync(savedPoint);
+            LoadEditor(savedPoint);
+            hasEditorState = true;
+        }
+        catch (Exception exception)
+        {
+            editorError = $"Unable to save observation point: {exception.Message}";
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private async Task DeleteObservationPointAsync()
+    {
+        if (editPoint.Id == 0)
+        {
+            return;
+        }
+
+        isDeleting = true;
+        editorError = null;
+        var deletedId = editPoint.Id;
+
+        try
+        {
+            await ObservationPointService.DeleteObservationPointAsync(deletedId);
+            await ObservationPointDeleted.InvokeAsync(deletedId);
+            await ObservationPointSelected.InvokeAsync(null);
+            StartNewPoint();
+        }
+        catch (Exception exception)
+        {
+            editorError = $"Unable to delete observation point: {exception.Message}";
+        }
+        finally
+        {
+            isDeleting = false;
+        }
+    }
+
+    private async Task OnEditorPointSelected()
+    {
+        await ObservationPointSelected.InvokeAsync(editorPointId);
+
+        var selectedPoint = ObservationPoints.FirstOrDefault(point => point.Id == editorPointId);
+        LoadEditor(selectedPoint);
+        hasEditorState = true;
+    }
+
+    private async Task StartNewPoint()
+    {
+        editorPointId = null;
+        await ObservationPointSelected.InvokeAsync(null);
+        LoadEditor(null);
+        hasEditorState = true;
+        editorError = null;
+    }
+
+    private void LoadEditor(ObservationPoint? observationPoint)
+    {
+        editPoint = observationPoint is null
+            ? CreateNewPoint(Location)
+            : Clone(observationPoint);
+        editLocation = editPoint.Coordinates;
+        editorPointId = observationPoint?.Id;
+    }
+
+    private void OnEditLocationChanged(GeographicCoordinate coordinate)
+    {
+        editLocation = coordinate;
+        editPoint.Latitude = coordinate.Latitude.Degrees;
+        editPoint.Longitude = coordinate.Longitude.Degrees;
+    }
+
+    private Task OnRangeChanged() => CalculateVisibilityAsync();
+
+    private async Task CalculateVisibilityAsync()
+    {
+        calculationCancellation?.Cancel();
+        calculationCancellation?.Dispose();
+        calculationCancellation = new CancellationTokenSource();
+        var cancellationToken = calculationCancellation.Token;
+
+        isCalculating = true;
+        calculationError = null;
+
+        try
+        {
+            var (fromUtc, toUtc) = ConvertRangeToUtc();
+            var messierObjects = await AstronomyService.GetAllMessierObjects();
+            await Task.Yield();
+
+            var point = SelectedObservationPoint ?? CreateNewPoint(Location);
+            visibleObjects = visibilityCalculator.Calculate(
+                point,
+                messierObjects,
+                fromUtc,
+                toUtc,
+                cancellationToken: cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+        }
+        catch (Exception exception)
+        {
+            visibleObjects = [];
+            calculationError = $"Unable to calculate visible objects: {exception.Message}";
+        }
+        finally
+        {
+            if (calculationCancellation?.Token == cancellationToken)
+            {
+                isCalculating = false;
+            }
+        }
+    }
+
+    private (DateTimeOffset FromUtc, DateTimeOffset ToUtc) ConvertRangeToUtc()
+    {
+        if (rangeEndLocal <= rangeStartLocal)
+        {
+            throw new ArgumentException("The end of the time range must be after the start.");
+        }
+
+        var fromUtc = TimeZoneInfo.ConvertTimeToUtc(
+            DateTime.SpecifyKind(rangeStartLocal, DateTimeKind.Unspecified),
+            AstronomyDefaults.LocalTimeZone);
+        var toUtc = TimeZoneInfo.ConvertTimeToUtc(
+            DateTime.SpecifyKind(rangeEndLocal, DateTimeKind.Unspecified),
+            AstronomyDefaults.LocalTimeZone);
+
+        return (new DateTimeOffset(fromUtc), new DateTimeOffset(toUtc));
+    }
+
+    private bool IsDirectionSelected(HorizonDirection direction) => selectedDirections.Contains(direction);
+
+    private void SetDirectionSelection(HorizonDirection direction, ChangeEventArgs eventArgs)
+    {
+        if (eventArgs.Value is true)
+        {
+            selectedDirections.Add(direction);
+        }
+        else
+        {
+            selectedDirections.Remove(direction);
+        }
+    }
+
+    private bool IsObjectTypeSelected(AstronomyObjectType objectType) => selectedObjectTypes.Contains(objectType);
+
+    private void SetObjectTypeSelection(AstronomyObjectType objectType, ChangeEventArgs eventArgs)
+    {
+        if (eventArgs.Value is true)
+        {
+            selectedObjectTypes.Add(objectType);
+        }
+        else
+        {
+            selectedObjectTypes.Remove(objectType);
+        }
+    }
+
+    private static ObservationPoint CreateNewPoint(GeographicCoordinate location) => new()
+    {
+        Name = string.Empty,
+        Latitude = location.Latitude.Degrees,
+        Longitude = location.Longitude.Degrees,
+        ElevationMeters = location.ElevationMeters == 0 ? null : location.ElevationMeters
+    };
+
+    private static ObservationPoint Clone(ObservationPoint source) => new()
+    {
+        Id = source.Id,
+        Name = source.Name,
+        Latitude = source.Latitude,
+        Longitude = source.Longitude,
+        ElevationMeters = source.ElevationMeters,
+        HorizonNorth = source.HorizonNorth,
+        HorizonNorthEast = source.HorizonNorthEast,
+        HorizonEast = source.HorizonEast,
+        HorizonSouthEast = source.HorizonSouthEast,
+        HorizonSouth = source.HorizonSouth,
+        HorizonSouthWest = source.HorizonSouthWest,
+        HorizonWest = source.HorizonWest,
+        HorizonNorthWest = source.HorizonNorthWest
+    };
+
+    private static string FormatDirection(HorizonDirection direction) => direction switch
+    {
+        HorizonDirection.North => "N",
+        HorizonDirection.NorthEast => "NE",
+        HorizonDirection.East => "E",
+        HorizonDirection.SouthEast => "SE",
+        HorizonDirection.South => "S",
+        HorizonDirection.SouthWest => "SW",
+        HorizonDirection.West => "W",
+        HorizonDirection.NorthWest => "NW",
+        _ => direction.ToString()
+    };
+
+    private static string FormatObjectType(AstronomyObjectType objectType) => objectType switch
+    {
+        AstronomyObjectType.DeepSky => "Deep sky",
+        _ => objectType.ToString()
+    };
+
+    private static string FormatLocalTime(DateTimeOffset utcTime) =>
+        TimeZoneInfo.ConvertTime(utcTime, AstronomyDefaults.LocalTimeZone).ToString("g");
+
+    private static string FormatDuration(TimeSpan duration)
+    {
+        if (duration.TotalMinutes < 1)
+        {
+            return "< 1m";
+        }
+
+        return $"{(int)duration.TotalHours}h {duration.Minutes:D2}m";
+    }
+
+    public void Dispose()
+    {
+        calculationCancellation?.Cancel();
+        calculationCancellation?.Dispose();
+    }
+}

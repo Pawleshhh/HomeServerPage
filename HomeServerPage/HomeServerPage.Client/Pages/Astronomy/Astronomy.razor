@@ -3,6 +3,8 @@
 @using AstroCalc.Core
 @using HomeServerPage.Data.Astronomy
 
+@inject IObservationPointService ObservationPointService
+
 <PageTitle>Astronomy</PageTitle>
 
 <div class="container-fluid astronomy-page">
@@ -17,6 +19,30 @@
         <h2 id="observer-settings-heading" class="visually-hidden">Observation settings</h2>
         <div class="row g-2 align-items-end">
             <div class="col-12 col-lg-8">
+                <label class="form-label" for="observation-point-select">Observation point</label>
+                @if (isLoadingObservationPoints)
+                {
+                    <p class="form-text mt-0 mb-2" role="status">Loading saved observation points...</p>
+                }
+                else
+                {
+                    <select id="observation-point-select"
+                            class="form-select form-select-sm mb-2"
+                            @bind="selectedObservationPointId"
+                            @bind:after="OnObservationPointSelected">
+                        <option value="">Custom location</option>
+                        @foreach (var observationPoint in observationPoints)
+                        {
+                            <option value="@observationPoint.Id">@observationPoint.Name</option>
+                        }
+                    </select>
+                }
+
+                @if (observationPointLoadError is not null)
+                {
+                    <p class="form-text text-danger mt-0 mb-2">@observationPointLoadError</p>
+                }
+
                 <GeoLocationInput Value="location" ValueChanged="OnLocationChanged" />
             </div>
 
@@ -60,24 +86,48 @@
     [
         new AstronomyTab("observations", "Observations", "observations-panel", typeof(AstronomyObservationsTab)),
         new AstronomyTab("tools", "Astronomy tools", "tools-panel", typeof(AstronomyToolsTab)),
-        new AstronomyTab("equipment", "Equipment", "equipment-panel", typeof(AstronomyEquipmentTab))
+        new AstronomyTab("equipment", "Equipment", "equipment-panel", typeof(AstronomyEquipmentTab)),
+        new AstronomyTab("observation-points", "Observation points", "observation-points-panel", typeof(AstronomyObservationPointsTab))
     ];
 
     private GeographicCoordinate location = AstronomyDefaults.Location;
+    private IReadOnlyList<ObservationPoint> observationPoints = [];
+    private int? selectedObservationPointId;
     private DateTime selectedLocalDateTime;
     private DateTime requestDateUtc;
     private string activeTab = astronomyTabs[0].Key;
+    private bool isLoadingObservationPoints;
+    private string? observationPointLoadError;
 
     private IAstronomyTab CurrentTab => astronomyTabs.First(tab => tab.Key == activeTab);
 
+    private ObservationPoint? SelectedObservationPoint => selectedObservationPointId is int id
+        ? observationPoints.FirstOrDefault(observationPoint => observationPoint.Id == id)
+        : null;
+
     private IDictionary<string, object> CurrentTabParameters =>
-        CurrentTab.ComponentType == typeof(AstronomyObservationsTab)
-            ? new Dictionary<string, object>
+        CurrentTab.ComponentType switch
+        {
+            _ when CurrentTab.ComponentType == typeof(AstronomyObservationsTab) => new Dictionary<string, object>
             {
                 [nameof(AstronomyObservationsTab.Location)] = location,
                 [nameof(AstronomyObservationsTab.RequestDateUtc)] = requestDateUtc
-            }
-            : new Dictionary<string, object>();
+            },
+            _ when CurrentTab.ComponentType == typeof(AstronomyObservationPointsTab) => new Dictionary<string, object>
+            {
+                [nameof(AstronomyObservationPointsTab.Location)] = location,
+                [nameof(AstronomyObservationPointsTab.SelectedLocalDateTime)] = selectedLocalDateTime,
+                [nameof(AstronomyObservationPointsTab.ObservationPoints)] = observationPoints,
+                [nameof(AstronomyObservationPointsTab.SelectedObservationPoint)] = SelectedObservationPoint,
+                [nameof(AstronomyObservationPointsTab.ObservationPointSaved)] =
+                    EventCallback.Factory.Create<ObservationPoint>(this, OnObservationPointSaved),
+                [nameof(AstronomyObservationPointsTab.ObservationPointDeleted)] =
+                    EventCallback.Factory.Create<int>(this, OnObservationPointDeleted),
+                [nameof(AstronomyObservationPointsTab.ObservationPointSelected)] =
+                    EventCallback.Factory.Create<int?>(this, OnObservationPointSelectedFromTab)
+            },
+            _ => new Dictionary<string, object>()
+        };
 
     private bool IsActive(IAstronomyTab tab) => tab.Key == activeTab;
 
@@ -89,19 +139,25 @@
         selectedLocalDateTime = nowInPoland.DateTime;
         UpdateRequestDate();
 
-        await Task.CompletedTask;
+        await LoadObservationPointsAsync();
     }
 
-    private async Task OnLocationChanged(GeographicCoordinate newLocation)
+    private Task OnLocationChanged(GeographicCoordinate newLocation)
     {
         location = newLocation;
-        await Task.CompletedTask;
+
+        if (SelectedObservationPoint is not null && !CoordinatesMatch(SelectedObservationPoint, newLocation))
+        {
+            selectedObservationPointId = null;
+        }
+
+        return Task.CompletedTask;
     }
 
-    private async Task OnSelectedDateTimeChanged()
+    private Task OnSelectedDateTimeChanged()
     {
         UpdateRequestDate();
-        await Task.CompletedTask;
+        return Task.CompletedTask;
     }
 
     private void UpdateRequestDate()
@@ -110,4 +166,71 @@
             DateTime.SpecifyKind(selectedLocalDateTime, DateTimeKind.Unspecified),
             AstronomyDefaults.LocalTimeZone);
     }
+
+    private async Task LoadObservationPointsAsync()
+    {
+        isLoadingObservationPoints = true;
+        observationPointLoadError = null;
+
+        try
+        {
+            observationPoints = await ObservationPointService.GetObservationPointsAsync();
+        }
+        catch (Exception exception)
+        {
+            observationPoints = [];
+            observationPointLoadError = $"Unable to load observation points: {exception.Message}";
+        }
+        finally
+        {
+            isLoadingObservationPoints = false;
+        }
+    }
+
+    private Task OnObservationPointSelectedFromTab(int? observationPointId)
+    {
+        selectedObservationPointId = observationPointId;
+
+        if (SelectedObservationPoint is not null)
+        {
+            location = SelectedObservationPoint.Coordinates;
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private Task OnObservationPointSelected()
+    {
+        var selectedPoint = SelectedObservationPoint;
+        if (selectedPoint is not null)
+        {
+            location = selectedPoint.Coordinates;
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private async Task OnObservationPointSaved(ObservationPoint observationPoint)
+    {
+        await LoadObservationPointsAsync();
+        selectedObservationPointId = observationPoint.Id;
+        location = observationPoint.Coordinates;
+    }
+
+    private async Task OnObservationPointDeleted(int observationPointId)
+    {
+        var wasSelected = selectedObservationPointId == observationPointId;
+        await LoadObservationPointsAsync();
+
+        if (wasSelected)
+        {
+            selectedObservationPointId = null;
+            location = AstronomyDefaults.Location;
+        }
+    }
+
+    private static bool CoordinatesMatch(ObservationPoint observationPoint, GeographicCoordinate coordinate) =>
+        observationPoint.Latitude == coordinate.Latitude.Degrees
+        && observationPoint.Longitude == coordinate.Longitude.Degrees
+        && (observationPoint.ElevationMeters ?? 0) == coordinate.ElevationMeters;
 }
