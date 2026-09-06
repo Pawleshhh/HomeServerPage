@@ -6,27 +6,28 @@
 
 .messier-observation-item {
     display: flex;
+    min-width: 0;
     flex-direction: column;
     gap: 0.2rem;
-    min-width: 0;
-    padding: 0.55rem 0.65rem;
+    padding: 0.65rem 0.7rem;
     overflow: hidden;
-    border: 1px solid rgba(125, 173, 255, 0.35);
-    border-radius: var(--bs-border-radius);
-    background-color: #071326;
+    border: 1px solid rgb(173 151 224 / 45%);
+    border-radius: var(--app-radius-sm);
+    color: #f6f1ff;
+    background-color: #1d1830;
     background-image:
-        radial-gradient(circle at 12% 24%, rgba(255, 255, 255, 0.9) 0 1px, transparent 1.5px),
-        radial-gradient(circle at 78% 18%, rgba(173, 216, 255, 0.8) 0 1px, transparent 1.5px),
-        radial-gradient(circle at 42% 76%, rgba(255, 255, 255, 0.7) 0 1px, transparent 1.5px),
-        radial-gradient(circle at 91% 82%, rgba(173, 216, 255, 0.75) 0 1px, transparent 1.5px),
-        linear-gradient(135deg, #071326 0%, #102653 52%, #050b1e 100%);
-    color: #f4f7ff;
+        radial-gradient(circle at 12% 24%, rgb(255 255 255 / 90%) 0 1px, transparent 1.5px),
+        radial-gradient(circle at 78% 18%, rgb(216 199 255 / 80%) 0 1px, transparent 1.5px),
+        radial-gradient(circle at 42% 76%, rgb(255 255 255 / 70%) 0 1px, transparent 1.5px),
+        radial-gradient(circle at 91% 82%, rgb(216 199 255 / 75%) 0 1px, transparent 1.5px),
+        linear-gradient(135deg, #1d1830 0%, #332452 52%, #120e22 100%);
 }
 
 .messier-observation-name {
     overflow: hidden;
+    color: #fbf8ff;
     font-size: 0.8rem;
-    font-weight: 600;
+    font-weight: 700;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
@@ -34,9 +35,9 @@
 .messier-observation-times {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem;
     width: 100%;
-    color: #bbc8e8;
+    gap: 0.5rem;
+    color: #d7cbed;
     font-size: 0.75rem;
 }
 
@@ -48,7 +49,7 @@
 
     .messier-observation-item {
         gap: 0.15rem;
-        padding: 0.35rem 0.4rem;
+        padding: 0.45rem 0.5rem;
     }
 
     .messier-observation-times {

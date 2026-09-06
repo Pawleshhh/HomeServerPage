@@ -2,37 +2,40 @@
 
 @inject IAstronomyService AstronomyService
 
-<div class="card h-100 shadow-sm">
+<section class="dashboard-card dashboard-card-astronomy astronomy-widget card h-100" aria-labelledby="astronomy-widget-heading">
     <div class="card-body">
-        <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
-            <div>
-                <h2 class="h5 card-title mb-1">Astronomy</h2>
-                <p class="text-body-secondary small mb-0">Solar, planetary, and lunar visibility for Szczecin.</p>
+        <div class="dashboard-card-header">
+            <div class="dashboard-card-heading">
+                <span class="dashboard-card-icon" aria-hidden="true">🪐</span>
+                <div>
+                    <h2 id="astronomy-widget-heading" class="dashboard-card-title">Astronomy</h2>
+                    <p class="dashboard-card-subtitle">Solar, planetary, and lunar visibility for Szczecin.</p>
+                </div>
             </div>
-            <a class="btn btn-sm btn-outline-primary flex-shrink-0" href="/astronomy">View all</a>
+            <a class="btn btn-sm btn-outline-primary dashboard-card-action" href="/astronomy">Open sky tools</a>
         </div>
 
         @if (solarSystemObservations is null)
         {
-            <p class="text-body-secondary mb-0" role="status">Loading celestial observations…</p>
+            <p class="dashboard-card-status" role="status">Loading celestial observations…</p>
         }
         else if (loadError is not null)
         {
-            <p class="text-danger mb-0" role="alert">@loadError</p>
+            <p class="dashboard-card-status is-error mb-0" role="alert">@loadError</p>
         }
         else
         {
-            <p class="text-body-secondary small mb-2">
+            <p class="dashboard-card-context">
                 Rise and set times for @observationTime?.ToString("g")
             </p>
             <PlanetObservationList Observations="solarSystemObservations" RequestDateUtc="requestDateUtc" Compact="true" />
 
             @if (visibleMessierObservations.Count > 0)
             {
-                <section class="messier-widget" aria-labelledby="visible-messier-heading">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h3 id="visible-messier-heading" class="h6 mb-0">Deep sky at sunset</h3>
-                        <span class="badge rounded-pill text-bg-dark">@visibleMessierObservations.Count visible</span>
+                <section class="messier-widget dashboard-card-subsection" aria-labelledby="visible-messier-heading">
+                    <div class="dashboard-subsection-header">
+                        <h3 id="visible-messier-heading" class="dashboard-subsection-title">Deep sky at sunset</h3>
+                        <span class="badge rounded-pill dashboard-count-badge">@visibleMessierObservations.Count visible</span>
                     </div>
 
                     <div class="messier-observation-items">
@@ -51,7 +54,7 @@
             }
         }
     </div>
-</div>
+</section>
 
 @code {
     private IReadOnlyList<AstronomyObservation>? solarSystemObservations;

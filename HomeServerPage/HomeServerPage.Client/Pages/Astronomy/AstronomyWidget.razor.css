@@ -1,6 +1,18 @@
-.messier-widget {
-    margin-top: 1rem;
-    padding-top: 0.75rem;
-    border-top: 1px solid var(--bs-border-color);
+.astronomy-widget .dashboard-card-context {
+    margin-bottom: 0.85rem;
+}
+
+.astronomy-widget .messier-observation-items {
+    margin-top: 0.1rem;
+}
+
+.astronomy-widget .messier-observation-item {
+    min-height: 3.3rem;
+}
+
+@media (max-width: 575.98px) {
+    .astronomy-widget .dashboard-card-header {
+        align-items: flex-start;
+    }
 }
 

@@ -10,13 +10,24 @@
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
-            <div class="mb-4">
-                <h1 class="h3 mb-1">My Fridge</h1>
-                <p class="text-body-secondary mb-0">Add a new product to your fridge inventory.</p>
-            </div>
+            <PageHeader Title="My Fridge"
+                        Description="Keep track of what is in the fridge and what needs using next."
+                        Accent="fridge" />
 
-            <EditForm Model="@EditedFridgeItem" OnValidSubmit="OnValidFridgeItemSubmitAsync" FormName="FridgeAddForm" method="post">
-                <DataAnnotationsValidator/>
+            <section class="feature-panel fridge-form-panel" aria-labelledby="fridge-form-heading">
+                <div class="feature-panel-heading">
+                    <div>
+                        <h2 id="fridge-form-heading">@(SelectedItemId is null ? "Add an item" : "Edit item")</h2>
+                        <p>@(SelectedItemId is null ? "Record something before it gets forgotten in the back of the fridge." : "Update the selected item, then save the changes.")</p>
+                    </div>
+                    @if (SelectedItemId is not null)
+                    {
+                        <span class="editing-badge">Editing selected item</span>
+                    }
+                </div>
+
+                <EditForm class="fridge-form" Model="@EditedFridgeItem" OnValidSubmit="OnValidFridgeItemSubmitAsync" FormName="FridgeAddForm" method="post">
+                    <DataAnnotationsValidator/>
 
                 <div class="row g-3">
                     <div class="col-12 col-md-6">
@@ -73,22 +84,23 @@
                         </InputSelect>
                     </div>
 
-                    <div class="col-12 d-grid d-md-flex justify-content-md-end gap-2 pt-2">
+                    <div class="col-12 fridge-form-actions">
                         @if (SelectedItemId is not null)
                         {
-                            <button type="button" class="btn btn-outline-secondary px-4" @onclick="ClearSelection">Cancel</button>
+                            <button type="button" class="btn btn-outline-secondary" @onclick="ClearSelection">Cancel</button>
                         }
-                        <button type="submit" class="btn btn-primary px-4">@(SelectedItemId is not null ? "Save Changes" : "Add to Fridge")</button>
+                        <button type="submit" class="btn btn-primary">@(SelectedItemId is not null ? "Save Changes" : "Add to Fridge")</button>
                     </div>
                 </div>
-            </EditForm>
+                </EditForm>
+            </section>
 
-            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3 mt-4 mt-md-5">
+            <div class="feature-section-heading">
                 <div>
-                    <h2 class="h4 mb-1">Fridge items</h2>
-                    <p class="text-body-secondary mb-0">Current products stored in the fridge.</p>
+                    <h2>Fridge items</h2>
+                    <p>Current products stored in the fridge.</p>
                 </div>
-                <span class="badge text-bg-light border">@SortedItems.Count item(s)</span>
+                <span class="badge item-count-badge">@SortedItems.Count item(s)</span>
             </div>
 
             @if (Items.Count == 0)
@@ -99,17 +111,25 @@
             }
             else
             {
-                <div class="table-responsive">
+                <div class="fridge-desktop-table table-responsive">
                     <table class="table table-hover align-middle mb-0 fridge-table">
                         <thead class="table-light">
                             <tr>
                                 <th scope="col">Name</th>
                                 <th scope="col" class="d-none d-sm-table-cell">Qty</th>
                                 <th scope="col" class="d-none d-lg-table-cell">Type</th>
-                                <th scope="col" class="d-none d-md-table-cell sortable-header" style="cursor:pointer" @onclick="() => SortBy(FridgeSortColumn.Added)">Added @GetSortIcon(FridgeSortColumn.Added)</th>
-                                <th scope="col" class="d-none d-xl-table-cell sortable-header" style="cursor:pointer" @onclick="() => SortBy(FridgeSortColumn.Opened)">Opened @GetSortIcon(FridgeSortColumn.Opened)</th>
-                                <th scope="col" class="sortable-header" style="cursor:pointer" @onclick="() => SortBy(FridgeSortColumn.Expires)">Expires @GetSortIcon(FridgeSortColumn.Expires)</th>
-                                <th scope="col" class="sortable-header" style="cursor:pointer" @onclick="() => SortBy(FridgeSortColumn.DaysLeft)">Days Left @GetSortIcon(FridgeSortColumn.DaysLeft)</th>
+                                <th scope="col" class="d-none d-md-table-cell sortable-header">
+                                    <button type="button" class="table-sort-button" @onclick="() => SortBy(FridgeSortColumn.Added)">Added @GetSortIcon(FridgeSortColumn.Added)</button>
+                                </th>
+                                <th scope="col" class="d-none d-xl-table-cell sortable-header">
+                                    <button type="button" class="table-sort-button" @onclick="() => SortBy(FridgeSortColumn.Opened)">Opened @GetSortIcon(FridgeSortColumn.Opened)</button>
+                                </th>
+                                <th scope="col" class="sortable-header">
+                                    <button type="button" class="table-sort-button" @onclick="() => SortBy(FridgeSortColumn.Expires)">Expires @GetSortIcon(FridgeSortColumn.Expires)</button>
+                                </th>
+                                <th scope="col" class="sortable-header">
+                                    <button type="button" class="table-sort-button" @onclick="() => SortBy(FridgeSortColumn.DaysLeft)">Days Left @GetSortIcon(FridgeSortColumn.DaysLeft)</button>
+                                </th>
                                 <th scope="col" class="d-none d-xl-table-cell">Time (hrs)</th>
                                 <th scope="col" aria-label="Buttons"></th>
                             </tr>
@@ -117,7 +137,7 @@
                         <tbody>
                             @foreach (var item in SortedItems)
                             {
-                                <tr class="@(item.Id == SelectedItemId ? "table-active" : null)" style="cursor:pointer" @onclick="() => SelectItem(item)">
+                                <tr class="fridge-table-row @(item.Id == SelectedItemId ? "table-active" : null)" tabindex="0" aria-selected="@(item.Id == SelectedItemId)" @onclick="() => SelectItem(item)" @onkeydown="(args) => SelectItemOnKeyDown(args, item)">
                                     <td class="fw-semibold">
                                         <div>@item.Name</div>
                                         <small class="text-muted d-sm-none">@item.QuantityValue @item.QuantityType</small>
@@ -132,17 +152,47 @@
                                     </td>
                                     <td class="d-none d-xl-table-cell">@(item.TimeAfterOpen.Value()?.TotalHours)</td>
                                     <td>
-                                        <button type="button" class="btn mx-1-sm btn-sm btn-outline-primary" @onclick="() => CopyItemAsync(item)" @onclick:stopPropagation="true" title="Copy">
-                                            📋
+                                        <button type="button" class="btn btn-sm btn-outline-primary fridge-action-button" @onclick="() => CopyItemAsync(item)" @onclick:stopPropagation="true" aria-label="Copy @item.Name" title="Copy">
+                                            <span aria-hidden="true">Copy</span>
                                         </button>
-                                        <button type="button" class="btn mx-1-sm btn-sm btn-outline-danger" @onclick="() => RemoveItemAsync(item)" @onclick:stopPropagation="true" title="Remove">
-                                            🗑️
+                                        <button type="button" class="btn btn-sm btn-outline-danger fridge-action-button" @onclick="() => RemoveItemAsync(item)" @onclick:stopPropagation="true" aria-label="Remove @item.Name" title="Remove">
+                                            <span aria-hidden="true">Remove</span>
                                         </button>
                                     </td>
                                 </tr>
                             }
                         </tbody>
                     </table>
+                </div>
+
+                <div class="fridge-mobile-list" aria-label="Fridge items">
+                    @foreach (var item in SortedItems)
+                    {
+                        <article class="fridge-mobile-item @(item.Id == SelectedItemId ? "is-selected" : null)">
+                            <button type="button" class="fridge-mobile-select" @onclick="() => SelectItem(item)" aria-pressed="@(item.Id == SelectedItemId)" aria-label="Select @item.Name for editing">
+                                <span class="fridge-mobile-name">@item.Name</span>
+                                <span class="fridge-mobile-quantity">@item.QuantityValue @item.QuantityType</span>
+                            </button>
+                            <div class="fridge-mobile-details">
+                                <div>
+                                    <span class="fridge-mobile-label">Expires</span>
+                                    <span>@item.ExpirationDate.ToString("d")</span>
+                                </div>
+                                <div>
+                                    <span class="fridge-mobile-label">Status</span>
+                                    <span class="badge @FridgeLabels.GetDaysLeftBadgeClass(item, DateTimeService.Now)">@FridgeLabels.GetDaysLeftText(item, DateTimeService.Now)</span>
+                                </div>
+                            </div>
+                            <div class="fridge-mobile-actions">
+                                <button type="button" class="btn btn-sm btn-outline-primary fridge-action-button" @onclick="() => CopyItemAsync(item)" aria-label="Copy @item.Name">
+                                    Copy
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger fridge-action-button" @onclick="() => RemoveItemAsync(item)" aria-label="Remove @item.Name">
+                                    Remove
+                                </button>
+                            </div>
+                        </article>
+                    }
                 </div>
             }
         </div>
@@ -268,6 +318,14 @@
 
         SelectedItemId = item.Id;
         EditedFridgeItem = FridgeItemModel.FromFridgeItem(item);
+    }
+
+    private void SelectItemOnKeyDown(KeyboardEventArgs args, FridgeItem item)
+    {
+        if (args.Key is "Enter" or " ")
+        {
+            SelectItem(item);
+        }
     }
 
     private void SortBy(FridgeSortColumn column)

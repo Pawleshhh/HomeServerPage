@@ -8,16 +8,13 @@
 <PageTitle>Astronomy</PageTitle>
 
 <div class="container-fluid astronomy-page">
-    <div class="mb-4">
-        <h1 class="h3 mb-1">Astronomy</h1>
-        <p class="text-body-secondary mb-0">
-            Tools and conditions for observing the sky.
-        </p>
-    </div>
+    <PageHeader Title="Astronomy"
+                Description="Tools and conditions for observing the sky."
+                Accent="astronomy" />
 
-    <section class="observer-settings mb-4" aria-labelledby="observer-settings-heading">
+    <section class="observer-settings astronomy-settings-panel mb-4" aria-labelledby="observer-settings-heading">
         <h2 id="observer-settings-heading" class="visually-hidden">Observation settings</h2>
-        <div class="row g-2 align-items-end">
+        <div class="row g-3 astronomy-settings-grid">
             <div class="col-12 col-lg-8">
                 <label class="form-label" for="observation-point-select">Observation point</label>
                 @if (isLoadingObservationPoints)
@@ -27,7 +24,7 @@
                 else
                 {
                     <select id="observation-point-select"
-                            class="form-select form-select-sm mb-2"
+                            class="form-select mb-2"
                             @bind="selectedObservationPointId"
                             @bind:after="OnObservationPointSelected">
                         <option value="">Custom location</option>
@@ -53,18 +50,18 @@
                                @bind-Value="selectedLocalDateTime"
                                @bind-Value:after="OnSelectedDateTimeChanged"
                                Type="InputDateType.DateTimeLocal"
-                               class="form-control form-control-sm" />
+                               class="form-control" />
                 </EditForm>
             </div>
         </div>
     </section>
 
-    <ul class="nav nav-tabs" role="tablist">
+    <ul class="nav nav-tabs astronomy-tabs" role="tablist" aria-label="Astronomy sections">
         @foreach (var tab in astronomyTabs)
         {
             <li class="nav-item" role="presentation">
                 <button id="@tab.Key-tab"
-                        class='nav-link @(IsActive(tab) ? "active" : null)'
+                        class='nav-link astronomy-tab-button @(IsActive(tab) ? "active" : null)'
                         type="button"
                         role="tab"
                         aria-controls="@tab.PanelId"
@@ -76,9 +73,11 @@
         }
     </ul>
 
-    <DynamicComponent @key="CurrentTab.Key"
-                      Type="CurrentTab.ComponentType"
-                      Parameters="CurrentTabParameters" />
+    <div class="astronomy-tab-content">
+        <DynamicComponent @key="CurrentTab.Key"
+                          Type="CurrentTab.ComponentType"
+                          Parameters="CurrentTabParameters" />
+    </div>
 </div>
 
 @code {

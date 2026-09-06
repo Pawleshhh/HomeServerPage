@@ -1,8 +1,9 @@
 .astronomy-panel {
     padding: 1.25rem;
-    border: 0;
-    border-radius: var(--bs-border-radius);
-    background: var(--bs-body-bg);
+    border: 1px solid #cfc4e6;
+    border-radius: var(--app-radius);
+    background: var(--app-surface);
+    box-shadow: var(--app-shadow-sm);
 }
 
 .astronomy-panel h2 {
@@ -18,13 +19,14 @@
 .equipment-category-heading {
     margin-bottom: 0.85rem;
     padding-bottom: 0.5rem;
-    border-bottom: 1px solid var(--bs-border-color-translucent);
+    border-bottom: 1px solid var(--app-border);
+    color: var(--app-astronomy);
 }
 
 .spec-table-wrapper {
     overflow-x: auto;
-    border: 1px solid var(--bs-border-color-translucent);
-    border-radius: var(--bs-border-radius);
+    border: 1px solid var(--app-border);
+    border-radius: var(--app-radius-sm);
 }
 
 .spec-table {
@@ -35,11 +37,12 @@
 
 .spec-table thead th {
     border-bottom-width: 1px;
-    color: var(--bs-secondary-color);
+    color: var(--app-text-muted);
+    background: var(--app-astronomy-soft);
     font-size: 0.78rem;
-    font-weight: 600;
-    text-transform: uppercase;
+    font-weight: 700;
     letter-spacing: 0.02em;
+    text-transform: uppercase;
 }
 
 .spec-table th,
@@ -49,13 +52,13 @@
 }
 
 .spec-table tbody th {
-    color: var(--bs-emphasis-color);
-    font-weight: 600;
+    color: var(--app-text);
+    font-weight: 700;
     white-space: normal;
 }
 
 .spec-table tbody td {
-    color: var(--bs-body-color);
+    color: var(--app-text);
 }
 
 .spec-table tbody tr:last-child th,
