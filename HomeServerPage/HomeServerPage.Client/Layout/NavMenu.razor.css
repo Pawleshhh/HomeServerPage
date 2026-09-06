@@ -166,15 +166,16 @@
 }
 
 .primary-navigation ::deep .nav-icon {
+    display: inline-flex;
     flex: 0 0 1.25rem;
     width: 1.25rem;
     height: 1.25rem;
+    align-items: center;
+    justify-content: center;
     color: var(--app-accent, #c96f45);
-    fill: none;
-    stroke: currentColor;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    stroke-width: 1.7;
+    font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif;
+    font-size: 1.25rem;
+    line-height: 1;
 }
 
 .primary-navigation ::deep .nav-link.active .nav-icon {
