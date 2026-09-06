@@ -5,66 +5,74 @@
 <PageTitle>Public Transport</PageTitle>
 
 <div class="container-fluid">
-    <div class="d-flex align-items-center justify-content-between mb-3">
-        <h3 class="mb-0">Public Transport</h3>
-        <button class="btn btn-outline-secondary btn-sm" @onclick="LoadBoardsAsync" disabled="@isLoading">
-            @(isLoading ? "Refreshing..." : "Refresh")
-        </button>
-    </div>
+    <PageHeader Title="Public Transport"
+                Description="See the next departures from your usual stop."
+                Accent="transport">
+        <Actions>
+            <button class="btn btn-outline-secondary" @onclick="LoadBoardsAsync" disabled="@isLoading">
+                @(isLoading ? "Refreshing..." : "Refresh")
+            </button>
+        </Actions>
+    </PageHeader>
 
     @if (isLoading && boards.Count == 0)
     {
-        <p><em>Loading...</em></p>
+        <div class="transport-page-state" role="status">
+            <span class="transport-state-dot" aria-hidden="true"></span>
+            Loading departure boards…
+        </div>
     }
     else if (errorMessage is not null)
     {
-        <div class="alert alert-danger">@errorMessage</div>
+        <div class="transport-page-state is-error alert" role="alert">@errorMessage</div>
+    }
+    else if (boards.Count == 0)
+    {
+        <div class="transport-page-state is-empty" role="status">
+            No departure boards are available right now.
+        </div>
     }
     else
     {
-        <div class="row g-3">
+        <section class="transport-board-grid" aria-label="Departure boards">
             @foreach (var board in boards)
             {
-                <div class="col-12 col-md-6">
-                    <div class="card">
-                        <div class="card-header">
-                            Lubomirskiego <span class="text-body-secondary">(stop @board.Stop.Number)</span>
+                <article class="transport-page-board" aria-labelledby="transport-page-stop-@board.Stop.Number">
+                    <header class="transport-page-board-header">
+                        <div>
+                            <h2 id="transport-page-stop-@board.Stop.Number">Lubomirskiego</h2>
+                            <p>Upcoming departures from this stop</p>
                         </div>
-                        <div class="table-responsive">
-                            <table class="table table-sm table-hover mb-0 align-middle">
-                                <thead>
-                                    <tr>
-                                        <th>Line</th>
-                                        <th>Direction</th>
-                                        <th>Departure</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var departure in board.Departures.OrderBy(d => d.DepartureTime.Estimated))
+                        <span class="transport-stop-badge">Stop @board.Stop.Number</span>
+                    </header>
+
+                    <div class="transport-page-departures">
+                        @foreach (var departure in board.Departures.OrderBy(d => d.DepartureTime.Estimated))
+                        {
+                            <div class="transport-page-departure @(departure.DepartureTime.Canceled ? "is-canceled" : null)">
+                                <span class="transport-page-line" style="background-color: @PublicTransportLineColors.GetColor(departure.Line.Number); color: @PublicTransportLineColors.GetTextColor(departure.Line.Number);">
+                                    @departure.Line.Number
+                                </span>
+                                <div class="transport-page-direction">
+                                    <span>@departure.Trip.Headsign.Short</span>
+                                    @if (departure.DepartureTime.Canceled)
                                     {
-                                        <tr class="@(departure.DepartureTime.Canceled ? "text-decoration-line-through text-body-secondary" : null)">
-                                            <td>
-                                                <span class="badge" style="background-color: @PublicTransportLineColors.GetColor(departure.Line.Number);">
-                                                    @departure.Line.Number
-                                                </span>
-                                            </td>
-                                            <td>@departure.Trip.Headsign.Short</td>
-                                            <td>
-                                                @departure.DepartureTime.Estimated.ToLocalTime().ToString("HH:mm")
-                                                @if (departure.DepartureTime.DepartingNow)
-                                                {
-                                                    <span class="badge text-bg-success ms-1">now</span>
-                                                }
-                                            </td>
-                                        </tr>
+                                        <small>Cancelled</small>
                                     }
-                                </tbody>
-                            </table>
-                        </div>
+                                </div>
+                                <div class="transport-page-time">
+                                    <span>@departure.DepartureTime.Estimated.ToLocalTime().ToString("HH:mm")</span>
+                                    @if (departure.DepartureTime.DepartingNow)
+                                    {
+                                        <span class="transport-now-badge">Now</span>
+                                    }
+                                </div>
+                            </div>
+                        }
                     </div>
-                </div>
+                </article>
             }
-        </div>
+        </section>
     }
 </div>
 

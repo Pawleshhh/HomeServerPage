@@ -33,4 +33,13 @@ public static class PublicTransportLineColors
             return ColorPalette[paletteIndex];
         }
     }
+
+    public static string GetTextColor(string lineNumber)
+    {
+        return GetColor(lineNumber) switch
+        {
+            "#46f0f0" or "#bcf60c" or "#fabebe" or "#e6beff" => "#2f2520",
+            _ => "#ffffff"
+        };
+    }
 }

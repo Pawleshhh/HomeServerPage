@@ -1,15 +1,16 @@
 .astronomy-content {
     display: grid;
-    grid-template-columns: minmax(380px, 0.75fr) minmax(420px, 1.25fr);
-    gap: 1.5rem;
+    grid-template-columns: minmax(0, 0.75fr) minmax(0, 1.25fr);
+    gap: 1rem;
     align-items: start;
 }
 
 .astronomy-panel {
     padding: 1.25rem;
-    border: 0;
-    border-radius: var(--bs-border-radius);
-    background: var(--bs-body-bg);
+    border: 1px solid #cfc4e6;
+    border-radius: var(--app-radius);
+    background: var(--app-surface);
+    box-shadow: var(--app-shadow-sm);
 }
 
 .astronomy-panel h2 {
@@ -27,7 +28,7 @@
 
 @media (max-width: 900px) {
     .astronomy-content {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(0, 1fr);
     }
 }
 

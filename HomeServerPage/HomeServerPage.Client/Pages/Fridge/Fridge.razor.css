@@ -1,46 +1,248 @@
-﻿
-.label-truncate {
+﻿.label-truncate {
     display: block;
-    white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
-/* Table improvements for mobile */
+.feature-panel {
+    margin-bottom: 2rem;
+    padding: 1.35rem;
+    border: 1px solid #b9d6bd;
+    border-radius: var(--app-radius-lg);
+    background: linear-gradient(135deg, var(--app-surface) 0%, var(--app-fridge-soft) 100%);
+    box-shadow: var(--app-shadow-sm);
+}
+
+.feature-panel-heading,
+.feature-section-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.feature-panel-heading {
+    margin-bottom: 1.25rem;
+}
+
+.feature-panel-heading h2,
+.feature-section-heading h2 {
+    margin: 0;
+    color: var(--app-text);
+    font-size: 1.2rem;
+    font-weight: 750;
+}
+
+.feature-panel-heading p,
+.feature-section-heading p {
+    margin: 0.3rem 0 0;
+    color: var(--app-text-muted);
+    font-size: 0.86rem;
+}
+
+.editing-badge,
+.item-count-badge {
+    flex: 0 0 auto;
+    color: var(--app-fridge);
+    background: var(--app-fridge-soft);
+    border: 1px solid #b9d6bd;
+}
+
+.fridge-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.65rem;
+    padding-top: 0.35rem;
+}
+
+.feature-section-heading {
+    margin: 2rem 0 1rem;
+}
+
+.fridge-desktop-table {
+    overflow-x: auto;
+    border: 1px solid var(--app-border);
+    border-radius: var(--app-radius);
+    background: var(--app-surface);
+    box-shadow: var(--app-shadow-sm);
+}
+
 ::deep .fridge-table {
+    min-width: 720px;
+    margin-bottom: 0;
     font-size: 0.875rem;
-    /* Stronger, theme-aware selection highlight (default is only 10% opacity) */
-    --bs-table-active-bg: rgba(var(--bs-primary-rgb), 0.25);
-    --bs-table-active-color: var(--bs-emphasis-color);
+    --bs-table-active-bg: var(--app-fridge-soft);
+    --bs-table-active-color: var(--app-text);
 }
 
-[data-bs-theme="dark"] ::deep .fridge-table {
-    /* Bump opacity further for dark mode where the tint is even less visible */
-    --bs-table-active-bg: rgba(var(--bs-primary-rgb), 0.35);
+::deep .fridge-table th {
+    white-space: nowrap;
 }
 
-@media (max-width: 575.98px) {
-    /* Smaller font on mobile for better fit */
-    ::deep .fridge-table {
-        font-size: 0.8125rem;
-    }
+.table-sort-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    min-height: 2rem;
+    padding: 0.2rem 0;
+    border: 0;
+    color: inherit;
+    background: transparent;
+    font: inherit;
+    font-weight: 700;
+    text-align: left;
+}
 
-    /* Reduce button padding on mobile */
-    ::deep .fridge-table .btn-sm {
-        padding: 0.15rem 0.4rem;
-        font-size: 0.75rem;
-    }
+.table-sort-button:hover {
+    color: var(--app-fridge);
+}
+
+.table-sort-button:focus-visible {
+    outline: 3px solid var(--app-focus);
+    outline-offset: 2px;
+}
+
+.fridge-table-row {
+    cursor: pointer;
+}
+
+.fridge-table-row:focus-visible {
+    outline: 3px solid var(--app-focus);
+    outline-offset: -3px;
+}
+
+.fridge-action-button {
+    min-width: 4.25rem;
+    margin: 0.1rem;
+    white-space: nowrap;
+}
+
+.fridge-mobile-list {
+    display: none;
 }
 
 @media (max-width: 767.98px) {
-    /* Improve spacing for mobile form */
+    .feature-panel {
+        margin-bottom: 1.5rem;
+        padding: 1.1rem;
+    }
+
+    .feature-panel-heading,
+    .feature-section-heading {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .editing-badge,
+    .item-count-badge {
+        align-self: flex-start;
+    }
+
+    .fridge-form-actions {
+        justify-content: stretch;
+    }
+
+    .fridge-form-actions .btn {
+        flex: 1 1 0;
+    }
+
+    .fridge-desktop-table {
+        display: none;
+    }
+
+    .fridge-mobile-list {
+        display: grid;
+        gap: 0.75rem;
+    }
+
+    .fridge-mobile-item {
+        display: grid;
+        gap: 0.75rem;
+        padding: 1rem;
+        border: 1px solid var(--app-border);
+        border-radius: var(--app-radius);
+        background: var(--app-surface);
+        box-shadow: var(--app-shadow-sm);
+    }
+
+    .fridge-mobile-item.is-selected {
+        border-color: var(--app-fridge);
+        box-shadow: 0 0 0 0.2rem rgba(79, 143, 100, 0.16), var(--app-shadow-sm);
+    }
+
+    .fridge-mobile-select {
+        display: flex;
+        min-width: 0;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 0.75rem;
+        padding: 0;
+        border: 0;
+        color: var(--app-text);
+        background: transparent;
+        text-align: left;
+    }
+
+    .fridge-mobile-select:focus-visible {
+        outline: 3px solid var(--app-focus);
+        outline-offset: 3px;
+    }
+
+    .fridge-mobile-name {
+        overflow: hidden;
+        font-weight: 750;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .fridge-mobile-quantity {
+        flex: 0 0 auto;
+        color: var(--app-text-muted);
+        font-size: 0.8rem;
+    }
+
+    .fridge-mobile-details {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.75rem;
+        padding-top: 0.75rem;
+        border-top: 1px solid var(--app-border);
+        color: var(--app-text);
+        font-size: 0.85rem;
+    }
+
+    .fridge-mobile-details > div {
+        display: flex;
+        min-width: 0;
+        flex-direction: column;
+        gap: 0.2rem;
+    }
+
+    .fridge-mobile-label {
+        color: var(--app-text-muted);
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+
+    .fridge-mobile-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.5rem;
+        padding-top: 0.2rem;
+    }
+}
+
+@media (max-width: 575.98px) {
     ::deep .form-label {
-        margin-bottom: 0.25rem;
+        margin-bottom: 0.3rem;
         font-size: 0.875rem;
     }
 
     ::deep .form-control,
     ::deep .form-select {
-        font-size: 0.875rem;
+        font-size: 0.95rem;
     }
 }

@@ -5,21 +5,20 @@
 
 <PageTitle>Home</PageTitle>
 
-<div class="container-fluid">
-    <div class="mb-4">
-        <h1 class="h3 mb-1">Home</h1>
-        <p class="text-body-secondary mb-0">A quick overview of your home server.</p>
-    </div>
+<div class="container-fluid dashboard-page">
+    <PageHeader Title="Home Base"
+                Description="A calm overview of the things you use every day."
+                Accent="home" />
 
-    <div class="row g-4">
-        <div class="col-12 col-lg-6 col-xl-5">
+    <section class="dashboard-grid" aria-label="Daily essentials">
+        <div class="dashboard-grid-item dashboard-grid-item-fridge">
             <ExpiringFridgeItems />
         </div>
-        <div class="col-12 col-lg-6 col-xl-5">
+        <div class="dashboard-grid-item dashboard-grid-item-transport">
             <PublicTransportWidget />
         </div>
-        <div class="col-12 col-lg-6 col-xl-5">
+        <div class="dashboard-grid-item dashboard-grid-item-astronomy">
             <AstronomyWidget />
         </div>
-    </div>
+    </section>
 </div>

@@ -1,0 +1,54 @@
+.transport-boards {
+    display: grid;
+    gap: 0.9rem;
+}
+
+.transport-board {
+    padding: 0.75rem 0.9rem 0.35rem;
+    border: 1px solid var(--app-border);
+    border-radius: var(--app-radius-sm);
+    background: var(--app-surface-raised);
+}
+
+.transport-board-title {
+    margin: 0 0 0.3rem;
+    color: var(--app-text);
+    font-size: 0.84rem;
+    font-weight: 750;
+}
+
+.transport-departure-row {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    gap: 0.7rem;
+    padding: 0.65rem 0;
+}
+
+.transport-departure-row:first-child {
+    border-top: 0;
+}
+
+.transport-line-badge {
+    min-width: 2.35rem;
+    color: #fff;
+    font-size: 0.78rem;
+    text-align: center;
+}
+
+.transport-destination {
+    min-width: 0;
+    overflow: hidden;
+    flex: 1 1 auto;
+    color: var(--app-text);
+    font-size: 0.88rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.transport-time {
+    flex: 0 0 auto;
+    color: var(--app-text);
+    font-size: 0.9rem;
+    font-weight: 750;
+}

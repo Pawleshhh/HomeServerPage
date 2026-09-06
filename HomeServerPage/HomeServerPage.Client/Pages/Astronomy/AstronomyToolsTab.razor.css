@@ -1,8 +1,9 @@
 .astronomy-panel {
     padding: 1.25rem;
-    border: 0;
-    border-radius: var(--bs-border-radius);
-    background: var(--bs-body-bg);
+    border: 1px solid #cfc4e6;
+    border-radius: var(--app-radius);
+    background: var(--app-surface);
+    box-shadow: var(--app-shadow-sm);
 }
 
 .astronomy-panel h2 {
@@ -61,11 +62,12 @@
 .result-count {
     flex: 0 0 auto;
     padding: 0.25rem 0.55rem;
+    border: 1px solid #cfc4e6;
     border-radius: 999px;
-    background: var(--bs-secondary-bg);
-    color: var(--bs-secondary-color);
+    color: var(--app-astronomy);
+    background: var(--app-astronomy-soft);
     font-size: 0.75rem;
-    font-weight: 600;
+    font-weight: 700;
     white-space: nowrap;
 }
 
@@ -86,22 +88,22 @@
     justify-content: center;
     gap: 0.15rem;
     padding: 0.6rem 0.7rem;
-    border: 1px solid var(--bs-border-color-translucent);
-    border-radius: var(--bs-border-radius);
-    background: var(--bs-tertiary-bg);
+    border: 1px solid #ded5ed;
+    border-radius: var(--app-radius-sm);
+    background: var(--app-astronomy-soft);
 }
 
 .object-name {
     overflow: hidden;
-    color: var(--bs-emphasis-color);
-    font-weight: 600;
+    color: var(--app-text);
+    font-weight: 700;
     line-height: 1.25;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
 .object-size {
-    color: var(--bs-secondary-color);
+    color: var(--app-text-muted);
     font-size: 0.8rem;
     line-height: 1.2;
 }
@@ -113,14 +115,14 @@
 .partial-results {
     margin-top: 1rem;
     padding-top: 0.85rem;
-    border-top: 1px solid var(--bs-border-color-translucent);
+    border-top: 1px solid var(--app-border);
 }
 
 .partial-results-heading {
     margin: 0 0 0.55rem;
-    color: var(--bs-secondary-color);
+    color: var(--app-text-muted);
     font-size: 0.8rem;
-    font-weight: 600;
+    font-weight: 700;
 }
 
 @media (max-width: 1199.98px) {
