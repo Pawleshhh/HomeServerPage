@@ -152,6 +152,9 @@
                                     </td>
                                     <td class="d-none d-xl-table-cell">@(item.TimeAfterOpen.Value()?.TotalHours)</td>
                                     <td>
+                                        <button type="button" class="btn btn-sm btn-outline-success fridge-action-button" @onclick="() => OpenItemAsync(item)" @onclick:stopPropagation="true" aria-label="Open @item.Name" title="Open">
+                                            <span aria-hidden="true">Open</span>
+                                        </button>
                                         <button type="button" class="btn btn-sm btn-outline-primary fridge-action-button" @onclick="() => CopyItemAsync(item)" @onclick:stopPropagation="true" aria-label="Copy @item.Name" title="Copy">
                                             <span aria-hidden="true">Copy</span>
                                         </button>
@@ -184,6 +187,9 @@
                                 </div>
                             </div>
                             <div class="fridge-mobile-actions">
+                                <button type="button" class="btn btn-sm btn-outline-success fridge-action-button" @onclick="() => OpenItemAsync(item)" aria-label="Open @item.Name">
+                                    Open
+                                </button>
                                 <button type="button" class="btn btn-sm btn-outline-primary fridge-action-button" @onclick="() => CopyItemAsync(item)" aria-label="Copy @item.Name">
                                     Copy
                                 </button>
@@ -358,6 +364,19 @@
 
         Items = await FridgeService.GetItemsAsync();
         SelectItem(created);
+    }
+
+    private async Task OpenItemAsync(FridgeItem item)
+    {
+        var openedAt = DateTimeService.Now;
+        var updated = await FridgeService.UpdateItemAsync(item with { OpenDate = openedAt });
+
+        Items = await FridgeService.GetItemsAsync();
+
+        if (updated && SelectedItemId == item.Id)
+        {
+            EditedFridgeItem.OpenDate = openedAt;
+        }
     }
 
     private async Task RemoveItemAsync(FridgeItem item)
