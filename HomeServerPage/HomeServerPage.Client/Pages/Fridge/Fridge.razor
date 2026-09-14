@@ -152,9 +152,12 @@
                                     </td>
                                     <td class="d-none d-xl-table-cell">@(item.TimeAfterOpen.Value()?.TotalHours)</td>
                                     <td>
-                                        <button type="button" class="btn btn-sm btn-outline-success fridge-action-button" @onclick="() => OpenItemAsync(item)" @onclick:stopPropagation="true" aria-label="Open @item.Name" title="Open">
-                                            <span aria-hidden="true">Open</span>
-                                        </button>
+                                        @if (!item.OpenDate.HasValue)
+                                        {
+                                            <button type="button" class="btn btn-sm btn-outline-success fridge-action-button" @onclick="() => OpenItemAsync(item)" @onclick:stopPropagation="true" aria-label="Open @item.Name" title="Open">
+                                                <span aria-hidden="true">Open</span>
+                                            </button>
+                                        }
                                         <button type="button" class="btn btn-sm btn-outline-primary fridge-action-button" @onclick="() => CopyItemAsync(item)" @onclick:stopPropagation="true" aria-label="Copy @item.Name" title="Copy">
                                             <span aria-hidden="true">Copy</span>
                                         </button>
@@ -187,9 +190,12 @@
                                 </div>
                             </div>
                             <div class="fridge-mobile-actions">
-                                <button type="button" class="btn btn-sm btn-outline-success fridge-action-button" @onclick="() => OpenItemAsync(item)" aria-label="Open @item.Name">
-                                    Open
-                                </button>
+                                @if (!item.OpenDate.HasValue)
+                                {
+                                    <button type="button" class="btn btn-sm btn-outline-success fridge-action-button" @onclick="() => OpenItemAsync(item)" aria-label="Open @item.Name">
+                                        Open
+                                    </button>
+                                }
                                 <button type="button" class="btn btn-sm btn-outline-primary fridge-action-button" @onclick="() => CopyItemAsync(item)" aria-label="Copy @item.Name">
                                     Copy
                                 </button>
