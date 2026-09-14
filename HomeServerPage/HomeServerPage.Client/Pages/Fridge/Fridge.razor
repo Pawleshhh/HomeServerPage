@@ -142,7 +142,17 @@
                                         <div>@item.Name</div>
                                         <small class="text-muted d-sm-none">@item.QuantityValue @item.QuantityType</small>
                                     </td>
-                                    <td class="d-none d-sm-table-cell">@item.QuantityValue</td>
+                                    <td class="d-none d-sm-table-cell">
+                                        <div class="fridge-quantity-controls" role="group" aria-label="Change quantity for @item.Name">
+                                            <button type="button" class="btn btn-sm btn-outline-secondary fridge-quantity-button" @onclick="() => ChangeQuantityAsync(item, -GetQuantityStep(item))" @onclick:stopPropagation="true" aria-label="Decrease quantity of @item.Name" title="Decrease quantity" disabled="@(item.QuantityValue <= 0)">
+                                                <span aria-hidden="true">−</span>
+                                            </button>
+                                            <span class="fridge-quantity-value" aria-live="polite">@item.QuantityValue</span>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary fridge-quantity-button" @onclick="() => ChangeQuantityAsync(item, GetQuantityStep(item))" @onclick:stopPropagation="true" aria-label="Increase quantity of @item.Name" title="Increase quantity">
+                                                <span aria-hidden="true">+</span>
+                                            </button>
+                                        </div>
+                                    </td>
                                     <td class="d-none d-lg-table-cell">@item.QuantityType @FridgeLabels.GetQuantityTypeLabel(item.QuantityType)</td>
                                     <td class="d-none d-md-table-cell">@item.AddedDate.ToString("d")</td>
                                     <td class="d-none d-xl-table-cell">@(item.OpenDate.HasValue ? item.OpenDate.Value.ToString("d") : "-")</td>
@@ -175,10 +185,20 @@
                     @foreach (var item in SortedItems)
                     {
                         <article class="fridge-mobile-item @(item.Id == SelectedItemId ? "is-selected" : null)">
-                            <button type="button" class="fridge-mobile-select" @onclick="() => SelectItem(item)" aria-pressed="@(item.Id == SelectedItemId)" aria-label="Select @item.Name for editing">
-                                <span class="fridge-mobile-name">@item.Name</span>
-                                <span class="fridge-mobile-quantity">@item.QuantityValue @item.QuantityType</span>
-                            </button>
+                            <div class="fridge-mobile-select-row">
+                                <button type="button" class="fridge-mobile-select" @onclick="() => SelectItem(item)" aria-pressed="@(item.Id == SelectedItemId)" aria-label="Select @item.Name for editing">
+                                    <span class="fridge-mobile-name">@item.Name</span>
+                                </button>
+                                <div class="fridge-quantity-controls" role="group" aria-label="Change quantity for @item.Name">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary fridge-quantity-button" @onclick="() => ChangeQuantityAsync(item, -GetQuantityStep(item))" aria-label="Decrease quantity of @item.Name" title="Decrease quantity" disabled="@(item.QuantityValue <= 0)">
+                                        <span aria-hidden="true">−</span>
+                                    </button>
+                                    <span class="fridge-quantity-value" aria-live="polite">@item.QuantityValue @item.QuantityType</span>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary fridge-quantity-button" @onclick="() => ChangeQuantityAsync(item, GetQuantityStep(item))" aria-label="Increase quantity of @item.Name" title="Increase quantity">
+                                        <span aria-hidden="true">+</span>
+                                    </button>
+                                </div>
+                            </div>
                             <div class="fridge-mobile-details">
                                 <div>
                                     <span class="fridge-mobile-label">Expires</span>
@@ -370,6 +390,26 @@
 
         Items = await FridgeService.GetItemsAsync();
         SelectItem(created);
+    }
+
+    private static double GetQuantityStep(FridgeItem item)
+        => item.QuantityType == QuantityType.Weight ? 0.1 : 1;
+
+    private async Task ChangeQuantityAsync(FridgeItem item, double adjustment)
+    {
+        var quantity = Math.Round(Math.Max(0, item.QuantityValue + adjustment), 2);
+        if (quantity == item.QuantityValue)
+        {
+            return;
+        }
+
+        var updated = await FridgeService.UpdateItemAsync(item with { QuantityValue = quantity });
+        Items = await FridgeService.GetItemsAsync();
+
+        if (updated && SelectedItemId == item.Id)
+        {
+            EditedFridgeItem.QuanitityValue = quantity;
+        }
     }
 
     private async Task OpenItemAsync(FridgeItem item)

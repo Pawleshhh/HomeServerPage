@@ -112,6 +112,31 @@
     outline-offset: -3px;
 }
 
+.fridge-quantity-controls {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.fridge-quantity-button {
+    display: inline-flex;
+    width: 2.5rem;
+    min-width: 2.5rem;
+    min-height: 2.5rem;
+    align-items: center;
+    justify-content: center;
+    padding: 0.25rem;
+    font-size: 1.1rem;
+    line-height: 1;
+}
+
+.fridge-quantity-value {
+    min-width: 3rem;
+    color: var(--app-text);
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+}
+
 .fridge-action-button {
     min-width: 4.25rem;
     margin: 0.1rem;
@@ -173,6 +198,7 @@
 
     .fridge-mobile-select {
         display: flex;
+        flex: 1 1 auto;
         min-width: 0;
         align-items: flex-start;
         justify-content: space-between;
@@ -189,6 +215,13 @@
         outline-offset: 3px;
     }
 
+    .fridge-mobile-select-row {
+        display: flex;
+        min-width: 0;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+
     .fridge-mobile-name {
         overflow: hidden;
         font-weight: 750;
@@ -196,10 +229,8 @@
         white-space: nowrap;
     }
 
-    .fridge-mobile-quantity {
+    .fridge-mobile-select-row .fridge-quantity-controls {
         flex: 0 0 auto;
-        color: var(--app-text-muted);
-        font-size: 0.8rem;
     }
 
     .fridge-mobile-details {
