@@ -15,9 +15,17 @@ public class FridgeHttpService(HttpClient httpClient) : IFridgeService
         return await httpClient.GetFromJsonAsync<List<FridgeItem>>("api/fridge") ?? [];
     }
 
-    public async Task<FridgeItem> AddItemAsync(FridgeItem item)
+    public async Task<List<FridgeItemTemplate>> GetTemplatesAsync()
     {
-        var resp = await httpClient.PostAsJsonAsync("api/fridge", item);
+        return await httpClient.GetFromJsonAsync<List<FridgeItemTemplate>>("api/fridge/templates") ?? [];
+    }
+
+    public async Task<FridgeItem> AddItemAsync(FridgeItem item, bool saveAsTemplate = false)
+    {
+        var uri = saveAsTemplate
+            ? "api/fridge?saveAsTemplate=true"
+            : "api/fridge";
+        var resp = await httpClient.PostAsJsonAsync(uri, item);
         resp.EnsureSuccessStatusCode();
         return (await resp.Content.ReadFromJsonAsync<FridgeItem>())!;
     }

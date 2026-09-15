@@ -46,10 +46,13 @@ public class FridgeItemModel : IValidatableObject
                 TimeAfterOpen = item.TimeAfterOpen.HasValue ? (int)item.TimeAfterOpen.Value.TotalHours : null
             };
 
+    public static FridgeItemModel FromFridgeItemTemplate(FridgeItemTemplate template, DateTime now)
+        => FromFridgeItem(template.ToFridgeItem(now));
+
     public FridgeItem ToFridgeItem()
         => new(
             0,
-            Name ?? throw new NullReferenceException(),
+            FridgeItemTemplate.NormalizeName(Name ?? throw new NullReferenceException()),
             QuanitityValue,
             QuantityType,
             AddedDate,

@@ -32,7 +32,18 @@
                 <div class="row g-3">
                     <div class="col-12 col-md-6">
                         <label class="form-label label-truncate" for="fridge-name">Name</label>
-                        <InputText id="fridge-name" class="form-control" @bind-Value="@EditedFridgeItem.Name" placeholder="Milk" />
+                        @if (SelectedItemId is null)
+                        {
+                            <FridgeTemplateAutocomplete Id="fridge-name"
+                                                        @bind-Value="@EditedFridgeItem.Name"
+                                                        Templates="Templates"
+                                                        TemplateSelected="ApplyTemplate"
+                                                        ManualValueChanged="ClearQuickTemplateSelection" />
+                        }
+                        else
+                        {
+                            <InputText id="fridge-name" class="form-control" @bind-Value="@EditedFridgeItem.Name" placeholder="Milk" />
+                        }
                         <ValidationMessage For="@(() => @EditedFridgeItem.Name)" />
                     </div>
 
@@ -256,6 +267,10 @@
     public List<FridgeItem> Items { get; set; } = [];
     public int? SelectedItemId { get; set; }
 
+    private List<FridgeItemTemplate> Templates { get; set; } = [];
+
+    private bool IsQuickTemplateSelection { get; set; }
+
     private FridgeItem? PendingDeleteItem { get; set; }
 
     private string? StatusMessage { get; set; }
@@ -341,6 +356,7 @@
         await DateTimeService.SyncAsync();
         EditedFridgeItem = FridgeItemModel.CreateClearEditedFridgeItem(DateTimeService.Now);
         Items = await FridgeService.GetItemsAsync();
+        Templates = await FridgeService.GetTemplatesAsync();
         await base.OnInitializedAsync();
     }
 
@@ -357,18 +373,43 @@
         }
         else
         {
-            var created = await FridgeService.AddItemAsync(this.EditedFridgeItem.ToFridgeItem());
-            SetStatus($"{created.Name} added to the fridge.");
+            var created = await FridgeService.AddItemAsync(
+                this.EditedFridgeItem.ToFridgeItem(),
+                saveAsTemplate: !IsQuickTemplateSelection);
+            SetStatus(IsQuickTemplateSelection
+                ? $"{created.Name} added from quick history."
+                : $"{created.Name} added to the fridge and saved to quick history.");
         }
 
         ClearSelection();
         Items = await FridgeService.GetItemsAsync();
+        Templates = await FridgeService.GetTemplatesAsync();
     }
 
     private void ClearSelection()
     {
         SelectedItemId = null;
+        IsQuickTemplateSelection = false;
         EditedFridgeItem = FridgeItemModel.CreateClearEditedFridgeItem(DateTimeService.Now);
+    }
+
+    private void ClearQuickTemplateSelection()
+    {
+        if (SelectedItemId is null)
+        {
+            IsQuickTemplateSelection = false;
+        }
+    }
+
+    private void ApplyTemplate(FridgeItemTemplate template)
+    {
+        if (SelectedItemId is not null)
+        {
+            return;
+        }
+
+        EditedFridgeItem = FridgeItemModel.FromFridgeItemTemplate(template, DateTimeService.Now);
+        IsQuickTemplateSelection = true;
     }
 
     private void SelectItem(FridgeItem item)
@@ -380,6 +421,7 @@
         }
 
         SelectedItemId = item.Id;
+        IsQuickTemplateSelection = false;
         EditedFridgeItem = FridgeItemModel.FromFridgeItem(item);
     }
 
@@ -416,12 +458,9 @@
 
     private async Task CopyItemAsync(FridgeItem item)
     {
-        var cloned = item with
-        {
-            Id = 0,
-            AddedDate = DateTimeService.Now.Date,
-            OpenDate = null
-        };
+        var cloned = FridgeItemTemplate
+            .FromFridgeItem(item)
+            .ToFridgeItem(DateTimeService.Now);
         var created = await FridgeService.AddItemAsync(cloned);
 
         Items = await FridgeService.GetItemsAsync();

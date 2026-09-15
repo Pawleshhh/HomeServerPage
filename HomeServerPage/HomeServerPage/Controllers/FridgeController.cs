@@ -22,10 +22,29 @@ public class FridgeController(IFridgeService fridgeService) : ControllerBase
         return Ok(items);
     }
 
-    [HttpPost]
-    public async Task<ActionResult<FridgeItem>> AddItem([FromBody] FridgeItem item)
+    [HttpGet("templates")]
+    public async Task<ActionResult<List<FridgeItemTemplate>>> GetTemplates()
     {
-        var created = await fridgeService.AddItemAsync(item);
+        var templates = await fridgeService.GetTemplatesAsync();
+        return Ok(templates);
+    }
+
+    [HttpPost]
+    public async Task<ActionResult<FridgeItem>> AddItem(
+        [FromBody] FridgeItem item,
+        [FromQuery] bool saveAsTemplate = false)
+    {
+        if (string.IsNullOrWhiteSpace(item.Name))
+        {
+            return BadRequest("Item name is required.");
+        }
+
+        if (item.ExpirationDate.Date < item.AddedDate.Date)
+        {
+            return BadRequest("Expiration date cannot be earlier than added date.");
+        }
+
+        var created = await fridgeService.AddItemAsync(item, saveAsTemplate);
         return Ok(created);
     }
 

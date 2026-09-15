@@ -6,7 +6,9 @@ public interface IFridgeService
 
     Task<List<FridgeItem>> GetItemsAsync();
 
-    Task<FridgeItem> AddItemAsync(FridgeItem item);
+    Task<List<FridgeItemTemplate>> GetTemplatesAsync();
+
+    Task<FridgeItem> AddItemAsync(FridgeItem item, bool saveAsTemplate = false);
 
     Task<bool> UpdateItemAsync(FridgeItem item);
 
