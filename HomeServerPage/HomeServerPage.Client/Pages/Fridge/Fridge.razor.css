@@ -56,6 +56,10 @@
     padding-top: 0.35rem;
 }
 
+.fridge-status {
+    margin-top: -1rem;
+}
+
 .feature-section-heading {
     margin: 2rem 0 1rem;
 }

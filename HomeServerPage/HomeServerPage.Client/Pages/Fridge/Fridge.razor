@@ -38,7 +38,8 @@
 
                     <div class="col-12 col-md-3">
                         <label class="form-label label-truncate" for="fridge-quantity">Quantity @FridgeLabels.GetQuantityTypeLabel(EditedFridgeItem.QuantityType)</label>
-                        <InputNumber id="fridge-quantity" class="form-control" @bind-Value="@EditedFridgeItem.QuanitityValue" />
+                        <InputNumber id="fridge-quantity" class="form-control" min="0" step="@(EditedFridgeItem.QuantityType == QuantityType.Weight ? "0.1" : "1")" @bind-Value="@EditedFridgeItem.QuanitityValue" />
+                        <ValidationMessage For="@(() => @EditedFridgeItem.QuanitityValue)" />
                     </div>
 
                     <div class="col-12 col-md-3">
@@ -94,6 +95,13 @@
                 </div>
                 </EditForm>
             </section>
+
+            @if (StatusMessage is not null)
+            {
+                <div class="alert @(StatusMessageIsError ? "alert-danger" : "alert-success") fridge-status" role="status" aria-live="polite">
+                    @StatusMessage
+                </div>
+            }
 
             <div class="feature-section-heading">
                 <div>
@@ -171,7 +179,7 @@
                                         <button type="button" class="btn btn-sm btn-outline-primary fridge-action-button" @onclick="() => CopyItemAsync(item)" @onclick:stopPropagation="true" aria-label="Copy @item.Name" title="Copy">
                                             <span aria-hidden="true">Copy</span>
                                         </button>
-                                        <button type="button" class="btn btn-sm btn-outline-danger fridge-action-button" @onclick="() => RemoveItemAsync(item)" @onclick:stopPropagation="true" aria-label="Remove @item.Name" title="Remove">
+                                        <button type="button" class="btn btn-sm btn-outline-danger fridge-action-button" @onclick="() => RequestDelete(item)" @onclick:stopPropagation="true" aria-label="Remove @item.Name" title="Remove">
                                             <span aria-hidden="true">Remove</span>
                                         </button>
                                     </td>
@@ -219,7 +227,7 @@
                                 <button type="button" class="btn btn-sm btn-outline-primary fridge-action-button" @onclick="() => CopyItemAsync(item)" aria-label="Copy @item.Name">
                                     Copy
                                 </button>
-                                <button type="button" class="btn btn-sm btn-outline-danger fridge-action-button" @onclick="() => RemoveItemAsync(item)" aria-label="Remove @item.Name">
+                                <button type="button" class="btn btn-sm btn-outline-danger fridge-action-button" @onclick="() => RequestDelete(item)" aria-label="Remove @item.Name">
                                     Remove
                                 </button>
                             </div>
@@ -231,11 +239,28 @@
     </div>
 </div>
 
+<ConfirmationDialog IsVisible="@(PendingDeleteItem is not null)"
+                    Id="fridge-delete-dialog"
+                    Title="Remove fridge item?"
+                    ConfirmText="Remove item"
+                    OnConfirm="ConfirmDeleteAsync"
+                    OnCancel="CancelDelete">
+    <ChildContent>
+        <p>Are you sure you want to remove <strong>@PendingDeleteItem?.Name</strong>? This cannot be undone.</p>
+    </ChildContent>
+</ConfirmationDialog>
+
 @code {
 
     public FridgeItemModel EditedFridgeItem { get; set; } = FridgeItemModel.CreateClearEditedFridgeItem(DateTime.Now);
     public List<FridgeItem> Items { get; set; } = [];
     public int? SelectedItemId { get; set; }
+
+    private FridgeItem? PendingDeleteItem { get; set; }
+
+    private string? StatusMessage { get; set; }
+
+    private bool StatusMessageIsError { get; set; }
 
     private static IReadOnlyList<QuantityType> QuantityTypes { get; } = Enum.GetValues<QuantityType>();
 
@@ -321,13 +346,19 @@
 
     private async Task OnValidFridgeItemSubmitAsync(EditContext args)
     {
+        var itemName = EditedFridgeItem.Name ?? "Item";
+
         if (SelectedItemId is int selectedId)
         {
-            await FridgeService.UpdateItemAsync(this.EditedFridgeItem.ToFridgeItem() with { Id = selectedId });
+            var updated = await FridgeService.UpdateItemAsync(this.EditedFridgeItem.ToFridgeItem() with { Id = selectedId });
+            SetStatus(
+                updated ? $"{itemName} updated." : $"Could not update {itemName}.",
+                !updated);
         }
         else
         {
-            await FridgeService.AddItemAsync(this.EditedFridgeItem.ToFridgeItem());
+            var created = await FridgeService.AddItemAsync(this.EditedFridgeItem.ToFridgeItem());
+            SetStatus($"{created.Name} added to the fridge.");
         }
 
         ClearSelection();
@@ -385,11 +416,17 @@
 
     private async Task CopyItemAsync(FridgeItem item)
     {
-        var cloned = item with { Id = 0, AddedDate = DateTimeService.Now.Date };
+        var cloned = item with
+        {
+            Id = 0,
+            AddedDate = DateTimeService.Now.Date,
+            OpenDate = null
+        };
         var created = await FridgeService.AddItemAsync(cloned);
 
         Items = await FridgeService.GetItemsAsync();
         SelectItem(created);
+        SetStatus($"{created.Name} copied as a new unopened item.");
     }
 
     private static double GetQuantityStep(FridgeItem item)
@@ -414,7 +451,7 @@
 
     private async Task OpenItemAsync(FridgeItem item)
     {
-        var openedAt = DateTimeService.Now;
+        var openedAt = DateTimeService.Now.Date;
         var updated = await FridgeService.UpdateItemAsync(item with { OpenDate = openedAt });
 
         Items = await FridgeService.GetItemsAsync();
@@ -425,10 +462,45 @@
         }
     }
 
-    private async Task RemoveItemAsync(FridgeItem item)
+    private void RequestDelete(FridgeItem item)
     {
-        await FridgeService.RemoveItemAsync(item.Id);
+        PendingDeleteItem = item;
+    }
+
+    private void CancelDelete()
+    {
+        PendingDeleteItem = null;
+    }
+
+    private async Task ConfirmDeleteAsync()
+    {
+        if (PendingDeleteItem is not FridgeItem item)
+        {
+            return;
+        }
+
+        PendingDeleteItem = null;
+        var removed = await FridgeService.RemoveItemAsync(item.Id);
         Items = await FridgeService.GetItemsAsync();
+
+        if (!removed)
+        {
+            SetStatus($"Could not remove {item.Name}.", isError: true);
+            return;
+        }
+
+        if (SelectedItemId == item.Id)
+        {
+            ClearSelection();
+        }
+
+        SetStatus($"{item.Name} removed from the fridge.");
+    }
+
+    private void SetStatus(string message, bool isError = false)
+    {
+        StatusMessage = message;
+        StatusMessageIsError = isError;
     }
 
 }

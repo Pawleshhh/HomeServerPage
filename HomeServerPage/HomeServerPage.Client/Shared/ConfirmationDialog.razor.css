@@ -1,0 +1,93 @@
+.confirmation-dialog-backdrop {
+    position: fixed;
+    z-index: 1050;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding: 1rem;
+    background: rgba(25, 40, 31, 0.58);
+    backdrop-filter: blur(3px);
+}
+
+.confirmation-dialog {
+    width: min(100%, 30rem);
+    padding: 1.35rem;
+    border: 1px solid var(--app-border);
+    border-radius: var(--app-radius-lg);
+    background: var(--app-surface);
+    box-shadow: 0 1rem 3rem rgba(16, 24, 20, 0.25);
+}
+
+.confirmation-dialog:focus-visible {
+    outline: 3px solid var(--app-focus);
+    outline-offset: 3px;
+}
+
+.confirmation-dialog-heading {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.85rem;
+}
+
+.confirmation-dialog-icon {
+    display: inline-flex;
+    width: 2.5rem;
+    min-width: 2.5rem;
+    height: 2.5rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    color: #842029;
+    background: #f8d7da;
+    font-size: 1.2rem;
+    font-weight: 800;
+}
+
+.confirmation-dialog h2 {
+    margin: 0;
+    color: var(--app-text);
+    font-size: 1.15rem;
+    font-weight: 750;
+}
+
+.confirmation-dialog-message {
+    margin-top: 0.35rem;
+    color: var(--app-text-muted);
+    line-height: 1.5;
+}
+
+.confirmation-dialog-message p,
+::deep .confirmation-dialog-message p {
+    margin: 0;
+}
+
+.confirmation-dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.65rem;
+    margin-top: 1.35rem;
+}
+
+.confirmation-dialog-actions .btn {
+    min-width: 7rem;
+}
+
+@media (max-width: 575.98px) {
+    .confirmation-dialog-backdrop {
+        align-items: end;
+        padding: 0.75rem;
+    }
+
+    .confirmation-dialog {
+        width: 100%;
+        padding: 1.1rem;
+    }
+
+    .confirmation-dialog-actions {
+        flex-direction: column;
+    }
+
+    .confirmation-dialog-actions .btn {
+        width: 100%;
+    }
+}

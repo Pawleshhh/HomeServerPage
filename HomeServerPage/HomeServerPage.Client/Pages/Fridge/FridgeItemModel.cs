@@ -25,7 +25,7 @@ public class FridgeItemModel : IValidatableObject
     public static FridgeItemModel CreateClearEditedFridgeItem(DateTime now)
         => new FridgeItemModel
             {
-                Name = "Name",
+                Name = string.Empty,
                 QuanitityValue = 1,
                 QuantityType = QuantityType.Unit,
                 AddedDate = now,
@@ -59,6 +59,13 @@ public class FridgeItemModel : IValidatableObject
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
+        if (QuantityType == QuantityType.Unit && QuanitityValue != Math.Truncate(QuanitityValue))
+        {
+            yield return new ValidationResult(
+                "Unit quantities must be whole numbers.",
+                new[] { nameof(QuanitityValue) });
+        }
+
         if (ExpirationDate.Date < AddedDate.Date)
         {
             yield return new ValidationResult(

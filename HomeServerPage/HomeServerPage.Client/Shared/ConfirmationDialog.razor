@@ -1,0 +1,86 @@
+@if (IsVisible)
+{
+    <div class="confirmation-dialog-backdrop" @onclick="HandleCancelAsync" @onkeydown="HandleKeyDownAsync">
+        <section class="confirmation-dialog" role="dialog" aria-modal="true" aria-labelledby="@TitleId" aria-describedby="@(HasMessage ? DescriptionId : null)" tabindex="-1" @onclick:stopPropagation="true">
+            <div class="confirmation-dialog-heading">
+                @if (!string.IsNullOrWhiteSpace(Icon))
+                {
+                    <span class="confirmation-dialog-icon" aria-hidden="true">@Icon</span>
+                }
+                <div>
+                    <h2 id="@TitleId">@Title</h2>
+                    @if (HasMessage)
+                    {
+                        <div id="@DescriptionId" class="confirmation-dialog-message">
+                            @if (ChildContent is not null)
+                            {
+                                @ChildContent
+                            }
+                            else
+                            {
+                                <p>@Message</p>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+            <div class="confirmation-dialog-actions">
+                <button type="button" class="btn btn-outline-secondary" @onclick="HandleCancelAsync" autofocus>@CancelText</button>
+                <button type="button" class="btn @ConfirmButtonClass" @onclick="HandleConfirmAsync">@ConfirmText</button>
+            </div>
+        </section>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public bool IsVisible { get; set; }
+
+    [Parameter]
+    public string Id { get; set; } = "confirmation-dialog";
+
+    [Parameter]
+    public string Title { get; set; } = "Confirm action";
+
+    [Parameter]
+    public string? Message { get; set; }
+
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    [Parameter]
+    public string ConfirmText { get; set; } = "Confirm";
+
+    [Parameter]
+    public string CancelText { get; set; } = "Cancel";
+
+    [Parameter]
+    public string ConfirmButtonClass { get; set; } = "btn-danger";
+
+    [Parameter]
+    public string Icon { get; set; } = "!";
+
+    [Parameter]
+    public EventCallback OnConfirm { get; set; }
+
+    [Parameter]
+    public EventCallback OnCancel { get; set; }
+
+    private string TitleId => $"{Id}-title";
+
+    private string DescriptionId => $"{Id}-description";
+
+    private bool HasMessage => ChildContent is not null || !string.IsNullOrWhiteSpace(Message);
+
+    private Task HandleConfirmAsync() => OnConfirm.InvokeAsync();
+
+    private Task HandleCancelAsync() => OnCancel.InvokeAsync();
+
+    private async Task HandleKeyDownAsync(KeyboardEventArgs args)
+    {
+        if (args.Key == "Escape")
+        {
+            await OnCancel.InvokeAsync();
+        }
+    }
+}
