@@ -1,0 +1,91 @@
+@page "/tablet-dashboard/public-transport"
+@layout TabletLayout
+@using HomeServerPage.Data.PublicTransport
+@inject IPublicTransportService PublicTransportService
+
+<PageTitle>Tablet Transport</PageTitle>
+
+<section class="tablet-page tablet-transport" aria-labelledby="tablet-transport-heading">
+    <header class="tablet-page-header">
+        <div>
+            <h1 id="tablet-transport-heading">Public transport</h1>
+            <p>Upcoming departures from your usual stops.</p>
+        </div>
+        <button type="button" class="btn btn-outline-primary" @onclick="LoadBoardsAsync" disabled="@isLoading">@(isLoading ? "Refreshing..." : "Refresh")</button>
+    </header>
+
+    @if (isLoading && boards.Count == 0)
+    {
+        <p class="tablet-page-status" role="status">Loading departure boards…</p>
+    }
+    else if (errorMessage is not null)
+    {
+        <p class="tablet-page-status is-error" role="alert">@errorMessage</p>
+    }
+    else if (boards.Count == 0)
+    {
+        <p class="tablet-page-status" role="status">No departure boards are available right now.</p>
+    }
+    else
+    {
+        <div class="tablet-transport-boards" aria-label="Departure boards">
+            @foreach (var board in boards)
+            {
+                <section class="tablet-transport-board" aria-labelledby="tablet-transport-stop-@board.Stop.Number">
+                    <header>
+                        <h2 id="tablet-transport-stop-@board.Stop.Number">Lubomirskiego</h2>
+                        <span>Stop @board.Stop.Number</span>
+                    </header>
+                    <div class="tablet-transport-departures">
+                        @foreach (var departure in board.Departures.OrderBy(departure => departure.DepartureTime.Estimated))
+                        {
+                            <div class="tablet-transport-departure @(departure.DepartureTime.Canceled ? "is-canceled" : null)">
+                                <span class="tablet-transport-line" style="background-color: @PublicTransportLineColors.GetColor(departure.Line.Number); color: @PublicTransportLineColors.GetTextColor(departure.Line.Number);">@departure.Line.Number</span>
+                                <span class="tablet-transport-destination">@departure.Trip.Headsign.Short</span>
+                                @if (departure.DepartureTime.Canceled)
+                                {
+                                    <span class="tablet-transport-state">Cancelled</span>
+                                }
+                                else if (departure.DepartureTime.DepartingNow)
+                                {
+                                    <span class="tablet-transport-state">Now</span>
+                                }
+                                <time>@departure.DepartureTime.Estimated.ToLocalTime().ToString("HH:mm")</time>
+                            </div>
+                        }
+                    </div>
+                </section>
+            }
+        </div>
+    }
+</section>
+
+@code {
+    private List<DepartureBoard> boards = [];
+    private bool isLoading;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadBoardsAsync();
+    }
+
+    private async Task LoadBoardsAsync()
+    {
+        isLoading = true;
+        errorMessage = null;
+
+        try
+        {
+            boards = await PublicTransportService.GetDepartureBoardsAsync();
+        }
+        catch (Exception)
+        {
+            errorMessage = "Could not load the departure boards.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}

@@ -12,10 +12,10 @@
                     <p class="dashboard-card-subtitle">Solar, planetary, and lunar visibility for Szczecin.</p>
                 </div>
             </div>
-            <a class="btn btn-sm btn-outline-primary dashboard-card-action" href="/astronomy">Open sky tools</a>
+            <a class="btn btn-sm btn-outline-primary dashboard-card-action" href="@DetailsHref">Open sky tools</a>
         </div>
 
-        @if (solarSystemObservations is null)
+        @if (isLoading)
         {
             <p class="dashboard-card-status" role="status">Loading celestial observations…</p>
         }
@@ -52,25 +52,43 @@
                     </div>
                 </section>
             }
+            else
+            {
+                <p class="dashboard-card-status is-empty mb-0">No deep-sky objects are visible at sunset.</p>
+            }
         }
     </div>
 </section>
 
 @code {
-    private IReadOnlyList<AstronomyObservation>? solarSystemObservations;
+    [Parameter]
+    public string DetailsHref { get; set; } = "/astronomy";
+
+    private IReadOnlyList<AstronomyObservation> solarSystemObservations = [];
     private IReadOnlyList<AstronomyObservation> visibleMessierObservations = [];
     private DateTime requestDateUtc;
     private DateTimeOffset? observationTime;
+    private bool isLoading = true;
     private string? loadError;
 
     protected override async Task OnInitializedAsync()
     {
-        var nowInPoland = TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, AstronomyDefaults.LocalTimeZone);
-        requestDateUtc = nowInPoland.UtcDateTime;
-        observationTime = nowInPoland;
+        await LoadObservationsAsync();
+    }
+
+    private async Task LoadObservationsAsync()
+    {
+        isLoading = true;
+        loadError = null;
+        solarSystemObservations = [];
+        visibleMessierObservations = [];
 
         try
         {
+            var nowInPoland = TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, AstronomyDefaults.LocalTimeZone);
+            requestDateUtc = nowInPoland.UtcDateTime;
+            observationTime = nowInPoland;
+
             var solarSystemObservationsTask = AstronomyObservationLoader.LoadSolarSystemAsync(
                 AstronomyService,
                 requestDateUtc,
@@ -94,6 +112,10 @@
         catch (Exception exception)
         {
             loadError = $"Unable to load celestial observations: {exception.Message}";
+        }
+        finally
+        {
+            isLoading = false;
         }
     }
 

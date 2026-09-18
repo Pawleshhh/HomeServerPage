@@ -12,7 +12,7 @@
                     <p class="dashboard-card-subtitle">Keep an eye on these fridge items.</p>
                 </div>
             </div>
-            <a class="btn btn-sm btn-outline-primary dashboard-card-action" href="/fridge">Open fridge</a>
+            <a class="btn btn-sm btn-outline-primary dashboard-card-action" href="@DetailsHref">Open fridge</a>
         </div>
 
         @if (Items is null)
@@ -42,6 +42,9 @@
 </section>
 
 @code {
+    [Parameter]
+    public string DetailsHref { get; set; } = "/fridge";
+
     private List<FridgeItem>? Items;
 
     protected override async Task OnInitializedAsync()

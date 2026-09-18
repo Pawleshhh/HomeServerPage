@@ -1,0 +1,17 @@
+.tablet-astronomy {
+    height: 100%;
+    min-height: 100%;
+    padding: 0.75rem;
+}
+
+.tablet-astronomy ::deep .astronomy-widget {
+    min-height: 100%;
+}
+
+.tablet-astronomy ::deep .card-body {
+    padding: 1rem;
+}
+
+.tablet-astronomy ::deep .dashboard-card-header {
+    margin-bottom: 0.8rem;
+}

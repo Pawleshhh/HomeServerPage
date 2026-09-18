@@ -11,16 +11,16 @@
                     <p class="dashboard-card-subtitle">Next departures from Lubomirskiego.</p>
                 </div>
             </div>
-            <a class="btn btn-sm btn-outline-primary dashboard-card-action" href="/public-transport">Open departures</a>
+            <a class="btn btn-sm btn-outline-primary dashboard-card-action" href="@DetailsHref">Open departures</a>
         </div>
 
-        @if (Boards is null)
-        {
-            <p class="dashboard-card-status" role="status">Loading departures…</p>
-        }
-        else if (errorMessage is not null)
+        @if (errorMessage is not null)
         {
             <p class="dashboard-card-status is-error mb-0" role="alert">@errorMessage</p>
+        }
+        else if (Boards is null)
+        {
+            <p class="dashboard-card-status" role="status">Loading departures…</p>
         }
         else if (Boards.Count == 0)
         {
@@ -57,6 +57,9 @@
 </section>
 
 @code {
+    [Parameter]
+    public string DetailsHref { get; set; } = "/public-transport";
+
     private List<DepartureBoard>? Boards;
     private string? errorMessage;
 
