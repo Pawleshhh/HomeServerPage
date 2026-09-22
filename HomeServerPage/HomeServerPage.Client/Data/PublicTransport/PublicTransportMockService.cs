@@ -9,18 +9,29 @@ public class PublicTransportMockService(IDateTimeService dateTimeService) : IPub
 
     public Task<DepartureBoard> GetDepartureBoardAsync(int stopNumber, int limit = 10, CancellationToken cancellationToken = default)
     {
-        return Task.FromResult(CreateBoard(stopNumber, limit));
+        return GetDepartureBoardInternalAsync(stopNumber, limit, cancellationToken);
     }
 
     public async Task<List<DepartureBoard>> GetDepartureBoardsAsync(int limit = 10, CancellationToken cancellationToken = default)
     {
+        await dateTimeService.SyncAsync(cancellationToken);
+
         var boards = new List<DepartureBoard>();
         foreach (var (stopNumber, _) in Stops)
         {
-            boards.Add(await GetDepartureBoardAsync(stopNumber, limit, cancellationToken));
+            boards.Add(CreateBoard(stopNumber, limit));
         }
 
         return boards;
+    }
+
+    private async Task<DepartureBoard> GetDepartureBoardInternalAsync(
+        int stopNumber,
+        int limit,
+        CancellationToken cancellationToken)
+    {
+        await dateTimeService.SyncAsync(cancellationToken);
+        return CreateBoard(stopNumber, limit);
     }
 
     private DepartureBoard CreateBoard(int stopNumber, int limit)

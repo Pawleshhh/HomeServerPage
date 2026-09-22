@@ -1,0 +1,21 @@
+@page "/tablet-dashboard"
+@layout TabletLayout
+@using HomeServerPage.Client.Pages.Astronomy
+@using HomeServerPage.Client.Pages.Fridge
+@using HomeServerPage.Client.Pages.PublicTransport
+
+<PageTitle>Tablet Dashboard</PageTitle>
+
+<div class="tablet-dashboard">
+    <section class="tablet-dashboard-grid" aria-label="Daily essentials">
+        <div class="tablet-dashboard-item tablet-dashboard-item-fridge">
+            <ExpiringFridgeItems DetailsHref="/tablet-dashboard/fridge" />
+        </div>
+        <div class="tablet-dashboard-item tablet-dashboard-item-transport">
+            <PublicTransportWidget DetailsHref="/tablet-dashboard/public-transport" />
+        </div>
+        <div class="tablet-dashboard-item tablet-dashboard-item-astronomy">
+            <AstronomyWidget DetailsHref="/tablet-dashboard/astronomy" />
+        </div>
+    </section>
+</div>
