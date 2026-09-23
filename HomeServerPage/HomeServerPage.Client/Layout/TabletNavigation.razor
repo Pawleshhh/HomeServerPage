@@ -1,4 +1,9 @@
+@inject NavigationManager NavigationManager
+
 <nav class="tablet-navigation" aria-label="Tablet navigation">
+    <button class="tablet-navigation-link tablet-navigation-refresh" type="button" aria-label="Refresh page" title="Refresh page" @onclick="RefreshPage">
+        <span class="tablet-navigation-icon" aria-hidden="true">🔄️</span>
+    </button>
     <NavLink class="tablet-navigation-link" href="tablet-dashboard" Match="NavLinkMatch.All">
         <span class="tablet-navigation-icon" aria-hidden="true">⌂</span>
         <span>Home</span>
@@ -16,3 +21,10 @@
         <span>Astronomy</span>
     </NavLink>
 </nav>
+
+@code {
+    private void RefreshPage()
+    {
+        NavigationManager.Refresh(forceReload: true);
+    }
+}
