@@ -28,29 +28,40 @@
         }
         else
         {
-            <div class="transport-boards">
-                @foreach (var board in Boards)
-                {
-                    <section class="transport-board" aria-labelledby="transport-stop-@board.Stop.Number">
-                        <h3 id="transport-stop-@board.Stop.Number" class="transport-board-title">
-                        Lubomirskiego <span class="text-body-secondary">(@board.Stop.Number)</span>
-                        </h3>
-                        <div class="list-group list-group-flush transport-departures">
-                            @foreach (var departure in board.Departures.OrderBy(d => d.DepartureTime.Estimated))
+            <div class="transport-table-scroll">
+                <table class="transport-directions-table">
+                    <thead>
+                        <tr>
+                            @foreach (var board in Boards)
                             {
-                                <div class="list-group-item transport-departure-row">
-                                    <span class="badge transport-line-badge" style="background-color: @PublicTransportLineColors.GetColor(departure.Line.Number); color: @PublicTransportLineColors.GetTextColor(departure.Line.Number)">
-                                        @departure.Line.Number
-                                    </span>
-                                    <span class="transport-destination">@departure.Trip.Headsign.Short</span>
-                                    <span class="transport-time">
-                                        @departure.DepartureTime.Estimated.ToLocalTime().ToString("HH:mm")
-                                    </span>
-                                </div>
+                                <th scope="col">Lubomirskiego <span class="text-body-secondary">(@board.Stop.Number)</span></th>
                             }
-                        </div>
-                    </section>
-                }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            @foreach (var board in Boards)
+                            {
+                                <td>
+                                    <div class="list-group list-group-flush transport-departures">
+                                        @foreach (var departure in board.Departures.OrderBy(d => d.DepartureTime.Estimated))
+                                        {
+                                            <div class="list-group-item transport-departure-row">
+                                                <span class="badge transport-line-badge" style="background-color: @PublicTransportLineColors.GetColor(departure.Line.Number); color: @PublicTransportLineColors.GetTextColor(departure.Line.Number)">
+                                                    @departure.Line.Number
+                                                </span>
+                                                <span class="transport-destination">@departure.Trip.Headsign.Short</span>
+                                                <span class="transport-time">
+                                                    @departure.DepartureTime.Estimated.ToLocalTime().ToString("HH:mm")
+                                                </span>
+                                            </div>
+                                        }
+                                    </div>
+                                </td>
+                            }
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         }
     </div>

@@ -1,20 +1,38 @@
-.transport-boards {
-    display: grid;
-    gap: 0.9rem;
+.transport-table-scroll {
+    max-width: 100%;
+    overflow-x: auto;
 }
 
-.transport-board {
-    padding: 0.75rem 0.9rem 0.35rem;
-    border: 1px solid var(--app-border);
-    border-radius: var(--app-radius-sm);
-    background: var(--app-surface-raised);
+.transport-directions-table {
+    width: 100%;
+    min-width: 520px;
+    table-layout: fixed;
+    border-collapse: separate;
+    border-spacing: 0;
 }
 
-.transport-board-title {
-    margin: 0 0 0.3rem;
+.transport-directions-table th {
+    width: 50%;
+    padding: 0.55rem 0.65rem;
+    border-bottom: 1px solid var(--app-border);
     color: var(--app-text);
     font-size: 0.84rem;
     font-weight: 750;
+    text-align: left;
+}
+
+.transport-directions-table th + th,
+.transport-directions-table td + td {
+    border-left: 1px solid var(--app-border);
+}
+
+.transport-directions-table td {
+    padding: 0 0.65rem;
+    vertical-align: top;
+}
+
+.transport-departures {
+    margin: 0;
 }
 
 .transport-departure-row {
