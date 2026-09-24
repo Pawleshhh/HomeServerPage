@@ -1,6 +1,5 @@
 @inject NavigationManager NavigationManager
 @inject HomeServerPage.Data.IDateTimeService DateTimeService
-@implements IAsyncDisposable
 
 <nav class="tablet-navigation" aria-label="Tablet navigation">
     <button class="tablet-navigation-link tablet-navigation-refresh" type="button" aria-label="Refresh page" title="Refresh page" @onclick="RefreshPage">
@@ -37,47 +36,15 @@
 
 @code {
     private DateTime? currentDateTime;
-    private CancellationTokenSource clockCancellation = new();
-    private Task? clockTask;
 
     protected override async Task OnInitializedAsync()
     {
         await DateTimeService.SyncAsync();
         currentDateTime = DateTimeService.Now;
-        clockTask = UpdateClockAsync(clockCancellation.Token);
     }
 
     private void RefreshPage()
     {
         NavigationManager.Refresh(forceReload: true);
-    }
-
-    private async Task UpdateClockAsync(CancellationToken cancellationToken)
-    {
-        using var timer = new PeriodicTimer(TimeSpan.FromSeconds(1));
-
-        try
-        {
-            while (await timer.WaitForNextTickAsync(cancellationToken))
-            {
-                currentDateTime = DateTimeService.Now;
-                await InvokeAsync(StateHasChanged);
-            }
-        }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-        {
-        }
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        clockCancellation.Cancel();
-
-        if (clockTask is not null)
-        {
-            await clockTask;
-        }
-
-        clockCancellation.Dispose();
     }
 }
