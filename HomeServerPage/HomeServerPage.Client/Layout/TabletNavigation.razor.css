@@ -2,11 +2,48 @@
     position: relative;
     z-index: 1;
     display: grid;
-    grid-template-columns: auto repeat(4, minmax(0, 1fr));
+    grid-template-columns: auto minmax(0, 1fr) repeat(4, minmax(0, 1fr));
     min-height: 4.75rem;
     border-top: 1px solid var(--app-border);
     background: var(--app-surface);
     box-shadow: 0 -0.35rem 1.25rem rgb(74 45 32 / 7%);
+}
+
+.tablet-navigation-clock {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 0.15rem;
+    padding: 0.45rem 0.75rem;
+    color: var(--app-text);
+}
+
+.tablet-navigation-date,
+.tablet-navigation-time {
+    min-width: 0;
+    max-width: 100%;
+    color: var(--app-text-muted);
+    font-size: clamp(0.95rem, 2.3vw, 1.25rem);
+    font-weight: 600;
+    line-height: 1.1;
+    overflow-wrap: anywhere;
+    white-space: normal;
+}
+
+.tablet-navigation-clock-status {
+    max-width: 100%;
+    color: var(--app-text-muted);
+    font-size: 0.8rem;
+    font-weight: 600;
+    line-height: 1.1;
+    overflow-wrap: anywhere;
+    white-space: normal;
+}
+
+.tablet-navigation-time {
+    font-variant-numeric: tabular-nums;
 }
 
 .tablet-navigation ::deep .tablet-navigation-link {
@@ -43,8 +80,10 @@
 }
 
 .tablet-navigation-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     height: 1.45rem;
-    font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif;
     font-size: 1.25rem;
     line-height: 1;
 }
@@ -56,8 +95,16 @@
 
 @media (min-width: 768px) {
     .tablet-navigation {
-        grid-template-columns: auto repeat(4, minmax(0, 1fr));
+        grid-template-columns: auto minmax(max-content, 1fr) repeat(4, minmax(0, 1fr));
         min-height: 4.25rem;
+    }
+
+    .tablet-navigation-clock {
+        align-items: center;
+        flex-direction: row;
+        gap: 0.75rem;
+        padding-right: 1rem;
+        padding-left: 1rem;
     }
 
     .tablet-navigation ::deep .tablet-navigation-link {
@@ -65,5 +112,14 @@
         flex-direction: row;
         gap: 0.5rem;
         font-size: 0.88rem;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .tablet-navigation-clock {
+        align-items: center;
+        padding-right: 0.4rem;
+        padding-left: 0.4rem;
+        text-align: center;
     }
 }

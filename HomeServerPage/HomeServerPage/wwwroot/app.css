@@ -316,7 +316,6 @@ h1:focus {
     border-radius: 0.8rem;
     color: var(--dashboard-accent);
     background: var(--dashboard-accent-soft);
-    font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif;
     font-size: 1.45rem;
     line-height: 1;
 }

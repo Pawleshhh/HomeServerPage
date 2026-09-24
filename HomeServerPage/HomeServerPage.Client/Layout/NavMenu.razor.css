@@ -173,7 +173,6 @@
     align-items: center;
     justify-content: center;
     color: var(--app-accent, #c96f45);
-    font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif;
     font-size: 1.25rem;
     line-height: 1;
 }
