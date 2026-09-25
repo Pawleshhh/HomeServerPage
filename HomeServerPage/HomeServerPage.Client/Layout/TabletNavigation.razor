@@ -1,11 +1,13 @@
 @inject NavigationManager NavigationManager
 @inject HomeServerPage.Data.IDateTimeService DateTimeService
 
+<script type="module" src="@Assets["Layout/TabletNavigation.razor.js"]"></script>
+
 <nav class="tablet-navigation" aria-label="Tablet navigation">
     <button class="tablet-navigation-link tablet-navigation-refresh" type="button" aria-label="Refresh page" title="Refresh page" @onclick="RefreshPage">
         <span class="tablet-navigation-icon" aria-hidden="true"><i class="bi bi-arrow-clockwise"></i></span>
     </button>
-    <div class="tablet-navigation-clock" aria-label="Current date and time" aria-live="polite">
+    <div class="tablet-navigation-clock" aria-label="Current date and time" aria-live="polite" data-server-time="@currentDateTime?.ToString("yyyy-MM-ddTHH:mm:ss.fff")">
         @if (currentDateTime is DateTime now)
         {
             <span class="tablet-navigation-date">@now.ToString("d")</span>
