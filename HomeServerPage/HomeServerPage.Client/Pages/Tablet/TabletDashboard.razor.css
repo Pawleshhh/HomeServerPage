@@ -23,12 +23,34 @@
 }
 
 .tablet-dashboard-item ::deep .card-body {
-    padding: 1rem;
+    position: relative;
+    padding: 1rem 1rem 1rem 3.25rem;
 }
 
 .tablet-dashboard-item ::deep .dashboard-card-header {
-    gap: 0.75rem;
-    margin-bottom: 0.75rem;
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    z-index: 1;
+    margin: 0;
+}
+
+.tablet-dashboard-item ::deep .dashboard-card-heading > div,
+.tablet-dashboard-item ::deep .dashboard-card-action {
+    display: none;
+}
+
+.tablet-dashboard-item ::deep .dashboard-card-heading {
+    display: block;
+}
+
+.tablet-dashboard-item ::deep .dashboard-card-icon {
+    display: grid;
+    width: 1.75rem;
+    height: 1.75rem;
+    place-items: center;
+    margin: 0;
+    font-size: 0.9rem;
 }
 
 .tablet-dashboard-item-fridge {
@@ -50,6 +72,86 @@
 @media (max-width: 767.98px) {
     .tablet-dashboard-grid {
         grid-template-columns: minmax(0, 1fr);
+    }
+
+    @media (min-width: 768px) and (max-width: 1100px) {
+        .tablet-dashboard {
+            padding: 0.2rem 0.4rem 0.1rem;
+        }
+
+        .tablet-dashboard-grid {
+            grid-template-columns: repeat(8, minmax(0, 1fr));
+            gap: 0.4rem;
+        }
+
+        .tablet-dashboard-item-fridge {
+            grid-column: span 3;
+        }
+
+        .tablet-dashboard-item-transport {
+            grid-column: span 5;
+        }
+
+        .tablet-dashboard-item-weather {
+            grid-column: span 5;
+        }
+
+        .tablet-dashboard-item-astronomy {
+            grid-column: span 3;
+        }
+
+        .tablet-dashboard-item ::deep .card-body {
+            padding: 0.7rem 0.75rem 0.65rem 3rem;
+        }
+
+        .tablet-dashboard-item ::deep .dashboard-card-header {
+            top: 0.7rem;
+            left: 0.75rem;
+        }
+
+        .tablet-dashboard-item-transport ::deep .card-body {
+            padding-left: 2.5rem;
+        }
+
+        .tablet-dashboard-item-transport ::deep .transport-directions-table {
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
+            table-layout: fixed;
+        }
+
+        .tablet-dashboard-item-transport ::deep .transport-table-scroll {
+            overflow-x: hidden;
+        }
+
+        .tablet-dashboard-item-transport ::deep .transport-directions-table th {
+            width: 50%;
+            padding-right: 0.35rem;
+            padding-left: 0.35rem;
+            font-size: 0.76rem;
+        }
+
+        .tablet-dashboard-item-transport ::deep .transport-directions-table td {
+            width: 50%;
+            padding-right: 0.35rem;
+            padding-left: 0.35rem;
+        }
+
+        .tablet-dashboard-item-transport ::deep .transport-departure-row {
+            gap: 0.2rem;
+            padding-top: 0.45rem;
+            padding-bottom: 0.45rem;
+        }
+
+        .tablet-dashboard-item-transport ::deep .transport-line-badge {
+            min-width: 2rem;
+            font-size: 0.7rem;
+        }
+
+        .tablet-dashboard-item-transport ::deep .transport-destination,
+        .tablet-dashboard-item-transport ::deep .transport-time {
+            font-size: 0.78rem;
+        }
     }
 
     .tablet-dashboard-item-fridge,
