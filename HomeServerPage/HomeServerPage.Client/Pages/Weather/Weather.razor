@@ -1,0 +1,14 @@
+@page "/weather"
+@page "/tablet-dashboard/weather"
+@using HomeServerPage.Client.Pages.Weather
+
+<PageTitle>Weather</PageTitle>
+
+<div class="container-fluid weather-page">
+    <PageHeader Title="Weather"
+                Description="Current conditions and a quick look at the day ahead."
+                Accent="transport" />
+
+    <WeatherWidget />
+    <WeatherForecast />
+</div>

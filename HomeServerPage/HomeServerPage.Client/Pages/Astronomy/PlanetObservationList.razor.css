@@ -4,6 +4,51 @@
     gap: 0.5rem;
 }
 
+.astronomy-planet-table-wrapper {
+    overflow-x: auto;
+}
+
+.astronomy-planet-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.78rem;
+}
+
+.astronomy-planet-table th,
+.astronomy-planet-table td {
+    padding: 0.25rem 0.4rem;
+    border-bottom: 1px solid var(--app-border);
+    text-align: right;
+    white-space: nowrap;
+}
+
+.astronomy-planet-table thead th {
+    color: var(--app-text-muted);
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.astronomy-planet-table th:first-child,
+.astronomy-planet-table td:first-child {
+    text-align: left;
+}
+
+.astronomy-planet-table tbody tr:last-child th,
+.astronomy-planet-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.astronomy-planet-table-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+    margin-right: 0.35rem;
+    vertical-align: middle;
+    object-fit: contain;
+    border-radius: 50%;
+}
+
 .astronomy-planet-item {
     background-image: linear-gradient(135deg, var(--planet-color-start, var(--app-surface)) 0%, var(--planet-color-end, var(--app-surface)) 100%);
     color: var(--planet-text-color, #fff);

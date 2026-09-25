@@ -1,0 +1,95 @@
+@using HomeServerPage.Data.Weather
+@inject IWeatherService WeatherService
+
+<section class="dashboard-card dashboard-card-weather card h-100" aria-labelledby="weather-widget-heading">
+    <div class="card-body">
+        <div class="dashboard-card-header">
+            <div class="dashboard-card-heading">
+                <span class="dashboard-card-icon" aria-hidden="true"><i class="bi @WeatherIconClass"></i></span>
+                <div>
+                    <h2 id="weather-widget-heading" class="dashboard-card-title">Weather</h2>
+                    <p class="dashboard-card-subtitle">Current conditions in @LocationLabel.</p>
+                </div>
+            </div>
+        </div>
+
+        @if (isLoading)
+        {
+            <p class="dashboard-card-status" role="status">Loading weather…</p>
+        }
+        else if (loadError is not null)
+        {
+            <p class="dashboard-card-status is-error mb-0" role="alert">@loadError</p>
+        }
+        else if (snapshot is not null)
+        {
+            <div class="weather-summary">
+                <div class="weather-temperature">
+                    <span class="weather-temperature-value">@snapshot.TemperatureCelsius.ToString("0.#")</span>
+                    <span class="weather-temperature-unit">°C</span>
+                </div>
+                <div class="weather-condition">
+                    <span class="weather-condition-icon" role="img" aria-label="@snapshot.Condition.Text">
+                        <i class="bi @WeatherIconClass" aria-hidden="true"></i>
+                    </span>
+                    <span>@snapshot.Condition.Text · feels like @snapshot.FeelsLikeCelsius.ToString("0.#")°C</span>
+                </div>
+            </div>
+            <dl class="weather-details">
+                <div>
+                    <dt><i class="bi bi-droplet-fill" aria-hidden="true"></i> Humidity</dt>
+                    <dd>@snapshot.HumidityPercent%</dd>
+                </div>
+                <div>
+                    <dt><i class="bi bi-wind" aria-hidden="true"></i> Wind</dt>
+                    <dd>@snapshot.WindSpeedKilometersPerHour.ToString("0.#") km/h @snapshot.WindDirection</dd>
+                </div>
+                <div>
+                    <dt><i class="bi bi-cloud-rain" aria-hidden="true"></i> Rain chance</dt>
+                    <dd>@RainChancePercent%</dd>
+                </div>
+                <div>
+                    <dt><i class="bi bi-moisture" aria-hidden="true"></i> Precipitation</dt>
+                    <dd>@snapshot.PrecipitationMillimeters.ToString("0.#") mm</dd>
+                </div>
+                <div>
+                    <dt><i class="bi bi-speedometer2" aria-hidden="true"></i> Pressure</dt>
+                    <dd>@snapshot.PressureMillibars.ToString("0.#") mb</dd>
+                </div>
+                <div>
+                    <dt><i class="bi bi-brightness-high" aria-hidden="true"></i> UV</dt>
+                    <dd>@snapshot.UvIndex.ToString("0.#")</dd>
+                </div>
+            </dl>
+        }
+    </div>
+</section>
+
+@code {
+    private WeatherSnapshot? snapshot;
+    private bool isLoading = true;
+    private string? loadError;
+    private WeatherForecastDay? forecastDay;
+
+    private string LocationLabel => snapshot?.Location.Name ?? "Szczecin";
+    private string WeatherIconClass => WeatherConditionIcons.GetIconClass(snapshot?.Condition.Text);
+    private int RainChancePercent => forecastDay?.ChanceOfRainPercent ?? 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var forecast = await WeatherService.GetForecastAsync(1);
+            snapshot = forecast.Current;
+            forecastDay = forecast.Days.FirstOrDefault();
+        }
+        catch (Exception)
+        {
+            loadError = "Could not load weather.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}

@@ -6,6 +6,7 @@ using HomeServerPage.Data.Astronomy;
 using HomeServerPage.Data.Astronomy.Telescopes;
 using HomeServerPage.Data.Fridge;
 using HomeServerPage.Data.PublicTransport;
+using HomeServerPage.Data.Weather;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -29,6 +30,30 @@ builder.Services.AddDbContextFactory<AstronomyDbContext>(op => op.UseSqlite(astr
 builder.Services.AddScoped<IAstronomyService, AstronomyService>();
 builder.Services.AddScoped<IObservationPointService, ObservationPointService>();
 builder.Services.AddScoped<ITelescopeService, TelescopeService>();
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services.AddScoped<IWeatherService, MockWeatherService>();
+}
+else
+{
+    builder.Services.AddOptions<WeatherApiOptions>()
+        .Configure(options =>
+        {
+            options.ApiKey = builder.Configuration["WEATHER_API"]
+                ?? builder.Configuration["WeatherApi:ApiKey"]
+                ?? string.Empty;
+            options.Location = builder.Configuration["WeatherApi:Location"] ?? "Szczecin";
+            options.ForecastDays = int.TryParse(
+                builder.Configuration["WeatherApi:ForecastDays"],
+                out var forecastDays)
+                ? Math.Clamp(forecastDays, 1, 14)
+                : 3;
+        });
+    builder.Services.AddHttpClient<IWeatherService, WeatherApiService>(client =>
+    {
+        client.BaseAddress = new Uri("https://api.weatherapi.com/v1/");
+    });
+}
 
 if (builder.Environment.IsDevelopment())
 {

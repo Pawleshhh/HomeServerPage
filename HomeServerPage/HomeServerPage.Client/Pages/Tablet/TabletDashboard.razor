@@ -3,6 +3,7 @@
 @using HomeServerPage.Client.Pages.Astronomy
 @using HomeServerPage.Client.Pages.Fridge
 @using HomeServerPage.Client.Pages.PublicTransport
+@using HomeServerPage.Client.Pages.Weather
 
 <PageTitle>Tablet Dashboard</PageTitle>
 
@@ -13,6 +14,9 @@
         </div>
         <div class="tablet-dashboard-item tablet-dashboard-item-transport">
             <PublicTransportWidget DetailsHref="/tablet-dashboard/public-transport" />
+        </div>
+        <div class="tablet-dashboard-item tablet-dashboard-item-weather">
+            <WeatherWidget />
         </div>
         <div class="tablet-dashboard-item tablet-dashboard-item-astronomy">
             <AstronomyWidget DetailsHref="/tablet-dashboard/astronomy" />

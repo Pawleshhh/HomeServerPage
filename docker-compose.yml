@@ -15,3 +15,6 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - AppSettings__PrivateDataPath=/app/data/private
+      - WEATHER_API=${WEATHER_API}
+      - WeatherApi__Location=${WEATHER_API_LOCATION:-Szczecin}
+      - WeatherApi__ForecastDays=${WEATHER_API_FORECAST_DAYS:-3}

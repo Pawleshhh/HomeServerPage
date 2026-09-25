@@ -39,8 +39,12 @@
     grid-column: span 7;
 }
 
+.tablet-dashboard-item-weather {
+    grid-column: span 7;
+}
+
 .tablet-dashboard-item-astronomy {
-    grid-column: 1 / -1;
+    grid-column: span 5;
 }
 
 @media (max-width: 767.98px) {
@@ -50,6 +54,7 @@
 
     .tablet-dashboard-item-fridge,
     .tablet-dashboard-item-transport,
+    .tablet-dashboard-item-weather,
     .tablet-dashboard-item-astronomy {
         grid-column: 1;
     }

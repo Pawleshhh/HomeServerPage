@@ -1,0 +1,37 @@
+@using HomeServerPage.Data.Weather
+
+@if (Astronomy is not null)
+{
+    <div class="moon-phase @(Large ? "moon-phase-large" : null)"
+         aria-label="@($"{Astronomy.MoonPhase}, {Astronomy.MoonIlluminationPercent}% illuminated")">
+        <span class="moon-phase-disc @PhaseClass" style="--moon-illumination: @Astronomy.MoonIlluminationPercent%;"></span>
+        <div class="moon-phase-details">
+            <strong>@Astronomy.MoonPhase</strong>
+            <span>@Astronomy.MoonIlluminationPercent% illuminated</span>
+            <span class="moon-phase-illumination" aria-hidden="true">
+                <span style="width: @Astronomy.MoonIlluminationPercent%;"></span>
+            </span>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public WeatherAstronomy? Astronomy { get; set; }
+
+    [Parameter]
+    public bool Large { get; set; }
+
+    private string PhaseClass => Astronomy?.MoonPhase.Trim().ToLowerInvariant() switch
+    {
+        "new moon" => "moon-phase-new",
+        "waxing crescent" => "moon-phase-waxing-crescent",
+        "first quarter" => "moon-phase-first-quarter",
+        "waxing gibbous" => "moon-phase-waxing-gibbous",
+        "full moon" => "moon-phase-full",
+        "waning gibbous" => "moon-phase-waning-gibbous",
+        "last quarter" or "third quarter" => "moon-phase-last-quarter",
+        "waning crescent" => "moon-phase-waning-crescent",
+        _ => "moon-phase-full"
+    };
+}
