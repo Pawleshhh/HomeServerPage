@@ -6,6 +6,7 @@ using HomeServerPage.Data.Astronomy;
 using HomeServerPage.Data.Astronomy.Telescopes;
 using HomeServerPage.Data.Fridge;
 using HomeServerPage.Data.PublicTransport;
+using HomeServerPage.Data.Weather;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -29,6 +30,7 @@ builder.Services.AddDbContextFactory<AstronomyDbContext>(op => op.UseSqlite(astr
 builder.Services.AddScoped<IAstronomyService, AstronomyService>();
 builder.Services.AddScoped<IObservationPointService, ObservationPointService>();
 builder.Services.AddScoped<ITelescopeService, TelescopeService>();
+builder.Services.AddScoped<IWeatherService, MockWeatherService>();
 
 if (builder.Environment.IsDevelopment())
 {

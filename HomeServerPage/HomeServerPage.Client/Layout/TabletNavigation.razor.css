@@ -2,7 +2,7 @@
     position: relative;
     z-index: 1;
     display: grid;
-    grid-template-columns: auto auto minmax(0, 1fr) repeat(4, minmax(0, 1fr));
+    grid-template-columns: auto auto minmax(0, 1fr) repeat(5, minmax(0, 1fr));
     min-height: 4.75rem;
     border-top: 1px solid var(--app-border);
     background: var(--app-surface);
@@ -102,7 +102,7 @@
 
 @media (min-width: 768px) {
     .tablet-navigation {
-        grid-template-columns: auto auto minmax(max-content, 1fr) repeat(4, minmax(0, 1fr));
+        grid-template-columns: auto auto minmax(max-content, 1fr) repeat(5, minmax(0, 1fr));
         min-height: 4.25rem;
     }
 

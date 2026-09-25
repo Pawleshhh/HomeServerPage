@@ -23,9 +23,13 @@
     grid-column: span 7;
 }
 
+.dashboard-grid-item-weather {
+    grid-column: span 4;
+}
+
 .dashboard-grid-item-astronomy {
     align-self: start;
-    grid-column: 1 / -1;
+    grid-column: span 8;
 }
 
 .dashboard-grid-item-astronomy ::deep .dashboard-card {
@@ -47,6 +51,7 @@
 
     .dashboard-grid-item-fridge,
     .dashboard-grid-item-transport,
+    .dashboard-grid-item-weather,
     .dashboard-grid-item-astronomy {
         grid-column: 1;
     }
