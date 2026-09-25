@@ -28,34 +28,11 @@
             <p class="dashboard-card-context">
                 Rise and set times for @observationTime?.ToString("g")
             </p>
-            <PlanetObservationList Observations="solarSystemObservations" RequestDateUtc="requestDateUtc" Compact="true" />
+            <PlanetObservationList Observations="solarSystemObservations"
+                                   RequestDateUtc="requestDateUtc"
+                                   Compact="true"
+                                   TableLayout="true" />
 
-            @if (visibleMessierObservations.Count > 0)
-            {
-                <section class="messier-widget dashboard-card-subsection" aria-labelledby="visible-messier-heading">
-                    <div class="dashboard-subsection-header">
-                        <h3 id="visible-messier-heading" class="dashboard-subsection-title">Deep sky at sunset</h3>
-                        <span class="badge rounded-pill dashboard-count-badge">@visibleMessierObservations.Count visible</span>
-                    </div>
-
-                    <div class="messier-observation-items">
-                        @foreach (var observation in visibleMessierObservations)
-                        {
-                            <article class="astronomy-object-card messier-observation-item">
-                                <span class="messier-observation-name">@observation.Name</span>
-                                <div class="messier-observation-times">
-                                    <span>Rise @observation.TransitResult.RiseUT.FormatUtHours(requestDateUtc, AstronomyDefaults.LocalTimeZone)</span>
-                                    <span>Set @observation.TransitResult.SetUT.FormatUtHours(requestDateUtc, AstronomyDefaults.LocalTimeZone)</span>
-                                </div>
-                            </article>
-                        }
-                    </div>
-                </section>
-            }
-            else
-            {
-                <p class="dashboard-card-status is-empty mb-0">No deep-sky objects are visible at sunset.</p>
-            }
         }
     </div>
 </section>
@@ -65,7 +42,6 @@
     public string DetailsHref { get; set; } = "/astronomy";
 
     private IReadOnlyList<AstronomyObservation> solarSystemObservations = [];
-    private IReadOnlyList<AstronomyObservation> visibleMessierObservations = [];
     private DateTime requestDateUtc;
     private DateTimeOffset? observationTime;
     private bool isLoading = true;
@@ -81,7 +57,6 @@
         isLoading = true;
         loadError = null;
         solarSystemObservations = [];
-        visibleMessierObservations = [];
 
         try
         {
@@ -93,21 +68,8 @@
                 AstronomyService,
                 requestDateUtc,
                 AstronomyDefaults.Location);
-            var messierObservationsTask = AstronomyObservationLoader.LoadMessierCatalogAsync(
-                AstronomyService,
-                requestDateUtc,
-                AstronomyDefaults.Location);
-
             var solarObservations = await solarSystemObservationsTask;
             solarSystemObservations = solarObservations.Where(p => p.Key != "uranus" && p.Key != "neptune").ToList();
-            var sunsetUtHours = solarSystemObservations.Single(observation => observation.Key == "sun").TransitResult.SetUT;
-            var messierObservations = await messierObservationsTask;
-
-            visibleMessierObservations = messierObservations
-                .Where(observation => IsAboveHorizonAt(observation, sunsetUtHours))
-                .OrderBy(observation => observation.Name)
-                .Take(3)
-                .ToArray();
         }
         catch (Exception exception)
         {
@@ -117,21 +79,6 @@
         {
             isLoading = false;
         }
-    }
-
-    private static bool IsAboveHorizonAt(AstronomyObservation observation, double utHours)
-    {
-        var riseUtHours = observation.TransitResult.RiseUT;
-        var setUtHours = observation.TransitResult.SetUT;
-
-        if (setUtHours - utHours < 2d)
-        {
-            return false;
-        }
-
-        return riseUtHours <= setUtHours
-            ? utHours >= riseUtHours && utHours <= setUtHours
-            : utHours >= riseUtHours || utHours <= setUtHours;
     }
 
 }

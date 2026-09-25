@@ -1,17 +1,5 @@
 .astronomy-widget .dashboard-card-context {
-    margin-bottom: 0.85rem;
-}
-
-.astronomy-widget .dashboard-card-status.is-empty {
-    margin: 1rem 0 0;
-}
-
-.astronomy-widget .messier-observation-items {
-    margin-top: 0.1rem;
-}
-
-.astronomy-widget .messier-observation-item {
-    min-height: 3.3rem;
+    margin-bottom: 0.5rem;
 }
 
 @media (max-width: 575.98px) {
@@ -19,4 +7,3 @@
         align-items: flex-start;
     }
 }
-
