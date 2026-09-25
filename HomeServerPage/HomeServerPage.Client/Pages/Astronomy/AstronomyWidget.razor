@@ -27,9 +27,12 @@
         }
         else
         {
-            <p class="dashboard-card-context">
-                Rise and set times for @observationTime?.ToString("g")
-            </p>
+            @if (!CompactTablet)
+            {
+                <p class="dashboard-card-context">
+                    Rise and set times for @observationTime?.ToString("g")
+                </p>
+            }
             <div class="astronomy-widget-content">
                 <div class="astronomy-widget-observations">
                     <PlanetObservationList Observations="solarSystemObservations"
@@ -49,6 +52,9 @@
 @code {
     [Parameter]
     public string DetailsHref { get; set; } = "/astronomy";
+
+    [Parameter]
+    public bool CompactTablet { get; set; }
 
     private IReadOnlyList<AstronomyObservation> solarSystemObservations = [];
     private WeatherAstronomy? moonAstronomy;
