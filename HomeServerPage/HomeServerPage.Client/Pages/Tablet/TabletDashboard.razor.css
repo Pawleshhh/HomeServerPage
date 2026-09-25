@@ -40,11 +40,11 @@
 }
 
 .tablet-dashboard-item-weather {
-    grid-column: span 4;
+    grid-column: span 7;
 }
 
 .tablet-dashboard-item-astronomy {
-    grid-column: span 8;
+    grid-column: span 5;
 }
 
 @media (max-width: 767.98px) {

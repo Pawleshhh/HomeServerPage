@@ -1,0 +1,82 @@
+@using HomeServerPage.Data.Weather
+@using WeatherForecastModel = HomeServerPage.Data.Weather.WeatherForecast
+@inject IWeatherService WeatherService
+
+<section class="weather-forecast dashboard-card" aria-labelledby="weather-forecast-heading">
+    <div class="card-body">
+        <div class="dashboard-card-header">
+            <div class="dashboard-card-heading">
+                <span class="dashboard-card-icon" aria-hidden="true"><i class="bi bi-calendar3"></i></span>
+                <div>
+                    <h2 id="weather-forecast-heading" class="dashboard-card-title">Forecast</h2>
+                    <p class="dashboard-card-subtitle">The next few days in @LocationLabel.</p>
+                </div>
+            </div>
+        </div>
+
+        @if (isLoading)
+        {
+            <p class="dashboard-card-status" role="status">Loading forecast…</p>
+        }
+        else if (loadError is not null)
+        {
+            <p class="dashboard-card-status is-error mb-0" role="alert">@loadError</p>
+        }
+        else if (forecast is not null)
+        {
+            <div class="weather-forecast-list">
+                @foreach (var day in forecast.Days)
+                {
+                    <article class="weather-forecast-day">
+                        <div class="weather-forecast-day-heading">
+                            <strong>@day.Date.ToString("ddd, MMM d")</strong>
+                            <span class="weather-forecast-condition">
+                                <i class="bi @GetIconClass(day.Condition)" aria-hidden="true"></i>
+                                @day.Condition.Text
+                            </span>
+                        </div>
+                        <div class="weather-forecast-values">
+                            <span><strong>@day.MaxTemperatureCelsius.ToString("0.#")°</strong> / @day.MinTemperatureCelsius.ToString("0.#")°C</span>
+                            <span><i class="bi bi-droplet-fill" aria-hidden="true"></i> @day.ChanceOfRainPercent%</span>
+                            <span><i class="bi bi-wind" aria-hidden="true"></i> @day.MaxWindSpeedKilometersPerHour.ToString("0.#") km/h</span>
+                            <span><i class="bi bi-moisture" aria-hidden="true"></i> @day.TotalPrecipitationMillimeters.ToString("0.#") mm</span>
+                            <span><i class="bi bi-brightness-high" aria-hidden="true"></i> UV @day.UvIndex.ToString("0.#")</span>
+                        </div>
+                        <div class="weather-forecast-meta">
+                            <span><i class="bi bi-droplet-half" aria-hidden="true"></i> Humidity @day.AverageHumidityPercent.ToString("0.#")%</span>
+                            <span><i class="bi bi-sunrise" aria-hidden="true"></i> @day.Astronomy.Sunrise</span>
+                            <span><i class="bi bi-sunset" aria-hidden="true"></i> @day.Astronomy.Sunset</span>
+                        </div>
+                    </article>
+                }
+            </div>
+        }
+    </div>
+</section>
+
+@code {
+    private WeatherForecastModel? forecast;
+    private bool isLoading = true;
+    private string? loadError;
+
+    private string LocationLabel => forecast?.Current.Location.Name ?? "Szczecin";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            forecast = await WeatherService.GetForecastAsync();
+        }
+        catch (Exception)
+        {
+            loadError = "Could not load the weather forecast.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private static string GetIconClass(WeatherCondition condition) =>
+        WeatherConditionIcons.GetIconClass(condition.Text);
+}

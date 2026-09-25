@@ -1,7 +1,9 @@
 @using AstroCalc.Core
 @using HomeServerPage.Data.Astronomy
+@using HomeServerPage.Data.Weather
 
 @inject IAstronomyService AstronomyService
+@inject IWeatherService WeatherService
 
 <div class="pt-4" role="tabpanel" aria-labelledby="observations-tab">
     <div class="astronomy-content">
@@ -29,6 +31,7 @@
             }
             else
             {
+                <MoonPhase Astronomy="moonAstronomy" />
                 <PlanetObservationList Observations="solarSystemObservations" RequestDateUtc="RequestDateUtc" />
             }
         </section>
@@ -83,6 +86,7 @@
 
     private IReadOnlyList<AstronomyObservation> solarSystemObservations = [];
     private IReadOnlyList<AstronomyObservation> messierObservations = [];
+    private WeatherAstronomy? moonAstronomy;
     private DateTimeOffset? observationTime;
     private bool isLoading = true;
     private string? loadError;
@@ -124,6 +128,9 @@
                 AstronomyService,
                 RequestDateUtc,
                 Location);
+
+            moonAstronomy = await WeatherService.GetAstronomyAsync(
+                DateOnly.FromDateTime(RequestDateUtc));
 
             messierObservations = await AstronomyObservationLoader.LoadMessierCatalogAsync(
                 AstronomyService,

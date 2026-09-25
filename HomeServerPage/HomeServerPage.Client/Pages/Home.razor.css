@@ -24,12 +24,12 @@
 }
 
 .dashboard-grid-item-weather {
-    grid-column: span 4;
+    grid-column: span 7;
 }
 
 .dashboard-grid-item-astronomy {
     align-self: start;
-    grid-column: span 8;
+    grid-column: span 5;
 }
 
 .dashboard-grid-item-astronomy ::deep .dashboard-card {

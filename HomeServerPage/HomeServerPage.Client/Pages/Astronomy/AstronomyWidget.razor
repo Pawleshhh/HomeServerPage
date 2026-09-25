@@ -1,6 +1,8 @@
 @using HomeServerPage.Data.Astronomy
+@using HomeServerPage.Data.Weather
 
 @inject IAstronomyService AstronomyService
+@inject IWeatherService WeatherService
 
 <section class="dashboard-card dashboard-card-astronomy astronomy-widget card h-100" aria-labelledby="astronomy-widget-heading">
     <div class="card-body">
@@ -28,10 +30,17 @@
             <p class="dashboard-card-context">
                 Rise and set times for @observationTime?.ToString("g")
             </p>
-            <PlanetObservationList Observations="solarSystemObservations"
-                                   RequestDateUtc="requestDateUtc"
-                                   Compact="true"
-                                   TableLayout="true" />
+            <div class="astronomy-widget-content">
+                <div class="astronomy-widget-observations">
+                    <PlanetObservationList Observations="solarSystemObservations"
+                                           RequestDateUtc="requestDateUtc"
+                                           Compact="true"
+                                           TableLayout="true" />
+                </div>
+                <div class="astronomy-widget-moon">
+                    <MoonPhase Astronomy="moonAstronomy" Large="true" />
+                </div>
+            </div>
 
         }
     </div>
@@ -42,6 +51,7 @@
     public string DetailsHref { get; set; } = "/astronomy";
 
     private IReadOnlyList<AstronomyObservation> solarSystemObservations = [];
+    private WeatherAstronomy? moonAstronomy;
     private DateTime requestDateUtc;
     private DateTimeOffset? observationTime;
     private bool isLoading = true;
@@ -57,6 +67,7 @@
         isLoading = true;
         loadError = null;
         solarSystemObservations = [];
+        moonAstronomy = null;
 
         try
         {
@@ -68,8 +79,12 @@
                 AstronomyService,
                 requestDateUtc,
                 AstronomyDefaults.Location);
+            var moonAstronomyTask = WeatherService.GetAstronomyAsync(
+                DateOnly.FromDateTime(requestDateUtc));
+            await Task.WhenAll(solarSystemObservationsTask, moonAstronomyTask);
             var solarObservations = await solarSystemObservationsTask;
             solarSystemObservations = solarObservations.Where(p => p.Key != "uranus" && p.Key != "neptune").ToList();
+            moonAstronomy = await moonAstronomyTask;
         }
         catch (Exception exception)
         {
