@@ -152,6 +152,60 @@
         .tablet-dashboard-item-transport ::deep .transport-time {
             font-size: 0.78rem;
         }
+
+        .tablet-dashboard-item-astronomy ::deep .astronomy-widget .dashboard-card-context {
+            display: none;
+        }
+
+        .tablet-dashboard-item-weather ::deep .weather-summary {
+            gap: 0.35rem;
+            padding-top: 0;
+            padding-bottom: 0.35rem;
+        }
+
+        .tablet-dashboard-item-weather ::deep .weather-temperature-value {
+            font-size: 2rem;
+        }
+
+        .tablet-dashboard-item-weather ::deep .weather-temperature-unit {
+            margin-top: 0.1rem;
+            font-size: 0.9rem;
+        }
+
+        .tablet-dashboard-item-weather ::deep .weather-condition {
+            gap: 0.25rem;
+        }
+
+        .tablet-dashboard-item-weather ::deep .weather-condition-icon {
+            font-size: 1.25rem;
+        }
+
+        .tablet-dashboard-item-weather ::deep .weather-condition > span:not(.weather-condition-icon) {
+            font-size: 0.7rem;
+        }
+
+        .tablet-dashboard-item-weather ::deep .weather-details {
+            gap: 0.35rem 0.5rem;
+            padding-top: 0.35rem;
+        }
+
+        .tablet-dashboard-item-weather ::deep .weather-details > div:nth-child(n + 3) {
+            padding-top: 0.25rem;
+        }
+
+        .tablet-dashboard-item-weather ::deep .weather-details > div:nth-child(3) {
+            grid-column: auto;
+            border-top: 0;
+        }
+
+        .tablet-dashboard-item-weather ::deep .weather-details dt {
+            font-size: 0.66rem;
+        }
+
+        .tablet-dashboard-item-weather ::deep .weather-details dd {
+            margin-top: 0.05rem;
+            font-size: 0.78rem;
+        }
     }
 
     .tablet-dashboard-item-fridge,
