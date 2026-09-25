@@ -11,7 +11,24 @@
 .tablet-main {
     min-width: 0;
     min-height: 0;
+    padding-top: 1rem;
     overflow-x: hidden;
     overflow-y: auto;
     overscroll-behavior: contain;
+}
+
+.tablet-main ::deep .page-header {
+    display: none;
+}
+
+@media (min-width: 768px) and (max-width: 1100px) {
+    .tablet-main ::deep .fridge-form-panel {
+        padding: 1rem;
+    }
+
+    .tablet-main ::deep .fridge-form-panel .form-control,
+    .tablet-main ::deep .fridge-form-panel .form-select,
+    .tablet-main ::deep .fridge-form-panel .btn {
+        min-height: 2.5rem;
+    }
 }
