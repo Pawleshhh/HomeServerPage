@@ -1,34 +1,61 @@
-const clock = document.querySelector(".tablet-navigation-clock[data-server-time]");
+const root = document.body ?? document.documentElement;
+const observer = new MutationObserver(syncClock);
+let activeClock;
+let activeTimeElement;
+let activeServerTime;
+let timeoutId;
 
-if (clock) {
-    function startClock() {
-        const startTime = new Date(clock.dataset.serverTime);
-        if (Number.isNaN(startTime.getTime())) {
-            return false;
-        }
+function syncClock() {
+    const clock = document.querySelector(".tablet-navigation-clock[data-server-time]");
+    const timeElement = clock?.querySelector(".tablet-navigation-time");
 
-        const browserTimeAtStart = Date.now();
-        const dateElement = clock.querySelector(".tablet-navigation-date");
-        const timeElement = clock.querySelector(".tablet-navigation-time");
-
-        function updateClock() {
-            const currentTime = new Date(startTime.getTime() + Date.now() - browserTimeAtStart);
-            dateElement.textContent = currentTime.toLocaleDateString();
-            timeElement.textContent = currentTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
-            setTimeout(updateClock, 1000 - currentTime.getMilliseconds());
-        }
-
-        updateClock();
-        return true;
+    if (!clock || !timeElement) {
+        stopClock();
+        return;
     }
 
-    if (!startClock()) {
-        const observer = new MutationObserver(() => {
-            if (startClock()) {
-                observer.disconnect();
-            }
+    const serverTime = clock.dataset.serverTime;
+    if (clock === activeClock && timeElement === activeTimeElement && serverTime === activeServerTime) {
+        return;
+    }
+
+    const startTime = new Date(serverTime);
+    if (Number.isNaN(startTime.getTime())) {
+        stopClock();
+        return;
+    }
+
+    stopClock();
+    activeClock = clock;
+    activeTimeElement = timeElement;
+    activeServerTime = serverTime;
+
+    const browserTimeAtStart = Date.now();
+    function updateClock() {
+        if (timeElement !== activeTimeElement) {
+            return;
+        }
+
+        const currentTime = new Date(startTime.getTime() + Date.now() - browserTimeAtStart);
+        timeElement.textContent = currentTime.toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+            hour12: false
         });
-
-        observer.observe(clock, { attributes: true, attributeFilter: ["data-server-time"] });
+        timeoutId = setTimeout(updateClock, 1000 - currentTime.getMilliseconds());
     }
+
+    updateClock();
 }
+
+function stopClock() {
+    clearTimeout(timeoutId);
+    timeoutId = undefined;
+    activeClock = undefined;
+    activeTimeElement = undefined;
+    activeServerTime = undefined;
+}
+
+syncClock();
+observer.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ["data-server-time"] });
