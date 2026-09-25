@@ -70,3 +70,39 @@
     font-size: 0.9rem;
     font-weight: 750;
 }
+
+.transport-table-scroll-tablet {
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+}
+
+.transport-table-scroll-tablet .transport-directions-table {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    table-layout: fixed;
+}
+
+.transport-table-scroll-tablet .transport-directions-table th,
+.transport-table-scroll-tablet .transport-directions-table td {
+    width: 50%;
+    min-width: 0;
+    max-width: 50%;
+}
+
+.transport-table-scroll-tablet .transport-departures,
+.transport-table-scroll-tablet .transport-departure-row {
+    width: 100%;
+    max-width: 100%;
+}
+
+.transport-table-scroll-tablet .transport-departure-row {
+    gap: 0.15rem;
+}
+
+.transport-table-scroll-tablet .transport-destination {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}

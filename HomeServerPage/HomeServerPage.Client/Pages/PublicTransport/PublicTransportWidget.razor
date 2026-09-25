@@ -28,7 +28,7 @@
         }
         else
         {
-            <div class="transport-table-scroll">
+            <div class="transport-table-scroll @(CompactTablet ? "transport-table-scroll-tablet" : null)">
                 <table class="transport-directions-table">
                     <thead>
                         <tr>
@@ -70,6 +70,9 @@
 @code {
     [Parameter]
     public string DetailsHref { get; set; } = "/public-transport";
+
+    [Parameter]
+    public bool CompactTablet { get; set; }
 
     private List<DepartureBoard>? Boards;
     private string? errorMessage;
