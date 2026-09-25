@@ -30,12 +30,12 @@
 }
 
 #blazor-error-ui {
-    background: var(--app-error-surface, #fff1ed);
-    border-top: 1px solid var(--app-error-border, #e7a28f);
+    background: var(--app-danger-soft);
+    border-top: 1px solid var(--app-danger-border);
     bottom: 0;
-    box-shadow: 0 -0.5rem 1.5rem rgb(74 45 32 / 12%);
+    box-shadow: var(--app-shadow);
     box-sizing: border-box;
-    color: var(--app-error-text, #8a3024);
+    color: var(--app-danger);
     display: none;
     left: 0;
     padding: 0.75rem 3rem 0.8rem 1.25rem;

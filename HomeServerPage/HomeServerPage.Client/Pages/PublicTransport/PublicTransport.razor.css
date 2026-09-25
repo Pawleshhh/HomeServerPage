@@ -16,7 +16,7 @@
 .transport-page-state.is-error {
     color: var(--app-danger);
     background: var(--app-danger-soft);
-    border-color: #e7b2a5;
+    border-color: var(--app-danger-border);
 }
 
 .transport-page-state.is-empty {
@@ -40,7 +40,7 @@
 
 .transport-page-board {
     overflow: hidden;
-    border: 1px solid #add2d3;
+    border: 1px solid var(--app-transport-border);
     border-top: 0.25rem solid var(--app-transport);
     border-radius: var(--app-radius);
     background: var(--app-surface);
@@ -112,7 +112,7 @@
     min-height: 2rem;
     padding: 0.25rem 0.45rem;
     border-radius: 0.55rem;
-    color: #fff;
+    color: var(--app-accent-contrast);
     font-size: 0.8rem;
     font-weight: 800;
     text-shadow: 0 1px 1px rgb(0 0 0 / 25%);
@@ -155,7 +155,7 @@
 .transport-now-badge {
     padding: 0.15rem 0.4rem;
     border-radius: 999px;
-    color: #24613b;
+    color: var(--app-success);
     background: var(--app-success-soft);
     font-size: 0.66rem;
     font-weight: 800;

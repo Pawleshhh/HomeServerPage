@@ -11,19 +11,22 @@
             </span>
         </a>
 
-        <button class="nav-toggle"
-                type="button"
-                aria-controls="primary-navigation"
-                aria-expanded="@isMenuOpen"
-                aria-label="@(isMenuOpen ? "Close navigation menu" : "Open navigation menu")"
-                @onclick="ToggleMenu">
-            <span class="nav-toggle-icon" aria-hidden="true">
-                <span></span>
-                <span></span>
-                <span></span>
-            </span>
-            <span class="nav-toggle-label">Menu</span>
-        </button>
+        <div class="app-header-actions">
+            <ThemeToggle />
+            <button class="nav-toggle"
+                    type="button"
+                    aria-controls="primary-navigation"
+                    aria-expanded="@isMenuOpen"
+                    aria-label="@(isMenuOpen ? "Close navigation menu" : "Open navigation menu")"
+                    @onclick="ToggleMenu">
+                <span class="nav-toggle-icon" aria-hidden="true">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </span>
+                <span class="nav-toggle-label">Menu</span>
+            </button>
+        </div>
     </div>
 
     <div id="primary-navigation" class="nav-drawer @(isMenuOpen ? "is-open" : null)">
@@ -62,7 +65,6 @@
 
 @code {
     private bool isMenuOpen;
-
     protected override void OnInitialized()
     {
         NavigationManager.LocationChanged += OnLocationChanged;

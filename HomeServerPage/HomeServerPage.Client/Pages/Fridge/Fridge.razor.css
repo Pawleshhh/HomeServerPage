@@ -8,7 +8,7 @@
 .feature-panel {
     margin-bottom: 2rem;
     padding: 1.35rem;
-    border: 1px solid #b9d6bd;
+    border: 1px solid var(--app-fridge-border);
     border-radius: var(--app-radius-lg);
     background: linear-gradient(135deg, var(--app-surface) 0%, var(--app-fridge-soft) 100%);
     box-shadow: var(--app-shadow-sm);
@@ -46,7 +46,7 @@
     flex: 0 0 auto;
     color: var(--app-fridge);
     background: var(--app-fridge-soft);
-    border: 1px solid #b9d6bd;
+    border: 1px solid var(--app-fridge-border);
 }
 
 .fridge-form-actions {
@@ -197,7 +197,7 @@
 
     .fridge-mobile-item.is-selected {
         border-color: var(--app-fridge);
-        box-shadow: 0 0 0 0.2rem rgba(79, 143, 100, 0.16), var(--app-shadow-sm);
+        box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--app-fridge) 16%, transparent), var(--app-shadow-sm);
     }
 
     .fridge-mobile-select {

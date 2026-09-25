@@ -1,6 +1,6 @@
 .astronomy-settings-panel {
     padding: 1.25rem;
-    border: 1px solid #cfc4e6;
+    border: 1px solid var(--app-astronomy-border);
     border-radius: var(--app-radius-lg);
     background: linear-gradient(135deg, var(--app-surface) 0%, var(--app-astronomy-soft) 100%);
     box-shadow: var(--app-shadow-sm);
@@ -25,7 +25,7 @@
     gap: 0.35rem;
     margin-bottom: 0;
     overflow-x: auto;
-    border-bottom: 1px solid #cfc4e6;
+    border-bottom: 1px solid var(--app-astronomy-border);
     scrollbar-width: none;
     -ms-overflow-style: none;
 }
@@ -52,7 +52,7 @@
 }
 
 .astronomy-tab-button.active {
-    border-color: #cfc4e6 !important;
+    border-color: var(--app-astronomy-border) !important;
     color: var(--app-astronomy);
     background: var(--app-surface);
 }
@@ -67,7 +67,7 @@
 }
 
 .astronomy-tab-content ::deep .astronomy-panel {
-    border-color: #cfc4e6;
+    border-color: var(--app-astronomy-border);
     background: var(--app-surface);
     box-shadow: var(--app-shadow-sm);
 }

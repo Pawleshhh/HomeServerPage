@@ -20,6 +20,12 @@
     padding: calc(0.75rem + env(safe-area-inset-top)) 1rem 0.75rem;
 }
 
+.app-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
 .app-brand {
     display: inline-flex;
     align-items: center;

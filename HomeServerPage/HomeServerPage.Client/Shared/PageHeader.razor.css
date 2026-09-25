@@ -71,19 +71,19 @@
 .page-header-fridge {
     --page-accent: var(--app-fridge);
     --page-accent-soft: var(--app-fridge-soft);
-    --page-accent-border: #b9d6bd;
+    --page-accent-border: var(--app-fridge-border);
 }
 
 .page-header-transport {
     --page-accent: var(--app-transport);
     --page-accent-soft: var(--app-transport-soft);
-    --page-accent-border: #add2d3;
+    --page-accent-border: var(--app-transport-border);
 }
 
 .page-header-astronomy {
     --page-accent: var(--app-astronomy);
     --page-accent-soft: var(--app-astronomy-soft);
-    --page-accent-border: #cfc4e6;
+    --page-accent-border: var(--app-astronomy-border);
 }
 
 @media (max-width: 767.98px) {

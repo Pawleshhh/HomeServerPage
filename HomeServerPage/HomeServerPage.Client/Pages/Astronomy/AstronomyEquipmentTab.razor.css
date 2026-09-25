@@ -1,6 +1,6 @@
 .astronomy-panel {
     padding: 1.25rem;
-    border: 1px solid #cfc4e6;
+    border: 1px solid var(--app-astronomy-border);
     border-radius: var(--app-radius);
     background: var(--app-surface);
     box-shadow: var(--app-shadow-sm);

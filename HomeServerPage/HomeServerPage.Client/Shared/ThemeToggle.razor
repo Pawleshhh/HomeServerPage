@@ -1,0 +1,31 @@
+@inject IJSRuntime JS
+
+<button class="theme-toggle" type="button"
+        aria-pressed="@isDarkTheme"
+        aria-label="@(isDarkTheme ? "Use light theme" : "Use dark theme")"
+        title="@(isDarkTheme ? "Use light theme" : "Use dark theme")"
+        @onclick="ToggleTheme">
+    <i class="bi @(isDarkTheme ? "bi-sun-fill" : "bi-moon-stars-fill")" aria-hidden="true"></i>
+</button>
+
+@code {
+    private bool isDarkTheme;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+        {
+            return;
+        }
+
+        var theme = await JS.InvokeAsync<string?>("homeServerPageTheme.get");
+        isDarkTheme = theme == "dark";
+        StateHasChanged();
+    }
+
+    private async Task ToggleTheme()
+    {
+        isDarkTheme = !isDarkTheme;
+        await JS.InvokeVoidAsync("homeServerPageTheme.set", isDarkTheme ? "dark" : "light");
+    }
+}

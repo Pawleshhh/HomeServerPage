@@ -26,12 +26,68 @@
     --app-transport-soft: #e1f0ef;
     --app-astronomy: #6f5aa3;
     --app-astronomy-soft: #eee9f8;
+    --app-fridge-border: #b9d6bd;
+    --app-transport-border: #add2d3;
+    --app-astronomy-border: #cfc4e6;
+    --app-danger-border: #e7b2a5;
+    --app-overlay: rgb(25 40 31 / 58%);
     --app-radius-sm: 0.6rem;
     --app-radius: 0.9rem;
     --app-radius-lg: 1.25rem;
     --app-shadow-sm: 0 0.35rem 1rem rgb(74 45 32 / 7%);
     --app-shadow: 0 0.75rem 2rem rgb(74 45 32 / 9%);
     --app-shadow-lg: 0 1rem 3rem rgb(74 45 32 / 12%);
+    color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+    --app-bg: #15171b;
+    --app-surface: #1d2026;
+    --app-surface-raised: #252932;
+    --app-surface-muted: #292e38;
+    --app-text: #f0f2f5;
+    --app-text-muted: #b3bac5;
+    --app-text-subtle: #8c95a3;
+    --app-border: #373e4a;
+    --app-border-strong: #4b5563;
+    --app-accent: #e39a70;
+    --app-accent-deep: #ffc0a0;
+    --app-accent-soft: #3b2c2a;
+    --app-accent-border: #805747;
+    --app-accent-contrast: #1d1714;
+    --app-focus: #f0b08c;
+    --app-focus-rgb: 240, 176, 140;
+    --app-success: #7bc28f;
+    --app-success-soft: #20372a;
+    --app-danger: #f08b7e;
+    --app-danger-soft: #3d2527;
+    --app-warning: #e5b866;
+    --app-fridge: #7bc28f;
+    --app-fridge-soft: #20372a;
+    --app-transport: #72c3ca;
+    --app-transport-soft: #1d363b;
+    --app-astronomy: #b9a5ee;
+    --app-astronomy-soft: #302a47;
+    --app-fridge-border: #477254;
+    --app-transport-border: #3d7379;
+    --app-astronomy-border: #65578b;
+    --app-danger-border: #824a4a;
+    --app-overlay: rgb(0 0 0 / 70%);
+    --app-shadow-sm: 0 0.35rem 1rem rgb(0 0 0 / 24%);
+    --app-shadow: 0 0.75rem 2rem rgb(0 0 0 / 30%);
+    --app-shadow-lg: 0 1rem 3rem rgb(0 0 0 / 38%);
+    color-scheme: dark;
+}
+
+:root[data-theme="dark"] {
+    --bs-body-bg: var(--app-bg);
+    --bs-body-color: var(--app-text);
+    --bs-border-color: var(--app-border);
+    --bs-secondary-color: var(--app-text-muted);
+    --bs-tertiary-bg: var(--app-surface-muted);
+    --bs-emphasis-color: var(--app-text);
+    --bs-link-color: var(--app-accent-deep);
+    --bs-link-hover-color: var(--app-accent);
 }
 
 *,
@@ -268,19 +324,19 @@ h1:focus {
 .dashboard-card-fridge {
     --dashboard-accent: var(--app-fridge);
     --dashboard-accent-soft: var(--app-fridge-soft);
-    --dashboard-accent-border: #b9d6bd;
+    --dashboard-accent-border: var(--app-fridge-border);
 }
 
 .dashboard-card-transport {
     --dashboard-accent: var(--app-transport);
     --dashboard-accent-soft: var(--app-transport-soft);
-    --dashboard-accent-border: #add2d3;
+    --dashboard-accent-border: var(--app-transport-border);
 }
 
 .dashboard-card-astronomy {
     --dashboard-accent: var(--app-astronomy);
     --dashboard-accent-soft: var(--app-astronomy-soft);
-    --dashboard-accent-border: #cfc4e6;
+    --dashboard-accent-border: var(--app-astronomy-border);
 }
 
 .dashboard-card .card-body {

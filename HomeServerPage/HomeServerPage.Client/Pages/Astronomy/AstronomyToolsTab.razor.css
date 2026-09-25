@@ -1,6 +1,6 @@
 .astronomy-panel {
     padding: 1.25rem;
-    border: 1px solid #cfc4e6;
+    border: 1px solid var(--app-astronomy-border);
     border-radius: var(--app-radius);
     background: var(--app-surface);
     box-shadow: var(--app-shadow-sm);
@@ -62,7 +62,7 @@
 .result-count {
     flex: 0 0 auto;
     padding: 0.25rem 0.55rem;
-    border: 1px solid #cfc4e6;
+    border: 1px solid var(--app-astronomy-border);
     border-radius: 999px;
     color: var(--app-astronomy);
     background: var(--app-astronomy-soft);
@@ -88,7 +88,7 @@
     justify-content: center;
     gap: 0.15rem;
     padding: 0.6rem 0.7rem;
-    border: 1px solid #ded5ed;
+    border: 1px solid var(--app-astronomy-border);
     border-radius: var(--app-radius-sm);
     background: var(--app-astronomy-soft);
 }

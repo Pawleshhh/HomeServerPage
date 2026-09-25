@@ -11,6 +11,24 @@
     <link rel="stylesheet" href="@Assets["app.css"]" />
     <link rel="stylesheet" href="@Assets["css/astronomy.css"]" />
     <link rel="stylesheet" href="@Assets["HomeServerPage.styles.css"]" />
+    <script>
+        (() => {
+            const stored = localStorage.getItem("home-server-page-theme");
+            const theme = stored === "dark" || stored === "light"
+                ? stored
+                : (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+            document.documentElement.dataset.theme = theme;
+            document.documentElement.dataset.bsTheme = theme;
+            window.homeServerPageTheme = {
+                get: () => document.documentElement.dataset.theme,
+                set: value => {
+                    document.documentElement.dataset.theme = value;
+                    document.documentElement.dataset.bsTheme = value;
+                    localStorage.setItem("home-server-page-theme", value);
+                }
+            };
+        })();
+    </script>
     <ImportMap />
     <link rel="icon" type="image/png" href="favicon.png" />
     <HeadOutlet @rendermode="InteractiveAuto" />

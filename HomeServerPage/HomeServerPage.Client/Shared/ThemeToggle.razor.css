@@ -1,0 +1,33 @@
+.theme-toggle {
+    display: inline-flex;
+    width: 2.75rem;
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+    align-items: center;
+    justify-content: center;
+    padding: 0.55rem;
+    border: 1px solid var(--app-border-strong);
+    border-radius: 0.75rem;
+    color: var(--app-text);
+    background: var(--app-surface-raised);
+    font-size: 1.05rem;
+}
+
+.theme-toggle:hover {
+    color: var(--app-accent-deep);
+    background: var(--app-surface-muted);
+}
+
+.theme-toggle:focus-visible {
+    outline: 3px solid var(--app-focus);
+    outline-offset: 2px;
+}
+
+@media (max-width: 575.98px) {
+    .theme-toggle {
+        width: 2.5rem;
+        min-width: 2.5rem;
+        min-height: 2.5rem;
+        padding: 0.45rem;
+    }
+}

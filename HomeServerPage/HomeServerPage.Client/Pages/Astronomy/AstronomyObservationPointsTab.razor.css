@@ -1,7 +1,7 @@
 .observation-points-tab .astronomy-panel {
     height: 100%;
     padding: 1.25rem;
-    border: 1px solid #cfc4e6;
+    border: 1px solid var(--app-astronomy-border);
     border-radius: var(--app-radius);
     background: var(--app-surface);
     box-shadow: var(--app-shadow-sm);
@@ -51,7 +51,7 @@
 .visibility-total {
     flex: 0 0 auto;
     padding: 0.25rem 0.55rem;
-    border: 1px solid #cfc4e6;
+    border: 1px solid var(--app-astronomy-border);
     border-radius: 999px;
     color: var(--app-astronomy);
     background: var(--app-astronomy-soft);
