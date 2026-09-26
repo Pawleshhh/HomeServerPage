@@ -1,0 +1,39 @@
+.weather-page ::deep .dashboard-card-weather .card-body {
+    padding: 0.75rem 1rem;
+}
+
+.weather-page ::deep .dashboard-card-weather .weather-summary {
+    padding-top: 0;
+    padding-bottom: 0.35rem;
+}
+
+.weather-page ::deep .dashboard-card-weather .weather-temperature-value {
+    font-size: 2rem;
+}
+
+.weather-page ::deep .dashboard-card-weather .weather-temperature-unit {
+    margin-top: 0.1rem;
+    font-size: 0.9rem;
+}
+
+.weather-page ::deep .dashboard-card-weather .weather-condition-icon {
+    font-size: 1.25rem;
+}
+
+.weather-page ::deep .dashboard-card-weather .weather-condition > span:not(.weather-condition-icon) {
+    font-size: 0.72rem;
+}
+
+.weather-page ::deep .dashboard-card-weather .weather-details {
+    gap: 0.3rem 0.5rem;
+    padding-top: 0.35rem;
+}
+
+.weather-page ::deep .dashboard-card-weather .weather-details dt {
+    font-size: 0.66rem;
+}
+
+.weather-page ::deep .dashboard-card-weather .weather-details dd {
+    margin-top: 0.05rem;
+    font-size: 0.78rem;
+}
