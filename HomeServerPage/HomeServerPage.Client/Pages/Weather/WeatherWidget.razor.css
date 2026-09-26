@@ -101,6 +101,41 @@
     font-weight: 750;
 }
 
+.weather-today-forecast {
+    padding-top: 0.65rem;
+    margin-top: 0.65rem;
+    border-top: 1px solid var(--app-border);
+}
+
+.weather-today-forecast h3 {
+    margin: 0 0 0.35rem;
+    color: var(--app-text-muted);
+    font-size: 0.76rem;
+    font-weight: 650;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.weather-today-forecast-values {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 0.9rem;
+    color: var(--app-text-muted);
+    font-size: 0.78rem;
+}
+
+.weather-today-forecast-values span {
+    white-space: nowrap;
+}
+
+.weather-today-forecast-values i {
+    margin-right: 0.15rem;
+}
+
+.weather-today-forecast-values strong {
+    color: var(--app-text);
+}
+
 @media (max-width: 575.98px) {
     .weather-summary {
         align-items: flex-start;

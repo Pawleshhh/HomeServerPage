@@ -26,6 +26,7 @@ public sealed record WeatherForecastDay(
     decimal MaxTemperatureCelsius,
     decimal MinTemperatureCelsius,
     decimal AverageTemperatureCelsius,
+    decimal AverageFeelsLikeCelsius,
     decimal MaxWindSpeedKilometersPerHour,
     decimal TotalPrecipitationMillimeters,
     int ChanceOfRainPercent,

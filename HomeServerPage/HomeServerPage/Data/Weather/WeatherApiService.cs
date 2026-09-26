@@ -105,6 +105,9 @@ public sealed class WeatherApiService(
             day.Day.MaxTempC,
             day.Day.MinTempC,
             day.Day.AvgTempC,
+            day.Hour is { Count: > 0 }
+                ? day.Hour.Average(hour => hour.FeelsLikeC)
+                : day.Day.AvgTempC,
             day.Day.MaxWindKph,
             day.Day.TotalPrecipMm,
             day.Day.DailyChanceOfRain,

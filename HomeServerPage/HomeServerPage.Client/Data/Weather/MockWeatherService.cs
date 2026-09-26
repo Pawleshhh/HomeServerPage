@@ -30,6 +30,7 @@ public sealed class MockWeatherService : IWeatherService
                     20m + offset,
                     11m + offset,
                     15.5m + offset,
+                    15m + offset,
                     22m,
                     offset % 2 == 0 ? 0.4m : 1.8m,
                     offset % 2 == 0 ? 20 : 55,

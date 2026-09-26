@@ -61,6 +61,26 @@
                     <dd>@snapshot.UvIndex.ToString("0.#")</dd>
                 </div>
             </dl>
+            @if (forecastDay is not null)
+            {
+                <section class="weather-today-forecast" aria-labelledby="weather-today-forecast-heading">
+                    <h3 id="weather-today-forecast-heading">Today</h3>
+                    <div class="weather-today-forecast-values">
+                        <span>
+                            <i class="bi bi-thermometer-half" aria-hidden="true"></i>
+                            <strong>@forecastDay.AverageTemperatureCelsius.ToString("0.#")°C</strong>
+                        </span>
+                        <span>
+                            <i class="bi bi-thermometer-high" aria-hidden="true"></i>
+                            feels like @forecastDay.AverageFeelsLikeCelsius.ToString("0.#")°C
+                        </span>
+                        <span>
+                            <i class="bi bi-cloud-rain" aria-hidden="true"></i>
+                            rain @forecastDay.ChanceOfRainPercent%
+                        </span>
+                    </div>
+                </section>
+            }
         }
     </div>
 </section>
