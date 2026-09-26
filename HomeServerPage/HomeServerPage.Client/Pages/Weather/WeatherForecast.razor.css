@@ -49,9 +49,31 @@
     white-space: nowrap;
 }
 
-.weather-forecast-condition i {
+.weather-forecast-visual {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    gap: 0.15rem;
+    padding: 0.55rem 0 0.45rem;
+    text-align: center;
+}
+
+.weather-forecast-visual > i {
     color: var(--app-transport);
-    margin-right: 0.2rem;
+    font-size: 2.4rem;
+    line-height: 1;
+}
+
+.weather-forecast-temperature {
+    color: var(--app-text);
+    font-size: 1.45rem;
+    line-height: 1.1;
+}
+
+.weather-forecast-temperature span {
+    color: var(--app-text-muted);
+    font-size: 0.9rem;
+    font-weight: 500;
 }
 
 .weather-forecast-values {

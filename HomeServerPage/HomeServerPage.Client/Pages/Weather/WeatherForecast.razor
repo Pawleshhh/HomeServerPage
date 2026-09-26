@@ -30,13 +30,15 @@
                     <article class="weather-forecast-day">
                         <div class="weather-forecast-day-heading">
                             <strong>@day.Date.ToString("ddd, MMM d")</strong>
-                            <span class="weather-forecast-condition">
-                                <i class="bi @GetIconClass(day.Condition)" aria-hidden="true"></i>
-                                @day.Condition.Text
-                            </span>
+                        </div>
+                        <div class="weather-forecast-visual">
+                            <i class="bi @GetIconClass(day.Condition)" aria-hidden="true"></i>
+                            <strong class="weather-forecast-temperature">
+                                @day.MaxTemperatureCelsius.ToString("0.#")°<span>/ @day.MinTemperatureCelsius.ToString("0.#")°</span>
+                            </strong>
+                            <span class="weather-forecast-condition">@day.Condition.Text</span>
                         </div>
                         <div class="weather-forecast-values">
-                            <span><strong>@day.MaxTemperatureCelsius.ToString("0.#")°</strong> / @day.MinTemperatureCelsius.ToString("0.#")°C</span>
                             <span><i class="bi bi-droplet-fill" aria-hidden="true"></i> @day.ChanceOfRainPercent%</span>
                             <span><i class="bi bi-wind" aria-hidden="true"></i> @day.MaxWindSpeedKilometersPerHour.ToString("0.#") km/h</span>
                             <span><i class="bi bi-moisture" aria-hidden="true"></i> @day.TotalPrecipitationMillimeters.ToString("0.#") mm</span>
