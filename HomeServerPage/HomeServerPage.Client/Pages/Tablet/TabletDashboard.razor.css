@@ -193,11 +193,6 @@
             padding-top: 0.25rem;
         }
 
-        .tablet-dashboard-item-weather ::deep .weather-details > div:nth-child(3) {
-            grid-column: auto;
-            border-top: 0;
-        }
-
         .tablet-dashboard-item-weather ::deep .weather-details dt {
             font-size: 0.66rem;
         }
