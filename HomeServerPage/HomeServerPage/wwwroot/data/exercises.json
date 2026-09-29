@@ -1,0 +1,50 @@
+[
+  {
+    "Name": "Deadlift (Barbell)",
+    "Type": 1
+  },
+  {
+    "Name": "Squat (Barbell)",
+    "Type": 1
+  },
+  {
+    "Name": "Bench Press (Barbell)",
+    "Type": 1
+  },
+  {
+    "Name": "Overhead Press (Barbell)",
+    "Type": 1
+  },
+  {
+    "Name": "Bent Over Row (Barbell)",
+    "Type": 1
+  },
+  {
+    "Name": "Lateral Raise (Dumbbell)",
+    "Type": 1
+  },
+  {
+    "Name": "Pull Up",
+    "Type": 2
+  },
+  {
+    "Name": "Chin Up",
+    "Type": 2
+  },
+  {
+    "Name": "Lat Pulldown (Cable)",
+    "Type": 1
+  },
+  {
+    "Name": "Lying Leg Raise",
+    "Type": 2
+  },
+  {
+    "Name": "Incline Bench Press (Barbell",
+    "Type": 1
+  },
+  {
+    "Name": "Skullcrusher (Dumbbell)",
+    "Type": 1
+  }
+]

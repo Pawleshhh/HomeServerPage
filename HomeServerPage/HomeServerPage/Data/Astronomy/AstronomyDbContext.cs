@@ -1,4 +1,5 @@
 ﻿using HomeServerPage.Client.Data.Astronomy.Telescopes;
+using HomeServerPage.Helpers;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
 using System.Text.Json;
@@ -139,16 +140,11 @@ public class AstronomyDbContext(DbContextOptions<AstronomyDbContext> options) : 
 
     private void AddDeepSkyObjects(ModelBuilder modelBuilder)
     {
-        using var stream = typeof(AstronomyDbContext).Assembly.GetManifestResourceStream(
-            "HomeServerPage.wwwroot.data.deepSkyObjects.json");
-
-        if (stream is null)
+        using var document = ResourcesHelper.GetJsonDocument("deepSkyObjects");
+        if (document is null)
         {
             return;
         }
-
-        using var reader = new StreamReader(stream);
-        using var document = JsonDocument.Parse(reader.ReadToEnd());
 
         var deepSkyObjects = document.RootElement
             .EnumerateArray()
