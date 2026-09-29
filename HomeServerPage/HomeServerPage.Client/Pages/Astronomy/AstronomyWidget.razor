@@ -1,8 +1,10 @@
+@using HomeServerPage.Data
 @using HomeServerPage.Data.Astronomy
 @using HomeServerPage.Data.Weather
 
 @inject IAstronomyService AstronomyService
 @inject IWeatherService WeatherService
+@inject IDateTimeService DateTimeService
 
 <section class="dashboard-card dashboard-card-astronomy astronomy-widget card h-100" aria-labelledby="astronomy-widget-heading">
     <div class="card-body">
@@ -77,8 +79,8 @@
 
         try
         {
-            var nowInPoland = TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, AstronomyDefaults.LocalTimeZone);
-            requestDateUtc = nowInPoland.UtcDateTime;
+            var nowInPoland = DateTimeService.Now;
+            requestDateUtc = DateTimeService.UtcNow;
             observationTime = nowInPoland;
 
             var solarSystemObservationsTask = AstronomyObservationLoader.LoadSolarSystemAsync(
