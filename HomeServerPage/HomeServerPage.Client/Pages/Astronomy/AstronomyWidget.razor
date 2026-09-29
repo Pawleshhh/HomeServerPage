@@ -79,6 +79,7 @@
 
         try
         {
+            await DateTimeService.SyncAsync();
             var nowInPoland = DateTimeService.Now;
             requestDateUtc = DateTimeService.UtcNow;
             observationTime = nowInPoland;
