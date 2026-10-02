@@ -13,6 +13,7 @@
 
 .weather-summary {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
     gap: 0.75rem;
@@ -27,6 +28,12 @@
 
 .weather-current {
     min-width: 0;
+}
+
+.weather-temperature-overview {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
 }
 
 .weather-temperature {
@@ -46,6 +53,21 @@
     margin-top: 0.2rem;
     font-size: 1.15rem;
     font-weight: 700;
+}
+
+.weather-temperature-range {
+    display: flex;
+    align-items: baseline;
+    gap: 0.3rem;
+    color: var(--app-text);
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.weather-temperature-minimum {
+    color: var(--app-text-muted);
+    font-size: 1.15rem;
+    font-weight: 600;
 }
 
 .weather-condition {
@@ -104,52 +126,9 @@
     font-weight: 750;
 }
 
-.weather-today-forecast {
-    min-width: 0;
-    padding-top: 0.55rem;
-    border-top: 1px solid var(--app-border);
-}
-
-.weather-today-forecast h3 {
-    margin: 0 0 0.35rem;
-    color: var(--app-text-muted);
-    font-size: 0.76rem;
-    font-weight: 650;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-}
-
-.weather-today-forecast-values {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.4rem 0.75rem;
-    color: var(--app-text-muted);
-    font-size: 0.78rem;
-}
-
-.weather-today-forecast-values span {
-    min-width: 0;
-}
-
-.weather-today-forecast-values i {
-    margin-right: 0.15rem;
-}
-
-.weather-today-forecast-values strong {
-    color: var(--app-text);
-}
-
 @media (max-width: 575.98px) {
     .weather-details {
         grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .weather-today-forecast {
-        padding-top: 0.65rem;
-    }
-
-    .weather-today-forecast-values {
-        grid-template-columns: 1fr;
     }
 
     .weather-summary {

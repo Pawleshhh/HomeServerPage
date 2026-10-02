@@ -26,9 +26,19 @@
             <div class="weather-widget-content">
                 <div class="weather-current">
                     <div class="weather-summary">
-                        <div class="weather-temperature">
-                            <span class="weather-temperature-value">@snapshot.TemperatureCelsius.ToString("0.#")</span>
-                            <span class="weather-temperature-unit">°C</span>
+                        <div class="weather-temperature-overview">
+                            <div class="weather-temperature">
+                                <span class="weather-temperature-value">@snapshot.TemperatureCelsius.ToString("0.#")</span>
+                                <span class="weather-temperature-unit">°C</span>
+                            </div>
+                            @if (forecastDay is not null)
+                            {
+                                <div class="weather-temperature-range" title="Today's maximum / minimum temperatures">
+                                    <span class="visually-hidden">Today's maximum:</span>
+                                    <span class="weather-temperature-value">@forecastDay.MaxTemperatureCelsius.ToString("0.#")°</span>
+                                    <span class="weather-temperature-minimum"><span aria-hidden="true">/ </span><span class="visually-hidden">Minimum:</span>@forecastDay.MinTemperatureCelsius.ToString("0.#")°C</span>
+                                </div>
+                            }
                         </div>
                         <div class="weather-condition">
                             <span class="weather-condition-icon" role="img" aria-label="@snapshot.Condition.Text">
@@ -64,26 +74,6 @@
                         </div>
                     </dl>
                 </div>
-                @if (forecastDay is not null)
-                {
-                    <section class="weather-today-forecast" aria-labelledby="weather-today-forecast-heading">
-                        <h3 id="weather-today-forecast-heading">Today</h3>
-                        <div class="weather-today-forecast-values">
-                            <span>
-                                <i class="bi bi-thermometer-half" aria-hidden="true"></i>
-                                <strong>@forecastDay.MaxTemperatureCelsius.ToString("0.#")°C</strong>
-                            </span>
-                            <span>
-                                <i class="bi bi-thermometer-high" aria-hidden="true"></i>
-                                feels like @forecastDay.AverageFeelsLikeCelsius.ToString("0.#")°C
-                            </span>
-                            <span>
-                                <i class="bi bi-cloud-rain" aria-hidden="true"></i>
-                                rain @forecastDay.ChanceOfRainPercent%
-                            </span>
-                        </div>
-                    </section>
-                }
             </div>
         }
     </div>
