@@ -2,7 +2,7 @@
     position: relative;
     z-index: 1;
     display: grid;
-    grid-template-columns: auto auto minmax(0, 1fr) repeat(5, minmax(0, 1fr));
+    grid-template-columns: auto auto auto minmax(0, 1fr) repeat(5, minmax(0, 1fr));
     min-height: 4.75rem;
     border-top: 1px solid var(--app-border);
     background: var(--app-surface);
@@ -72,7 +72,8 @@
     text-decoration: none;
 }
 
-.tablet-navigation ::deep .tablet-navigation-refresh {
+.tablet-navigation ::deep .tablet-navigation-refresh,
+.tablet-navigation ::deep .tablet-navigation-screensaver {
     width: 3.5rem;
     min-width: 3.5rem;
     padding: 0.35rem;
@@ -102,7 +103,7 @@
 
 @media (min-width: 768px) {
     .tablet-navigation {
-        grid-template-columns: auto auto minmax(max-content, 1fr) repeat(5, minmax(0, 1fr));
+        grid-template-columns: auto auto auto minmax(max-content, 1fr) repeat(5, minmax(0, 1fr));
         min-height: 4.25rem;
     }
 

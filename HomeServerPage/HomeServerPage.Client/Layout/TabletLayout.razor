@@ -1,9 +1,46 @@
 @inherits LayoutComponentBase
 
-<div class="tablet-shell">
+<div class="tablet-shell" inert="@isScreensaverActive" tabindex="-1" @ref="shell">
     <main class="tablet-main">
         @Body
     </main>
 
-    <TabletNavigation />
+    <TabletNavigation OnScreensaverRequested="ActivateScreensaver" />
 </div>
+
+@if (isScreensaverActive)
+{
+    <div class="tablet-screensaver" role="dialog" aria-modal="true" aria-label="Screensaver">
+        <button class="tablet-screensaver-wake" type="button" aria-label="Turn off screensaver" title="Turn off screensaver" @onclick="DeactivateScreensaver" @ref="wakeButton">
+            <i class="bi bi-power" aria-hidden="true"></i>
+        </button>
+    </div>
+}
+
+@code {
+    private bool isScreensaverActive;
+    private bool shouldUpdateFocus;
+    private ElementReference shell;
+    private ElementReference wakeButton;
+
+    private void ActivateScreensaver()
+    {
+        isScreensaverActive = true;
+        shouldUpdateFocus = true;
+    }
+
+    private void DeactivateScreensaver()
+    {
+        isScreensaverActive = false;
+        shouldUpdateFocus = true;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (shouldUpdateFocus)
+        {
+            shouldUpdateFocus = false;
+            await (isScreensaverActive ? wakeButton : shell).FocusAsync(preventScroll: true);
+        }
+    }
+}

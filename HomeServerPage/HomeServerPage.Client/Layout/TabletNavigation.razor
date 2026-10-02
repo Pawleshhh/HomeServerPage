@@ -7,6 +7,9 @@
     <button class="tablet-navigation-link tablet-navigation-refresh" type="button" aria-label="Refresh page" title="Refresh page" @onclick="RefreshPage">
         <span class="tablet-navigation-icon" aria-hidden="true"><i class="bi bi-arrow-clockwise"></i></span>
     </button>
+    <button class="tablet-navigation-link tablet-navigation-screensaver" type="button" aria-label="Activate screensaver" title="Activate screensaver" @onclick="OnScreensaverRequested">
+        <span class="tablet-navigation-icon" aria-hidden="true"><i class="bi bi-power"></i></span>
+    </button>
     <div class="tablet-navigation-theme">
         <ThemeToggle />
     </div>
@@ -39,6 +42,9 @@
 </nav>
 
 @code {
+    [Parameter]
+    public EventCallback OnScreensaverRequested { get; set; }
+
     private DateTime? currentDateTime;
 
     protected override async Task OnInitializedAsync()

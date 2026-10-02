@@ -21,6 +21,35 @@
     display: none;
 }
 
+.tablet-screensaver {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #000;
+}
+
+.tablet-screensaver-wake {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 4rem;
+    height: 4rem;
+    border: 1px solid #666;
+    border-radius: 50%;
+    color: #fff;
+    background: #000;
+    font-size: 2rem;
+    cursor: pointer;
+}
+
+.tablet-screensaver-wake:focus-visible {
+    outline: 3px solid #fff;
+    outline-offset: 4px;
+}
+
 @media (min-width: 768px) and (max-width: 1100px) {
     .tablet-main {
         padding-top: 0.2rem;
