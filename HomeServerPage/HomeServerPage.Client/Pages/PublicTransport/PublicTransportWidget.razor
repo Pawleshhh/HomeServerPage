@@ -1,5 +1,7 @@
 @using HomeServerPage.Data.PublicTransport
+@implements IDisposable
 @inject IPublicTransportService PublicTransportService
+@inject HomeServerPage.Client.Data.TabletDashboardRefreshService DashboardRefreshService
 
 <section class="dashboard-card dashboard-card-transport card h-100" aria-labelledby="public-transport-widget-heading">
     <div class="card-body">
@@ -74,11 +76,26 @@
     [Parameter]
     public bool CompactTablet { get; set; }
 
+    [Parameter]
+    public bool AutoRefresh { get; set; }
+
     private List<DepartureBoard>? Boards;
     private string? errorMessage;
 
     protected override async Task OnInitializedAsync()
     {
+        if (AutoRefresh)
+        {
+            DashboardRefreshService.RefreshRequested += HandleRefreshRequestedAsync;
+        }
+
+        await LoadDeparturesAsync();
+    }
+
+    private async Task LoadDeparturesAsync()
+    {
+        errorMessage = null;
+
         try
         {
             Boards = await PublicTransportService.GetDepartureBoardsAsync(limit: 3);
@@ -89,4 +106,13 @@
         }
     }
 
+    private Task HandleRefreshRequestedAsync() => InvokeAsync(LoadDeparturesAsync);
+
+    public void Dispose()
+    {
+        if (AutoRefresh)
+        {
+            DashboardRefreshService.RefreshRequested -= HandleRefreshRequestedAsync;
+        }
+    }
 }

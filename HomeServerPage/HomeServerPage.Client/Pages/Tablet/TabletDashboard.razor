@@ -1,25 +1,53 @@
 @page "/tablet-dashboard"
 @layout TabletLayout
+@implements IAsyncDisposable
 @using HomeServerPage.Client.Pages.Astronomy
 @using HomeServerPage.Client.Pages.Fridge
 @using HomeServerPage.Client.Pages.PublicTransport
 @using HomeServerPage.Client.Pages.Weather
+@inject HomeServerPage.Client.Data.TabletDashboardRefreshService DashboardRefreshService
 
 <PageTitle>Tablet Dashboard</PageTitle>
 
 <div class="tablet-dashboard">
     <section class="tablet-dashboard-grid" aria-label="Daily essentials">
         <div class="tablet-dashboard-item tablet-dashboard-item-fridge">
-            <ExpiringFridgeItems DetailsHref="/tablet-dashboard/fridge" />
+            <ExpiringFridgeItems DetailsHref="/tablet-dashboard/fridge" AutoRefresh="true" />
         </div>
         <div class="tablet-dashboard-item tablet-dashboard-item-transport">
-            <PublicTransportWidget DetailsHref="/tablet-dashboard/public-transport" CompactTablet="true" />
+            <PublicTransportWidget DetailsHref="/tablet-dashboard/public-transport" CompactTablet="true" AutoRefresh="true" />
         </div>
         <div class="tablet-dashboard-item tablet-dashboard-item-weather">
-            <WeatherWidget />
+            <WeatherWidget AutoRefresh="true" />
         </div>
         <div class="tablet-dashboard-item tablet-dashboard-item-astronomy">
-            <AstronomyWidget DetailsHref="/tablet-dashboard/astronomy" CompactTablet="true" />
+            <AstronomyWidget DetailsHref="/tablet-dashboard/astronomy" CompactTablet="true" AutoRefresh="true" />
         </div>
     </section>
 </div>
+
+@code {
+    private readonly CancellationTokenSource refreshCancellation = new();
+    private Task refreshTask = Task.CompletedTask;
+
+    protected override void OnInitialized()
+    {
+        refreshTask = DashboardRefreshService.RunAsync(refreshCancellation.Token);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        refreshCancellation.Cancel();
+        try
+        {
+            await refreshTask;
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        finally
+        {
+            refreshCancellation.Dispose();
+        }
+    }
+}

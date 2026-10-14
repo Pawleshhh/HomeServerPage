@@ -1,5 +1,7 @@
 @using HomeServerPage.Data.Weather
+@implements IDisposable
 @inject IWeatherService WeatherService
+@inject HomeServerPage.Client.Data.TabletDashboardRefreshService DashboardRefreshService
 
 <section class="dashboard-card dashboard-card-weather card h-100" aria-labelledby="weather-widget-heading">
     <div class="card-body">
@@ -85,12 +87,28 @@
     private string? loadError;
     private WeatherForecastDay? forecastDay;
 
+    [Parameter]
+    public bool AutoRefresh { get; set; }
+
     private string LocationLabel => snapshot?.Location.Name ?? "Szczecin";
     private string WeatherIconClass => WeatherConditionIcons.GetIconClass(snapshot?.Condition.Text);
     private int RainChancePercent => forecastDay?.ChanceOfRainPercent ?? 0;
 
     protected override async Task OnInitializedAsync()
     {
+        if (AutoRefresh)
+        {
+            DashboardRefreshService.RefreshRequested += HandleRefreshRequestedAsync;
+        }
+
+        await LoadWeatherAsync();
+    }
+
+    private async Task LoadWeatherAsync()
+    {
+        isLoading = true;
+        loadError = null;
+
         try
         {
             var forecast = await WeatherService.GetForecastAsync(1);
@@ -104,6 +122,16 @@
         finally
         {
             isLoading = false;
+        }
+    }
+
+    private Task HandleRefreshRequestedAsync() => InvokeAsync(LoadWeatherAsync);
+
+    public void Dispose()
+    {
+        if (AutoRefresh)
+        {
+            DashboardRefreshService.RefreshRequested -= HandleRefreshRequestedAsync;
         }
     }
 }

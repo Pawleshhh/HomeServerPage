@@ -1,4 +1,5 @@
 using HomeServerPage.Client.Data.Astronomy.Telescopes;
+using HomeServerPage.Client.Data;
 using HomeServerPage.Client.Pages;
 using HomeServerPage.Components;
 using HomeServerPage.Data;
@@ -19,6 +20,12 @@ builder.Services.AddRazorComponents()
 builder.Services.AddControllers();
 
 builder.Services.AddSingleton<IDateTimeService, DateTimeService>();
+builder.Services.AddOptions<TabletDashboardRefreshOptions>()
+    .Bind(builder.Configuration.GetSection(TabletDashboardRefreshOptions.SectionName))
+    .Validate(options => options.IsValid, "Tablet dashboard refresh settings must use a positive interval up to 1440 minutes and a valid same-day active range.")
+    .ValidateOnStart();
+builder.Services.AddScoped<ITabletDashboardRefreshSettingsProvider, OptionsTabletDashboardRefreshSettingsProvider>();
+builder.Services.AddScoped<TabletDashboardRefreshService>();
 
 var fridgeConnection = builder.Configuration.GetConnectionString("FridgeDbConnection");
 var astronomyConnection = builder.Configuration.GetConnectionString("AstronomyDbConnection");

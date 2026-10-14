@@ -1,10 +1,12 @@
 @using HomeServerPage.Data
 @using HomeServerPage.Data.Astronomy
 @using HomeServerPage.Data.Weather
+@implements IDisposable
 
 @inject IAstronomyService AstronomyService
 @inject IWeatherService WeatherService
 @inject IDateTimeService DateTimeService
+@inject HomeServerPage.Client.Data.TabletDashboardRefreshService DashboardRefreshService
 
 <section class="dashboard-card dashboard-card-astronomy astronomy-widget card h-100" aria-labelledby="astronomy-widget-heading">
     <div class="card-body">
@@ -58,6 +60,9 @@
     [Parameter]
     public bool CompactTablet { get; set; }
 
+    [Parameter]
+    public bool AutoRefresh { get; set; }
+
     private IReadOnlyList<AstronomyObservation> solarSystemObservations = [];
     private WeatherAstronomy? moonAstronomy;
     private DateTime requestDateUtc;
@@ -67,8 +72,15 @@
 
     protected override async Task OnInitializedAsync()
     {
+        if (AutoRefresh)
+        {
+            DashboardRefreshService.RefreshRequested += HandleRefreshRequestedAsync;
+        }
+
         await LoadObservationsAsync();
     }
+
+    private Task HandleRefreshRequestedAsync() => InvokeAsync(LoadObservationsAsync);
 
     private async Task LoadObservationsAsync()
     {
@@ -105,4 +117,11 @@
         }
     }
 
+    public void Dispose()
+    {
+        if (AutoRefresh)
+        {
+            DashboardRefreshService.RefreshRequested -= HandleRefreshRequestedAsync;
+        }
+    }
 }
