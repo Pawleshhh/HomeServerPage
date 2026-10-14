@@ -2,12 +2,14 @@ const root = document.body ?? document.documentElement;
 const observer = new MutationObserver(syncClock);
 let activeClock;
 let activeTimeElement;
+let activeDateElement;
 let activeServerTime;
 let timeoutId;
 
 function syncClock() {
     const clock = document.querySelector(".tablet-navigation-clock[data-server-time]");
     const timeElement = clock?.querySelector(".tablet-navigation-time");
+    const dateElement = clock?.querySelector(".tablet-navigation-date");
 
     if (!clock || !timeElement) {
         stopClock();
@@ -15,7 +17,7 @@ function syncClock() {
     }
 
     const serverTime = clock.dataset.serverTime;
-    if (clock === activeClock && timeElement === activeTimeElement && serverTime === activeServerTime) {
+    if (clock === activeClock && timeElement === activeTimeElement && dateElement === activeDateElement && serverTime === activeServerTime) {
         return;
     }
 
@@ -28,6 +30,7 @@ function syncClock() {
     stopClock();
     activeClock = clock;
     activeTimeElement = timeElement;
+    activeDateElement = dateElement;
     activeServerTime = serverTime;
 
     const browserTimeAtStart = Date.now();
@@ -43,6 +46,9 @@ function syncClock() {
             second: "2-digit",
             hour12: false
         });
+        if (dateElement) {
+            dateElement.textContent = currentTime.toLocaleDateString();
+        }
         timeoutId = setTimeout(updateClock, 1000 - currentTime.getMilliseconds());
     }
 
@@ -54,6 +60,7 @@ function stopClock() {
     timeoutId = undefined;
     activeClock = undefined;
     activeTimeElement = undefined;
+    activeDateElement = undefined;
     activeServerTime = undefined;
 }
 

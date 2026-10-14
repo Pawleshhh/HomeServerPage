@@ -1,12 +1,15 @@
 using HomeServerPage.Client.Data.Astronomy.Telescopes;
+using HomeServerPage.Client.Data;
 using HomeServerPage.Client.Pages;
 using HomeServerPage.Components;
 using HomeServerPage.Data;
 using HomeServerPage.Data.Astronomy;
 using HomeServerPage.Data.Astronomy.Telescopes;
 using HomeServerPage.Data.Fridge;
+using HomeServerPage.Data.Notifications;
 using HomeServerPage.Data.PublicTransport;
 using HomeServerPage.Data.Weather;
+using HomeServerPage.Hubs;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,8 +20,20 @@ builder.Services.AddRazorComponents()
     .AddInteractiveWebAssemblyComponents();
 
 builder.Services.AddControllers();
+builder.Services.AddSignalR();
 
 builder.Services.AddSingleton<IDateTimeService, DateTimeService>();
+builder.Services.AddOptions<TabletDashboardRefreshOptions>()
+    .Bind(builder.Configuration.GetSection(TabletDashboardRefreshOptions.SectionName))
+    .Validate(options => options.IsValid, "Tablet dashboard refresh settings must use a positive interval up to 1440 minutes and a valid same-day active range.")
+    .ValidateOnStart();
+builder.Services.AddScoped<ITabletDashboardRefreshSettingsProvider, OptionsTabletDashboardRefreshSettingsProvider>();
+builder.Services.AddScoped<TabletDashboardRefreshService>();
+builder.Services.AddSingleton<RealtimeNotificationService>();
+builder.Services.AddSingleton<IRealtimeNotificationEventSource>(services =>
+    services.GetRequiredService<RealtimeNotificationService>());
+builder.Services.AddSingleton<IRealtimeNotificationPublisher>(services =>
+    services.GetRequiredService<RealtimeNotificationService>());
 
 var fridgeConnection = builder.Configuration.GetConnectionString("FridgeDbConnection");
 var astronomyConnection = builder.Configuration.GetConnectionString("AstronomyDbConnection");
@@ -105,6 +120,7 @@ app.UseHttpsRedirection();
 app.UseAntiforgery();
 
 app.MapControllers();
+app.MapHub<RealtimeNotificationsHub>(RealtimeNotificationContract.HubPath);
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()

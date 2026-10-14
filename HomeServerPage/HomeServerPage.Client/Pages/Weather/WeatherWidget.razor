@@ -1,76 +1,78 @@
 @using HomeServerPage.Data.Weather
+@implements IDisposable
 @inject IWeatherService WeatherService
+@inject HomeServerPage.Client.Data.TabletDashboardRefreshService DashboardRefreshService
 
 <section class="dashboard-card dashboard-card-weather card h-100" aria-labelledby="weather-widget-heading">
     <div class="card-body">
         <div class="dashboard-card-header">
             <div class="dashboard-card-heading">
-                <span class="dashboard-card-icon" aria-hidden="true"><i class="bi @WeatherIconClass"></i></span>
+                <span class="dashboard-card-icon" aria-hidden="true"><i class="bi @this.WeatherIconClass"></i></span>
                 <div>
                     <h2 id="weather-widget-heading" class="dashboard-card-title">Weather</h2>
-                    <p class="dashboard-card-subtitle">Current conditions in @LocationLabel.</p>
+                    <p class="dashboard-card-subtitle">Current conditions in @this.LocationLabel.</p>
                 </div>
             </div>
         </div>
 
-        @if (isLoading)
+        @if (this.isLoading)
         {
             <p class="dashboard-card-status" role="status">Loading weather…</p>
         }
-        else if (loadError is not null)
+        else if (this.loadError is not null)
         {
-            <p class="dashboard-card-status is-error mb-0" role="alert">@loadError</p>
+            <p class="dashboard-card-status is-error mb-0" role="alert">@this.loadError</p>
         }
-        else if (snapshot is not null)
+        else if (this.snapshot is not null)
         {
             <div class="weather-widget-content">
                 <div class="weather-current">
                     <div class="weather-summary">
                         <div class="weather-temperature-overview">
                             <div class="weather-temperature">
-                                <span class="weather-temperature-value">@snapshot.TemperatureCelsius.ToString("0.#")</span>
+                                <span class="weather-temperature-value">@this.snapshot.TemperatureCelsius.ToString("0.#")</span>
                                 <span class="weather-temperature-unit">°C</span>
                             </div>
-                            @if (forecastDay is not null)
+                            @if (this.forecastDay is not null)
                             {
                                 <div class="weather-temperature-range" title="Today's maximum / minimum temperatures">
                                     <span class="visually-hidden">Today's maximum:</span>
-                                    <span class="weather-temperature-value">@forecastDay.MaxTemperatureCelsius.ToString("0.#")°</span>
-                                    <span class="weather-temperature-minimum"><span aria-hidden="true">/ </span><span class="visually-hidden">Minimum:</span>@forecastDay.MinTemperatureCelsius.ToString("0.#")°C</span>
+                                    <span class="weather-temperature-value">@this.forecastDay.MaxTemperatureCelsius.ToString("0.#")°</span>
+                                    <span class="weather-temperature-minimum"><span aria-hidden="true">/ </span><span class="visually-hidden">Minimum:</span>@this.forecastDay.MinTemperatureCelsius.ToString("0.#")°C</span>
                                 </div>
                             }
                         </div>
                         <div class="weather-condition">
-                            <span class="weather-condition-icon" role="img" aria-label="@snapshot.Condition.Text">
-                                <i class="bi @WeatherIconClass" aria-hidden="true"></i>
+                            <span class="weather-condition-icon" role="img" aria-label="@this.snapshot.Condition.Text">
+                                <i class="bi @this.WeatherIconClass" aria-hidden="true"></i>
                             </span>
-                            <span>@snapshot.Condition.Text · feels like @snapshot.FeelsLikeCelsius.ToString("0.#")°C</span>
+                            <span>@this.snapshot.Condition.Text · feels like @this.snapshot.FeelsLikeCelsius.ToString("0.#")°C</span>
                         </div>
                     </div>
                     <dl class="weather-details">
                         <div>
                             <dt><i class="bi bi-droplet-fill" aria-hidden="true"></i> Humidity</dt>
-                            <dd>@snapshot.HumidityPercent%</dd>
+                            <dd>@this.snapshot.HumidityPercent%</dd>
                         </div>
                         <div>
                             <dt><i class="bi bi-wind" aria-hidden="true"></i> Wind</dt>
-                            <dd>@snapshot.WindSpeedKilometersPerHour.ToString("0.#") km/h @snapshot.WindDirection</dd>
+                            <dd>@this.snapshot.WindSpeedKilometersPerHour.ToString("0.#") km/h @this.snapshot.WindDirection</dd>
                         </div>
                         <div>
                             <dt><i class="bi bi-cloud-rain" aria-hidden="true"></i> Rain chance</dt>
-                            <dd>@RainChancePercent%</dd>
+                            <dd>@this.RainChancePercent%</dd>
                         </div>
                         <div>
                             <dt><i class="bi bi-moisture" aria-hidden="true"></i> Precipitation</dt>
-                            <dd>@snapshot.PrecipitationMillimeters.ToString("0.#") mm</dd>
+                            <dd>@this.snapshot.PrecipitationMillimeters.ToString("0.#") mm</dd>
                         </div>
                         <div>
                             <dt><i class="bi bi-speedometer2" aria-hidden="true"></i> Pressure</dt>
-                            <dd>@snapshot.PressureMillibars.ToString("0.#") mb</dd>
+                            <dd>@this.snapshot.PressureMillibars.ToString("0.#") mb</dd>
                         </div>
                         <div>
                             <dt><i class="bi bi-brightness-high" aria-hidden="true"></i> UV</dt>
-                            <dd>@snapshot.UvIndex.ToString("0.#")</dd>
+                            <dd>@this.snapshot.UvIndex.ToString("0.#")</dd>
                         </div>
                     </dl>
                 </div>
@@ -85,25 +87,51 @@
     private string? loadError;
     private WeatherForecastDay? forecastDay;
 
-    private string LocationLabel => snapshot?.Location.Name ?? "Szczecin";
-    private string WeatherIconClass => WeatherConditionIcons.GetIconClass(snapshot?.Condition.Text);
-    private int RainChancePercent => forecastDay?.ChanceOfRainPercent ?? 0;
+    [Parameter]
+    public bool AutoRefresh { get; set; }
+
+    private string LocationLabel => this.snapshot?.Location.Name ?? "Szczecin";
+    private string WeatherIconClass => WeatherConditionIcons.GetIconClass(this.snapshot?.Condition.Text);
+    private int RainChancePercent => this.forecastDay?.ChanceOfRainPercent ?? 0;
 
     protected override async Task OnInitializedAsync()
     {
+        if (AutoRefresh)
+        {
+            DashboardRefreshService.RefreshRequested += this.HandleRefreshRequestedAsync;
+        }
+
+        await this.LoadWeatherAsync();
+    }
+
+    private async Task LoadWeatherAsync()
+    {
+        this.isLoading = true;
+        this.loadError = null;
+
         try
         {
             var forecast = await WeatherService.GetForecastAsync(1);
-            snapshot = forecast.Current;
-            forecastDay = forecast.Days.FirstOrDefault();
+            this.snapshot = forecast.Current;
+            this.forecastDay = forecast.Days.FirstOrDefault();
         }
         catch (Exception)
         {
-            loadError = "Could not load weather.";
+            this.loadError = "Could not load weather.";
         }
         finally
         {
-            isLoading = false;
+            this.isLoading = false;
+        }
+    }
+
+    private Task HandleRefreshRequestedAsync() => InvokeAsync(this.LoadWeatherAsync);
+
+    public void Dispose()
+    {
+        if (AutoRefresh)
+        {
+            DashboardRefreshService.RefreshRequested -= this.HandleRefreshRequestedAsync;
         }
     }
 }

@@ -1,8 +1,11 @@
+using HomeServerPage.Data.Notifications;
 using Microsoft.EntityFrameworkCore;
 
 namespace HomeServerPage.Data.Fridge;
 
-public class FridgeService(IDbContextFactory<FridgeDbContext> dbContextFactory) : IFridgeService
+public class FridgeService(
+    IDbContextFactory<FridgeDbContext> dbContextFactory,
+    IRealtimeNotificationPublisher notificationPublisher) : IFridgeService
 {
     public async Task<FridgeItem?> GetItemAsync(int id)
     {
@@ -46,6 +49,7 @@ public class FridgeService(IDbContextFactory<FridgeDbContext> dbContextFactory) 
 
         var entry = await dbContext.AddAsync(item);
         await dbContext.SaveChangesAsync();
+        await notificationPublisher.PublishAsync(RealtimeNotificationTypes.FridgeChanged);
         return entry.Entity;
     }
 
@@ -60,6 +64,7 @@ public class FridgeService(IDbContextFactory<FridgeDbContext> dbContextFactory) 
 
         dbContext.Entry(entity).CurrentValues.SetValues(item);
         await dbContext.SaveChangesAsync();
+        await notificationPublisher.PublishAsync(RealtimeNotificationTypes.FridgeChanged);
         return true;
     }
 
@@ -74,6 +79,7 @@ public class FridgeService(IDbContextFactory<FridgeDbContext> dbContextFactory) 
 
         dbContext.FridgeItems.Remove(entity);
         await dbContext.SaveChangesAsync();
+        await notificationPublisher.PublishAsync(RealtimeNotificationTypes.FridgeChanged);
         return true;
     }
 }

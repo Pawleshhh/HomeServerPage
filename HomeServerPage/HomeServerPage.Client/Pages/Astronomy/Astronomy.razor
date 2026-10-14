@@ -105,15 +105,15 @@
         ? observationPoints.FirstOrDefault(observationPoint => observationPoint.Id == id)
         : null;
 
-    private IDictionary<string, object> CurrentTabParameters =>
+    private IDictionary<string, object?> CurrentTabParameters =>
         CurrentTab.ComponentType switch
         {
-            _ when CurrentTab.ComponentType == typeof(AstronomyObservationsTab) => new Dictionary<string, object>
+            _ when CurrentTab.ComponentType == typeof(AstronomyObservationsTab) => new Dictionary<string, object?>
             {
                 [nameof(AstronomyObservationsTab.Location)] = location,
                 [nameof(AstronomyObservationsTab.RequestDateUtc)] = requestDateUtc
             },
-            _ when CurrentTab.ComponentType == typeof(AstronomyObservationPointsTab) => new Dictionary<string, object>
+            _ when CurrentTab.ComponentType == typeof(AstronomyObservationPointsTab) => new Dictionary<string, object?>
             {
                 [nameof(AstronomyObservationPointsTab.Location)] = location,
                 [nameof(AstronomyObservationPointsTab.SelectedLocalDateTime)] = selectedLocalDateTime,
@@ -126,7 +126,7 @@
                 [nameof(AstronomyObservationPointsTab.ObservationPointSelected)] =
                     EventCallback.Factory.Create<int?>(this, OnObservationPointSelectedFromTab)
             },
-            _ => new Dictionary<string, object>()
+            _ => new Dictionary<string, object?>()
         };
 
     private bool IsActive(IAstronomyTab tab) => tab.Key == activeTab;

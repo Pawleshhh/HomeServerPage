@@ -1,6 +1,9 @@
 @using HomeServerPage.Data.Fridge
+@using HomeServerPage.Data.Notifications
+@implements IDisposable
 @inject IFridgeService FridgeService
 @inject HomeServerPage.Data.IDateTimeService DateTimeService
+@inject HomeServerPage.Client.Data.TabletDashboardRefreshService DashboardRefreshService
 
 <section class="dashboard-card dashboard-card-fridge card h-100" aria-labelledby="expiring-fridge-heading">
     <div class="card-body">
@@ -15,18 +18,22 @@
             <a class="btn btn-sm btn-outline-primary dashboard-card-action" href="@DetailsHref">Open fridge</a>
         </div>
 
-        @if (Items is null)
+        @if (this.errorMessage is not null)
+        {
+            <p class="dashboard-card-status is-error mb-0" role="alert">@this.errorMessage</p>
+        }
+        else if (this.Items is null)
         {
             <p class="dashboard-card-status" role="status">Loading fridge items…</p>
         }
-        else if (Items.Count == 0)
+        else if (this.Items.Count == 0)
         {
             <p class="dashboard-card-status is-empty mb-0">No fridge items yet.</p>
         }
         else
         {
             <div class="list-group list-group-flush fridge-expiring-list">
-                @foreach (var item in Items)
+                @foreach (var item in this.Items)
                 {
                     <div class="list-group-item fridge-expiring-item">
                         <div class="fridge-item-details">
@@ -45,15 +52,55 @@
     [Parameter]
     public string DetailsHref { get; set; } = "/fridge";
 
+    [Parameter]
+    public bool AutoRefresh { get; set; }
+
     private List<FridgeItem>? Items;
+    private string? errorMessage;
 
     protected override async Task OnInitializedAsync()
     {
-        await DateTimeService.SyncAsync();
-        var items = await FridgeService.GetItemsAsync();
-        Items = items
-            .OrderBy(FridgeLabels.GetEffectiveExpirationDate)
-            .Take(3)
-            .ToList();
+        if (AutoRefresh)
+        {
+            DashboardRefreshService.RefreshRequested += this.HandleRefreshRequestedAsync;
+            DashboardRefreshService.NotificationReceived += this.HandleNotificationReceivedAsync;
+        }
+
+        await this.LoadItemsAsync();
+    }
+
+    private async Task LoadItemsAsync()
+    {
+        this.errorMessage = null;
+
+        try
+        {
+            await DateTimeService.SyncAsync();
+            var items = await FridgeService.GetItemsAsync();
+            this.Items = items
+                .OrderBy(FridgeLabels.GetEffectiveExpirationDate)
+                .Take(3)
+                .ToList();
+        }
+        catch (Exception)
+        {
+            this.errorMessage = "Could not load fridge items.";
+        }
+    }
+
+    private Task HandleRefreshRequestedAsync() => InvokeAsync(this.LoadItemsAsync);
+
+    private Task HandleNotificationReceivedAsync(string notificationType) =>
+        notificationType == RealtimeNotificationTypes.FridgeChanged
+            ? InvokeAsync(this.LoadItemsAsync)
+            : Task.CompletedTask;
+
+    public void Dispose()
+    {
+        if (AutoRefresh)
+        {
+            DashboardRefreshService.RefreshRequested -= this.HandleRefreshRequestedAsync;
+            DashboardRefreshService.NotificationReceived -= this.HandleNotificationReceivedAsync;
+        }
     }
 }
