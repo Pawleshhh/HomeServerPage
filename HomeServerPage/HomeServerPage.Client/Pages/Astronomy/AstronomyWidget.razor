@@ -21,31 +21,31 @@
             <a class="btn btn-sm btn-outline-primary dashboard-card-action" href="@DetailsHref">Open sky tools</a>
         </div>
 
-        @if (isLoading)
+        @if (this.isLoading)
         {
             <p class="dashboard-card-status" role="status">Loading celestial observations…</p>
         }
-        else if (loadError is not null)
+        else if (this.loadError is not null)
         {
-            <p class="dashboard-card-status is-error mb-0" role="alert">@loadError</p>
+            <p class="dashboard-card-status is-error mb-0" role="alert">@this.loadError</p>
         }
         else
         {
             @if (!CompactTablet)
             {
                 <p class="dashboard-card-context">
-                    Rise and set times for @observationTime?.ToString("g")
+                    Rise and set times for @this.observationTime?.ToString("g")
                 </p>
             }
             <div class="astronomy-widget-content">
                 <div class="astronomy-widget-observations">
-                    <PlanetObservationList Observations="solarSystemObservations"
-                                           RequestDateUtc="requestDateUtc"
+                    <PlanetObservationList Observations="@this.solarSystemObservations"
+                                           RequestDateUtc="@this.requestDateUtc"
                                            Compact="true"
                                            TableLayout="true" />
                 </div>
                 <div class="astronomy-widget-moon">
-                    <MoonPhase Astronomy="moonAstronomy" Large="true" />
+                    <MoonPhase Astronomy="@this.moonAstronomy" Large="true" />
                 </div>
             </div>
 
@@ -74,46 +74,46 @@
     {
         if (AutoRefresh)
         {
-            DashboardRefreshService.RefreshRequested += HandleRefreshRequestedAsync;
+            DashboardRefreshService.RefreshRequested += this.HandleRefreshRequestedAsync;
         }
 
-        await LoadObservationsAsync();
+        await this.LoadObservationsAsync();
     }
 
-    private Task HandleRefreshRequestedAsync() => InvokeAsync(LoadObservationsAsync);
+    private Task HandleRefreshRequestedAsync() => InvokeAsync(this.LoadObservationsAsync);
 
     private async Task LoadObservationsAsync()
     {
-        isLoading = true;
-        loadError = null;
-        solarSystemObservations = [];
-        moonAstronomy = null;
+        this.isLoading = true;
+        this.loadError = null;
+        this.solarSystemObservations = [];
+        this.moonAstronomy = null;
 
         try
         {
             await DateTimeService.SyncAsync();
             var nowInPoland = DateTimeService.Now;
-            requestDateUtc = DateTimeService.UtcNow;
-            observationTime = nowInPoland;
+            this.requestDateUtc = DateTimeService.UtcNow;
+            this.observationTime = nowInPoland;
 
             var solarSystemObservationsTask = AstronomyObservationLoader.LoadSolarSystemAsync(
                 AstronomyService,
-                requestDateUtc,
+                this.requestDateUtc,
                 AstronomyDefaults.Location);
             var moonAstronomyTask = WeatherService.GetAstronomyAsync(
-                DateOnly.FromDateTime(requestDateUtc));
+                DateOnly.FromDateTime(this.requestDateUtc));
             await Task.WhenAll(solarSystemObservationsTask, moonAstronomyTask);
             var solarObservations = await solarSystemObservationsTask;
-            solarSystemObservations = solarObservations.Where(p => p.Key != "uranus" && p.Key != "neptune").ToList();
-            moonAstronomy = await moonAstronomyTask;
+            this.solarSystemObservations = solarObservations.Where(p => p.Key != "uranus" && p.Key != "neptune").ToList();
+            this.moonAstronomy = await moonAstronomyTask;
         }
         catch (Exception exception)
         {
-            loadError = $"Unable to load celestial observations: {exception.Message}";
+            this.loadError = $"Unable to load celestial observations: {exception.Message}";
         }
         finally
         {
-            isLoading = false;
+            this.isLoading = false;
         }
     }
 
@@ -121,7 +121,7 @@
     {
         if (AutoRefresh)
         {
-            DashboardRefreshService.RefreshRequested -= HandleRefreshRequestedAsync;
+            DashboardRefreshService.RefreshRequested -= this.HandleRefreshRequestedAsync;
         }
     }
 }

@@ -346,8 +346,7 @@
         {
             await ObservationPointService.DeleteObservationPointAsync(deletedId);
             await ObservationPointDeleted.InvokeAsync(deletedId);
-            await ObservationPointSelected.InvokeAsync(null);
-            StartNewPoint();
+            await StartNewPoint();
         }
         catch (Exception exception)
         {

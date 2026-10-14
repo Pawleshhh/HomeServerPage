@@ -1,50 +1,66 @@
 using HomeServerPage.Data;
 using HomeServerPage.Data.Astronomy;
+using HomeServerPage.Data.Notifications;
 
 namespace HomeServerPage.Client.Data;
 
 public sealed class TabletDashboardRefreshService(
     IDateTimeService dateTimeService,
     ITabletDashboardRefreshSettingsProvider settingsProvider,
+    IRealtimeNotificationEventSource notificationEventSource,
     ILogger<TabletDashboardRefreshService> logger)
 {
     public event Func<Task>? RefreshRequested;
+    public event Func<string, Task>? NotificationReceived;
 
     public async Task RunAsync(CancellationToken cancellationToken)
     {
-        var settings = await GetSettingsAsync(cancellationToken);
-        if (!settings.TryGetActiveRange(out var activeFrom, out var activeUntil))
+        notificationEventSource.NotificationReceived += this.HandleNotificationReceivedAsync;
+        try
         {
-            throw new InvalidOperationException("The tablet dashboard refresh settings are invalid.");
+            await notificationEventSource.StartAsync(cancellationToken);
+            var settings = await this.GetSettingsAsync(cancellationToken);
+            if (!settings.TryGetActiveRange(out var activeFrom, out var activeUntil))
+            {
+                throw new InvalidOperationException("The tablet dashboard refresh settings are invalid.");
+            }
+
+            await this.SyncAndGetUtcNowAsync(cancellationToken);
+
+            while (true)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                var nowUtc = this.GetUtcNow();
+                var nowInPoland = TimeZoneInfo.ConvertTime(nowUtc, AstronomyDefaults.LocalTimeZone);
+                var nextRefresh = GetNextRefreshTime(nowInPoland, settings, activeFrom, activeUntil);
+                var delay = nextRefresh - nowUtc;
+
+                if (delay > TimeSpan.Zero)
+                {
+                    await Task.Delay(delay, cancellationToken);
+                }
+
+                nowUtc = await this.SyncAndGetUtcNowAsync(cancellationToken);
+                nowInPoland = TimeZoneInfo.ConvertTime(nowUtc, AstronomyDefaults.LocalTimeZone);
+
+                if (nowUtc < nextRefresh || !IsWithinActiveRange(nowInPoland, activeFrom, activeUntil))
+                {
+                    continue;
+                }
+
+                await this.NotifySubscribersAsync(this.RefreshRequested);
+            }
         }
-
-        await SyncAndGetUtcNowAsync(cancellationToken);
-
-        while (true)
+        finally
         {
-            cancellationToken.ThrowIfCancellationRequested();
-
-            var nowUtc = GetUtcNow();
-            var nowInPoland = TimeZoneInfo.ConvertTime(nowUtc, AstronomyDefaults.LocalTimeZone);
-            var nextRefresh = GetNextRefreshTime(nowInPoland, settings, activeFrom, activeUntil);
-            var delay = nextRefresh - nowUtc;
-
-            if (delay > TimeSpan.Zero)
-            {
-                await Task.Delay(delay, cancellationToken);
-            }
-
-            nowUtc = await SyncAndGetUtcNowAsync(cancellationToken);
-            nowInPoland = TimeZoneInfo.ConvertTime(nowUtc, AstronomyDefaults.LocalTimeZone);
-
-            if (nowUtc < nextRefresh || !IsWithinActiveRange(nowInPoland, activeFrom, activeUntil))
-            {
-                continue;
-            }
-
-            await NotifyRefreshRequestedAsync();
+            notificationEventSource.NotificationReceived -= this.HandleNotificationReceivedAsync;
+            await notificationEventSource.StopAsync();
         }
     }
+
+    private Task HandleNotificationReceivedAsync(string notificationType) =>
+        this.NotifySubscribersAsync(this.NotificationReceived, notificationType);
 
     private async Task<TabletDashboardRefreshOptions> GetSettingsAsync(CancellationToken cancellationToken)
     {
@@ -79,7 +95,7 @@ public sealed class TabletDashboardRefreshService(
             try
             {
                 await dateTimeService.SyncAsync(cancellationToken);
-                return GetUtcNow();
+                return this.GetUtcNow();
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
@@ -145,15 +161,14 @@ public sealed class TabletDashboardRefreshService(
         return time >= activeFrom && time < activeUntil;
     }
 
-    private async Task NotifyRefreshRequestedAsync()
+    private async Task NotifySubscribersAsync(Func<Task>? subscribers)
     {
-        var handlers = RefreshRequested;
-        if (handlers is null)
+        if (subscribers is null)
         {
             return;
         }
 
-        foreach (var handler in handlers.GetInvocationList().Cast<Func<Task>>())
+        foreach (var handler in subscribers.GetInvocationList().Cast<Func<Task>>())
         {
             try
             {
@@ -162,6 +177,31 @@ public sealed class TabletDashboardRefreshService(
             catch (Exception exception)
             {
                 logger.LogError(exception, "A tablet dashboard component failed to refresh.");
+            }
+        }
+    }
+
+    private async Task NotifySubscribersAsync(
+        Func<string, Task>? subscribers,
+        string notificationType)
+    {
+        if (subscribers is null)
+        {
+            return;
+        }
+
+        foreach (var handler in subscribers.GetInvocationList().Cast<Func<string, Task>>())
+        {
+            try
+            {
+                await handler(notificationType);
+            }
+            catch (Exception exception)
+            {
+                logger.LogError(
+                    exception,
+                    "A tablet dashboard component failed to handle realtime notification {NotificationType}.",
+                    notificationType);
             }
         }
     }

@@ -16,15 +16,15 @@
             <a class="btn btn-sm btn-outline-primary dashboard-card-action" href="@DetailsHref">Open departures</a>
         </div>
 
-        @if (errorMessage is not null)
+        @if (this.errorMessage is not null)
         {
-            <p class="dashboard-card-status is-error mb-0" role="alert">@errorMessage</p>
+            <p class="dashboard-card-status is-error mb-0" role="alert">@this.errorMessage</p>
         }
-        else if (Boards is null)
+        else if (this.Boards is null)
         {
             <p class="dashboard-card-status" role="status">Loading departures…</p>
         }
-        else if (Boards.Count == 0)
+        else if (this.Boards.Count == 0)
         {
             <p class="dashboard-card-status is-empty mb-0">No departures available.</p>
         }
@@ -34,7 +34,7 @@
                 <table class="transport-directions-table">
                     <thead>
                         <tr>
-                            @foreach (var board in Boards)
+                            @foreach (var board in this.Boards)
                             {
                                 <th scope="col">Lubomirskiego <span class="text-body-secondary">(@board.Stop.Number)</span></th>
                             }
@@ -42,7 +42,7 @@
                     </thead>
                     <tbody>
                         <tr>
-                            @foreach (var board in Boards)
+                            @foreach (var board in this.Boards)
                             {
                                 <td>
                                     <div class="list-group list-group-flush transport-departures">
@@ -86,33 +86,33 @@
     {
         if (AutoRefresh)
         {
-            DashboardRefreshService.RefreshRequested += HandleRefreshRequestedAsync;
+            DashboardRefreshService.RefreshRequested += this.HandleRefreshRequestedAsync;
         }
 
-        await LoadDeparturesAsync();
+        await this.LoadDeparturesAsync();
     }
 
     private async Task LoadDeparturesAsync()
     {
-        errorMessage = null;
+        this.errorMessage = null;
 
         try
         {
-            Boards = await PublicTransportService.GetDepartureBoardsAsync(limit: 3);
+            this.Boards = await PublicTransportService.GetDepartureBoardsAsync(limit: 3);
         }
         catch (Exception)
         {
-            errorMessage = "Could not load departures.";
+            this.errorMessage = "Could not load departures.";
         }
     }
 
-    private Task HandleRefreshRequestedAsync() => InvokeAsync(LoadDeparturesAsync);
+    private Task HandleRefreshRequestedAsync() => InvokeAsync(this.LoadDeparturesAsync);
 
     public void Dispose()
     {
         if (AutoRefresh)
         {
-            DashboardRefreshService.RefreshRequested -= HandleRefreshRequestedAsync;
+            DashboardRefreshService.RefreshRequested -= this.HandleRefreshRequestedAsync;
         }
     }
 }

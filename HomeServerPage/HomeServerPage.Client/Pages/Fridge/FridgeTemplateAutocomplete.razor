@@ -1,6 +1,7 @@
 @using HomeServerPage.Data.Fridge
 @using Microsoft.AspNetCore.Components.Forms
 @using Microsoft.AspNetCore.Components.Web
+@using System.Diagnostics.CodeAnalysis
 @inherits InputBase<string>
 
 <div class="fridge-template-autocomplete">
@@ -130,7 +131,7 @@
     protected override bool TryParseValueFromString(
         string? value,
         out string result,
-        out string? validationErrorMessage)
+        [NotNullWhen(false)] out string? validationErrorMessage)
     {
         result = value ?? string.Empty;
         validationErrorMessage = null;

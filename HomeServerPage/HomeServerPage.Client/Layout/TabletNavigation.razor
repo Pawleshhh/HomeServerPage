@@ -4,7 +4,7 @@
 <script type="module" src="@Assets["Layout/TabletNavigation.razor.js"]"></script>
 
 <nav class="tablet-navigation" aria-label="Tablet navigation">
-    <button class="tablet-navigation-link tablet-navigation-refresh" type="button" aria-label="Refresh page" title="Refresh page" @onclick="RefreshPage">
+    <button class="tablet-navigation-link tablet-navigation-refresh" type="button" aria-label="Refresh page" title="Refresh page" @onclick="this.RefreshPage">
         <span class="tablet-navigation-icon" aria-hidden="true"><i class="bi bi-arrow-clockwise"></i></span>
     </button>
     <button class="tablet-navigation-link tablet-navigation-screensaver" type="button" aria-label="Activate screensaver" title="Activate screensaver" @onclick="OnScreensaverRequested">
@@ -13,8 +13,8 @@
     <div class="tablet-navigation-theme">
         <ThemeToggle />
     </div>
-    <div class="tablet-navigation-clock" aria-label="Current date and time" aria-live="polite" data-server-time="@currentDateTime?.ToString("yyyy-MM-ddTHH:mm:ss.fff")">
-        @if (currentDateTime is DateTime now)
+    <div class="tablet-navigation-clock" aria-label="Current date and time" aria-live="polite" data-server-time="@this.currentDateTime?.ToString("yyyy-MM-ddTHH:mm:ss.fff")">
+        @if (this.currentDateTime is DateTime now)
         {
             <span class="tablet-navigation-date">@now.ToString("d")</span>
             <span class="tablet-navigation-time">@now.ToString("HH:mm:ss")</span>
@@ -50,7 +50,7 @@
     protected override async Task OnInitializedAsync()
     {
         await DateTimeService.SyncAsync();
-        currentDateTime = DateTimeService.Now;
+        this.currentDateTime = DateTimeService.Now;
     }
 
     private void RefreshPage()

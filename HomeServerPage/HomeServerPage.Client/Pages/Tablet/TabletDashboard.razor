@@ -32,22 +32,22 @@
 
     protected override void OnInitialized()
     {
-        refreshTask = DashboardRefreshService.RunAsync(refreshCancellation.Token);
+        this.refreshTask = DashboardRefreshService.RunAsync(this.refreshCancellation.Token);
     }
 
     public async ValueTask DisposeAsync()
     {
-        refreshCancellation.Cancel();
+        this.refreshCancellation.Cancel();
         try
         {
-            await refreshTask;
+            await this.refreshTask;
         }
         catch (OperationCanceledException)
         {
         }
         finally
         {
-            refreshCancellation.Dispose();
+            this.refreshCancellation.Dispose();
         }
     }
 }
