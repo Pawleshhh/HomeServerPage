@@ -7,8 +7,6 @@
 @inject IJSRuntime JS
 @inject ILogger<Calories> Logger
 
-<script type="module" src="@Assets["Pages/Calories/Calories.razor.js"]"></script>
-
 <PageTitle>Calories</PageTitle>
 
 <div class="container-fluid calories-page">
@@ -620,6 +618,7 @@
     private bool isSavingGoal;
     private bool isNotificationsStarted;
     private bool isDisposed;
+    private IJSObjectReference? caloriesJsModule;
     private bool isTabletMode => TabletMode;
 
     [Parameter]
@@ -658,7 +657,7 @@
     };
     private string HistoryRangeText => historyPeriod switch
     {
-        HistoryPeriod.Daily => $"Last 30 days · {historyFrom.ToString("d MMM", CultureInfo.CurrentCulture)}–{historyThrough.ToString("d MMM yyyy", CultureInfo.CurrentCulture)}",
+        HistoryPeriod.Daily => $"Last 7 days · {historyFrom.ToString("d MMM", CultureInfo.CurrentCulture)}–{historyThrough.ToString("d MMM yyyy", CultureInfo.CurrentCulture)}",
         HistoryPeriod.Weekly => $"Last 12 calendar weeks · {historyFrom.ToString("d MMM yyyy", CultureInfo.CurrentCulture)}–{historyThrough.ToString("d MMM yyyy", CultureInfo.CurrentCulture)}",
         _ => $"Last 12 calendar months · {historyFrom.ToString("MMM yyyy", CultureInfo.CurrentCulture)}–{historyThrough.ToString("MMM yyyy", CultureInfo.CurrentCulture)}"
     };
@@ -733,8 +732,12 @@
 
     private async Task InitializeTrackerAsync(CancellationToken cancellationToken)
     {
-        var clock = await JS.InvokeAsync<BrowserClock>(
-            "homeServerPageCalories.getLocalClock",
+        caloriesJsModule ??= await JS.InvokeAsync<IJSObjectReference>(
+            "import",
+            cancellationToken,
+            "./Pages/Calories/Calories.razor.js");
+        var clock = await caloriesJsModule.InvokeAsync<BrowserClock>(
+            "getLocalClock",
             cancellationToken);
         today = DateOnly.ParseExact(clock.Date, "yyyy-MM-dd", CultureInfo.InvariantCulture);
         selectedDate = today;
@@ -943,8 +946,13 @@
 
     private async Task<DateTimeOffset> GetLoggedAtAsync()
     {
-        var offsetMinutes = await JS.InvokeAsync<int>(
-            "homeServerPageCalories.getOffsetMinutes",
+        caloriesJsModule ??= await JS.InvokeAsync<IJSObjectReference>(
+            "import",
+            lifetimeCancellation.Token,
+            "./Pages/Calories/Calories.razor.js");
+        var offsetMinutes = await caloriesJsModule.InvokeAsync<int>(
+            "getOffsetMinutes",
+            lifetimeCancellation.Token,
             selectedDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
             entryTime);
         var localDateTime = DateTime.SpecifyKind(
@@ -1212,7 +1220,7 @@
     {
         if (period == HistoryPeriod.Daily)
         {
-            return (currentDate.AddDays(-29), currentDate);
+            return (currentDate.AddDays(-6), currentDate);
         }
 
         if (period == HistoryPeriod.Weekly)
@@ -1290,6 +1298,11 @@
         if (isNotificationsStarted)
         {
             await NotificationEventSource.StopAsync();
+        }
+
+        if (caloriesJsModule is not null)
+        {
+            await caloriesJsModule.DisposeAsync();
         }
 
         lifetimeCancellation.Dispose();
