@@ -1,0 +1,1321 @@
+@implements IAsyncDisposable
+@using System.Globalization
+@using HomeServerPage.Data.Calories
+@using HomeServerPage.Data.Notifications
+@inject ICaloriesService CaloriesService
+@inject IRealtimeNotificationEventSource NotificationEventSource
+@inject IJSRuntime JS
+@inject ILogger<Calories> Logger
+
+<script type="module" src="@Assets["Pages/Calories/Calories.razor.js"]"></script>
+
+<PageTitle>Calories</PageTitle>
+
+<div class="container-fluid calories-page">
+    <PageHeader Title="Calories"
+                Description="Track daily food, nutrition, and calorie history."
+                Accent="calories" />
+
+    @if (isLoading)
+    {
+        <div class="calories-loading" role="status">Loading your calorie tracker…</div>
+    }
+    else if (loadError is not null)
+    {
+        <div class="alert alert-danger" role="alert">
+            <p class="mb-2">@loadError</p>
+            <button class="btn btn-outline-secondary" type="button" @onclick="RetryLoadingAsync">Try again</button>
+        </div>
+    }
+    else
+    {
+        @if (statusMessage is not null)
+        {
+            <div class="alert @(statusIsError ? "alert-danger" : "alert-success") calories-status" role="status" aria-live="polite">
+                @statusMessage
+            </div>
+        }
+
+        <div class="calories-tabs" role="tablist" aria-label="Calories tracker sections">
+            <button id="calories-daily-tab"
+                    class="calories-tab @(activeTab == CaloriesTab.Daily ? "active" : null)"
+                    type="button"
+                    role="tab"
+                    aria-selected="@(activeTab == CaloriesTab.Daily)"
+                    aria-controls="calories-daily-panel"
+                    @onclick="() => SelectTabAsync(CaloriesTab.Daily)">
+                <i class="bi bi-calendar-day" aria-hidden="true"></i>
+                Daily log
+            </button>
+            <button id="calories-foods-tab"
+                    class="calories-tab @(activeTab == CaloriesTab.Foods ? "active" : null)"
+                    type="button"
+                    role="tab"
+                    aria-selected="@(activeTab == CaloriesTab.Foods)"
+                    aria-controls="calories-foods-panel"
+                    @onclick="() => SelectTabAsync(CaloriesTab.Foods)">
+                <i class="bi bi-bookmark-heart" aria-hidden="true"></i>
+                Foods
+            </button>
+            <button id="calories-statistics-tab"
+                    class="calories-tab @(activeTab == CaloriesTab.Statistics ? "active" : null)"
+                    type="button"
+                    role="tab"
+                    aria-selected="@(activeTab == CaloriesTab.Statistics)"
+                    aria-controls="calories-statistics-panel"
+                    @onclick="() => SelectTabAsync(CaloriesTab.Statistics)">
+                <i class="bi bi-bar-chart-line" aria-hidden="true"></i>
+                Statistics
+            </button>
+        </div>
+
+        @if (activeTab == CaloriesTab.Daily)
+        {
+            <section id="calories-daily-panel"
+                     class="calories-tab-panel @(isTabletMode ? "calories-tablet-daily" : null)"
+                     role="tabpanel"
+                     aria-labelledby="calories-daily-tab"
+                     tabindex="0">
+                <div class="calories-date-toolbar @(isTabletMode ? "calories-tablet-date-toolbar" : null)">
+                    <button class="btn btn-outline-secondary calories-day-step" type="button" aria-label="Previous day" @onclick="GoToPreviousDayAsync">
+                        <i class="bi bi-chevron-left" aria-hidden="true"></i>
+                    </button>
+                    <div class="calories-date-picker">
+                        <label class="visually-hidden" for="calories-selected-date">Selected date</label>
+                        <InputDate id="calories-selected-date"
+                                   class="form-control"
+                                   TValue="DateOnly"
+                                   Value="selectedDate"
+                                   ValueChanged="OnSelectedDateChangedAsync"
+                                   ValueExpression="() => selectedDate"
+                                   Max="today.ToDateTime(TimeOnly.MinValue)" />
+                    </div>
+                    <button class="btn btn-outline-secondary calories-day-step"
+                            type="button"
+                            aria-label="Next day"
+                            disabled="@(selectedDate >= today)"
+                            @onclick="GoToNextDayAsync">
+                        <i class="bi bi-chevron-right" aria-hidden="true"></i>
+                    </button>
+                    <button class="btn btn-outline-primary calories-today-button"
+                            type="button"
+                            disabled="@(selectedDate == today)"
+                            @onclick="GoToTodayAsync">
+                        Today
+                    </button>
+                </div>
+
+                <div class="calories-daily-overview @(isTabletMode ? "calories-tablet-overview" : null)">
+                    <section class="calories-summary-card calories-total-card" aria-labelledby="daily-total-heading">
+                        <div class="calories-summary-heading">
+                            <div>
+                                <p class="calories-eyebrow">Selected day</p>
+                                <h2 id="daily-total-heading">@(isTabletMode
+                                    ? selectedDate.ToString("ddd, d MMM", CultureInfo.CurrentCulture)
+                                    : selectedDate.ToString("dddd, d MMMM yyyy", CultureInfo.CurrentCulture))</h2>
+                            </div>
+                            <span class="calories-summary-icon" aria-hidden="true"><i class="bi bi-fire"></i></span>
+                        </div>
+                        <p class="calories-total-value"><strong>@DailyCalories.ToString("N0", CultureInfo.CurrentCulture)</strong><span>kcal</span></p>
+                        @if (dailyGoal is int goal)
+                        {
+                            <div class="calories-goal-progress" role="progressbar" aria-label="Daily calorie goal progress" aria-valuemin="0" aria-valuemax="@goal" aria-valuenow="@Math.Min(DailyCalories, goal)">
+                                <span style="width: @(GoalProgressPercent)%"></span>
+                            </div>
+                            <p class="calories-goal-caption">
+                                @if (DailyCalories <= goal)
+                                {
+                                    <span>@((goal - DailyCalories).ToString("N0", CultureInfo.CurrentCulture)) kcal remaining of @goal.ToString("N0", CultureInfo.CurrentCulture)</span>
+                                }
+                                else
+                                {
+                                    <span>@((DailyCalories - goal).ToString("N0", CultureInfo.CurrentCulture)) kcal over your @goal.ToString("N0", CultureInfo.CurrentCulture) goal</span>
+                                }
+                            </p>
+                        }
+                        else if (!isTabletMode)
+                        {
+                            <p class="calories-goal-caption">Set a daily goal below to track progress.</p>
+                        }
+                    </section>
+
+                    @if (!isTabletMode)
+                    {
+                        <section class="calories-summary-card" aria-labelledby="weekly-total-heading">
+                            <div class="calories-summary-heading">
+                                <div>
+                                    <p class="calories-eyebrow">Monday–Sunday</p>
+                                    <h2 id="weekly-total-heading">Selected week</h2>
+                                </div>
+                                <span class="calories-summary-icon" aria-hidden="true"><i class="bi bi-calendar-week"></i></span>
+                            </div>
+                            <p class="calories-total-value"><strong>@WeeklyCalories.ToString("N0", CultureInfo.CurrentCulture)</strong><span>kcal</span></p>
+                            <p class="calories-goal-caption">@WeekStart.ToString("d MMM", CultureInfo.CurrentCulture) – @WeekEnd.ToString("d MMM", CultureInfo.CurrentCulture)</p>
+                        </section>
+
+                        <section class="calories-summary-card calories-goal-card" aria-labelledby="calories-goal-heading">
+                            <div class="calories-summary-heading">
+                                <div>
+                                    <p class="calories-eyebrow">Applies to every day</p>
+                                    <h2 id="calories-goal-heading">Daily goal</h2>
+                                </div>
+                                <span class="calories-summary-icon" aria-hidden="true"><i class="bi bi-bullseye"></i></span>
+                            </div>
+                            <EditForm class="calories-goal-form" Model="goalDraft" OnValidSubmit="SaveGoalAsync" FormName="CaloriesGoalForm">
+                                <DataAnnotationsValidator />
+                                <div class="calories-goal-input-row">
+                                    <label class="visually-hidden" for="calories-goal-input">Daily calorie goal in kcal</label>
+                                    <InputNumber id="calories-goal-input" class="form-control" @bind-Value="goalDraft.Calories" min="1" step="1" placeholder="e.g. 2000" />
+                                    <button class="btn btn-primary" type="submit" disabled="@isSavingGoal">Save</button>
+                                </div>
+                                <ValidationMessage For="() => goalDraft.Calories" />
+                            </EditForm>
+                        </section>
+                    }
+                </div>
+
+                <section class="calories-macro-summary @(isTabletMode ? "calories-tablet-macro-summary" : null)"
+                         aria-label="@(isTabletMode ? "Daily macronutrient totals" : "Daily and weekly macronutrient totals")">
+                    <div>
+                        <span>Today · recorded</span>
+                        <strong>Carbs @FormatMacro(DailyCarbohydrates) · Protein @FormatMacro(DailyProtein) · Fat @FormatMacro(DailyFat)</strong>
+                    </div>
+                    @if (!isTabletMode)
+                    {
+                        <div>
+                            <span>Selected week · recorded</span>
+                            <strong>Carbs @FormatMacro(WeeklyCarbohydrates) · Protein @FormatMacro(WeeklyProtein) · Fat @FormatMacro(WeeklyFat)</strong>
+                        </div>
+                        <p class="calories-macro-note">Only entries with recorded macro values are included in these totals.</p>
+                    }
+                </section>
+
+                @if (isTabletMode && showTabletEntryForm)
+                {
+                    <button class="calories-tablet-entry-backdrop"
+                            type="button"
+                            aria-label="Close food entry form"
+                            @onclick="CloseTabletEntryForm"></button>
+                }
+
+                @if (!isTabletMode || showTabletEntryForm)
+                {
+                <section class="calories-panel calories-entry-panel @(isTabletMode ? "calories-tablet-entry-dialog" : null)"
+                         aria-labelledby="log-food-heading"
+                         role="@(isTabletMode ? "dialog" : null)"
+                         aria-modal="@(isTabletMode ? "true" : null)">
+                    <div class="calories-panel-heading">
+                        <div>
+                            @if (!isTabletMode)
+                            {
+                                <p class="calories-eyebrow">Add to @selectedDate.ToString("d MMM", CultureInfo.CurrentCulture)</p>
+                            }
+                            <h2 id="log-food-heading">Log food</h2>
+                        </div>
+                        @if (isTabletMode)
+                        {
+                            <button class="btn btn-outline-secondary btn-sm" type="button" @onclick="CloseTabletEntryForm">Close</button>
+                        }
+                        else
+                        {
+                            <span class="calories-item-count">@dayEntries.Count item(s)</span>
+                        }
+                    </div>
+
+                    <div class="calories-entry-mode" role="group" aria-label="Food entry type">
+                        <button class="calories-entry-mode-button @(entryMode == EntryMode.SavedFood ? "active" : null)"
+                                type="button"
+                                aria-pressed="@(entryMode == EntryMode.SavedFood)"
+                                @onclick="() => entryMode = EntryMode.SavedFood">
+                            Saved food
+                        </button>
+                        <button class="calories-entry-mode-button @(entryMode == EntryMode.CustomFood ? "active" : null)"
+                                type="button"
+                                aria-pressed="@(entryMode == EntryMode.CustomFood)"
+                                @onclick="() => entryMode = EntryMode.CustomFood">
+                            One-time custom food
+                        </button>
+                    </div>
+
+                    @if (entryMode == EntryMode.SavedFood)
+                    {
+                        <EditForm class="calories-entry-form" Model="savedEntryDraft" OnValidSubmit="AddSavedEntryAsync" FormName="CaloriesSavedEntryForm">
+                            <DataAnnotationsValidator />
+                            <div class="calories-compact-form calories-saved-entry-grid">
+                                <div class="calories-compact-field calories-wide-field">
+                                    <label class="form-label" for="calories-saved-food">Food</label>
+                                    <InputSelect id="calories-saved-food" class="form-select" @bind-Value="savedEntryDraft.FoodId">
+                                        <option value="">Choose a saved food</option>
+                                        @foreach (var food in foods)
+                                        {
+                                            <option value="@food.Id">@food.Name — @food.CaloriesPerServing kcal/serving</option>
+                                        }
+                                    </InputSelect>
+                                    <ValidationMessage For="() => savedEntryDraft.FoodId" />
+                                    @if (foods.Count == 0)
+                                    {
+                                        <p class="form-text">Add foods in the Foods tab, or use a one-time custom entry.</p>
+                                    }
+                                </div>
+                                <div class="calories-compact-field">
+                                    <label class="form-label" for="calories-serving-count">Servings</label>
+                                    <InputNumber id="calories-serving-count" class="form-control" @bind-Value="savedEntryDraft.Servings" min="1" step="1" />
+                                    <ValidationMessage For="() => savedEntryDraft.Servings" />
+                                </div>
+                                <div class="calories-compact-field">
+                                    <label class="form-label" for="calories-entry-time">Time eaten</label>
+                                    <input id="calories-entry-time" class="form-control" type="time" value="@entryTime" @onchange="OnEntryTimeChanged" />
+                                </div>
+                                <div class="calories-compact-field">
+                                    <label class="form-label" for="calories-entry-notes">Note (optional)</label>
+                                    <InputText id="calories-entry-notes" class="form-control" @bind-Value="entryNotes" maxlength="500" placeholder="Optional note" />
+                                </div>
+                                <div class="calories-form-submit">
+                                    <button class="btn btn-primary" type="submit" disabled="@(isSavingEntry || foods.Count == 0)">
+                                        @(isSavingEntry ? "Adding…" : "Add food")
+                                    </button>
+                                </div>
+                            </div>
+                            <p class="calories-compact-help">Time uses device local time; adjust it for entries from earlier.</p>
+                        </EditForm>
+                    }
+                    else
+                    {
+                        <EditForm class="calories-entry-form" Model="customEntryDraft" OnValidSubmit="AddCustomEntryAsync" FormName="CaloriesCustomEntryForm">
+                            <DataAnnotationsValidator />
+                            <div class="calories-compact-form calories-custom-entry-grid">
+                                <div class="calories-compact-field calories-wide-field">
+                                    <label class="form-label" for="calories-custom-name">Food name</label>
+                                    <InputText id="calories-custom-name" class="form-control" @bind-Value="customEntryDraft.Name" maxlength="160" />
+                                    <ValidationMessage For="() => customEntryDraft.Name" />
+                                </div>
+                                <div class="calories-compact-field">
+                                    <label class="form-label" for="calories-custom-kcal">Calories (kcal)</label>
+                                    <InputNumber id="calories-custom-kcal" class="form-control" @bind-Value="customEntryDraft.Calories" min="1" step="1" />
+                                    <ValidationMessage For="() => customEntryDraft.Calories" />
+                                </div>
+                                <div class="calories-compact-field">
+                                    <label class="form-label" for="calories-custom-carbs">Carbohydrates (g)</label>
+                                    <InputNumber id="calories-custom-carbs" class="form-control" @bind-Value="customEntryDraft.CarbohydratesGrams" min="0" step="1" />
+                                </div>
+                                <div class="calories-compact-field">
+                                    <label class="form-label" for="calories-custom-protein">Protein (g)</label>
+                                    <InputNumber id="calories-custom-protein" class="form-control" @bind-Value="customEntryDraft.ProteinGrams" min="0" step="1" />
+                                </div>
+                                <div class="calories-compact-field">
+                                    <label class="form-label" for="calories-custom-fat">Fat (g)</label>
+                                    <InputNumber id="calories-custom-fat" class="form-control" @bind-Value="customEntryDraft.FatGrams" min="0" step="1" />
+                                </div>
+                                <div class="calories-compact-field">
+                                    <label class="form-label" for="calories-entry-time">Time eaten</label>
+                                    <input id="calories-entry-time" class="form-control" type="time" value="@entryTime" @onchange="OnEntryTimeChanged" />
+                                </div>
+                                <div class="calories-compact-field calories-wide-field">
+                                    <label class="form-label" for="calories-entry-notes">Note (optional)</label>
+                                    <InputText id="calories-entry-notes" class="form-control" @bind-Value="entryNotes" maxlength="500" placeholder="Optional note" />
+                                </div>
+                                <div class="calories-form-submit">
+                                    <button class="btn btn-primary" type="submit" disabled="@isSavingEntry">
+                                        @(isSavingEntry ? "Adding…" : "Add custom food")
+                                    </button>
+                                </div>
+                            </div>
+                            <p class="calories-compact-help">Enter nutrition for the exact amount eaten. Time uses device local time.</p>
+                        </EditForm>
+                    }
+                </section>
+                }
+
+                <section class="calories-panel calories-log-panel @(isTabletMode ? "calories-tablet-log-panel" : null)" aria-labelledby="daily-log-heading">
+                    <div class="calories-panel-heading">
+                        <div>
+                            @if (!isTabletMode)
+                            {
+                                <p class="calories-eyebrow">Food recorded for this date</p>
+                            }
+                            <h2 id="daily-log-heading">Daily log</h2>
+                        </div>
+                        @if (isTabletMode)
+                        {
+                            <div class="calories-tablet-log-actions">
+                                <span class="calories-item-count">@dayEntries.Count item(s)</span>
+                                <button class="btn btn-primary btn-sm" type="button" @onclick="OpenTabletEntryForm">
+                                    <i class="bi bi-plus-lg" aria-hidden="true"></i>
+                                    Add food
+                                </button>
+                            </div>
+                        }
+                        else
+                        {
+                            <strong class="calories-log-total">@DailyCalories.ToString("N0", CultureInfo.CurrentCulture) kcal</strong>
+                        }
+                    </div>
+
+                    @if (dayEntries.Count == 0)
+                    {
+                        <p class="calories-empty-state">Nothing logged yet. Add a saved or one-time food above.</p>
+                    }
+                    else
+                    {
+                        <div class="calories-log-list">
+                            @foreach (var entry in dayEntries)
+                            {
+                                <article class="calories-log-item" @key="entry.Id">
+                                    <time class="calories-log-time" datetime="@entry.LoggedAt.ToString("O", CultureInfo.InvariantCulture)">@entry.LoggedAt.ToString("HH:mm", CultureInfo.CurrentCulture)</time>
+                                    <div class="calories-log-copy">
+                                        <strong>@entry.Name</strong>
+                                        @if (entry.Servings is int servings)
+                                        {
+                                            <span>@servings serving(s)</span>
+                                        }
+                                        <span>@FormatEntryMacros(entry)</span>
+                                        @if (!string.IsNullOrWhiteSpace(entry.Notes))
+                                        {
+                                            <span class="calories-log-note">@entry.Notes</span>
+                                        }
+                                    </div>
+                                    <strong class="calories-log-kcal">@entry.Calories.ToString("N0", CultureInfo.CurrentCulture) kcal</strong>
+                                </article>
+                            }
+                        </div>
+                        @if (!isTabletMode)
+                        {
+                            <p class="calories-immutable-note">Logged entries are saved as history snapshots and cannot be edited or deleted.</p>
+                        }
+                    }
+                </section>
+            </section>
+        }
+        else if (activeTab == CaloriesTab.Foods)
+        {
+            <section id="calories-foods-panel" class="calories-tab-panel" role="tabpanel" aria-labelledby="calories-foods-tab" tabindex="0">
+                <section class="calories-panel" aria-labelledby="calories-food-form-heading">
+                    <div class="calories-panel-heading">
+                        <div>
+                            <p class="calories-eyebrow">Reusable items</p>
+                            <h2 id="calories-food-form-heading">@(editingFoodId is null ? "Add a saved food" : "Edit saved food")</h2>
+                        </div>
+                        @if (editingFoodId is not null)
+                        {
+                            <button class="btn btn-outline-secondary" type="button" @onclick="CancelFoodEdit">Cancel edit</button>
+                        }
+                    </div>
+
+                    <EditForm class="calories-food-form" Model="foodDraft" OnValidSubmit="SaveFoodAsync" FormName="CaloriesFoodForm">
+                        <DataAnnotationsValidator />
+                        <div class="calories-compact-form calories-food-entry-grid">
+                            <div class="calories-compact-field calories-wide-field">
+                                <label class="form-label" for="calories-food-name">Food name</label>
+                                <InputText id="calories-food-name" class="form-control" @bind-Value="foodDraft.Name" maxlength="160" placeholder="e.g. Greek yogurt" />
+                                <ValidationMessage For="() => foodDraft.Name" />
+                            </div>
+                            <div class="calories-compact-field">
+                                <label class="form-label" for="calories-food-kcal">Calories per serving (kcal)</label>
+                                <InputNumber id="calories-food-kcal" class="form-control" @bind-Value="foodDraft.CaloriesPerServing" min="1" step="1" />
+                                <ValidationMessage For="() => foodDraft.CaloriesPerServing" />
+                            </div>
+                            <div class="calories-compact-field">
+                                <label class="form-label" for="calories-food-carbs">Carbohydrates per serving (g)</label>
+                                <InputNumber id="calories-food-carbs" class="form-control" @bind-Value="foodDraft.CarbohydratesGrams" min="0" step="1" />
+                                <ValidationMessage For="() => foodDraft.CarbohydratesGrams" />
+                            </div>
+                            <div class="calories-compact-field">
+                                <label class="form-label" for="calories-food-protein">Protein per serving (g)</label>
+                                <InputNumber id="calories-food-protein" class="form-control" @bind-Value="foodDraft.ProteinGrams" min="0" step="1" />
+                                <ValidationMessage For="() => foodDraft.ProteinGrams" />
+                            </div>
+                            <div class="calories-compact-field">
+                                <label class="form-label" for="calories-food-fat">Fat per serving (g)</label>
+                                <InputNumber id="calories-food-fat" class="form-control" @bind-Value="foodDraft.FatGrams" min="0" step="1" />
+                                <ValidationMessage For="() => foodDraft.FatGrams" />
+                            </div>
+                            <div class="calories-form-submit">
+                                <button class="btn btn-primary" type="submit" disabled="@isSavingFood">
+                                    @(isSavingFood ? "Saving…" : editingFoodId is null ? "Save food" : "Save changes")
+                                </button>
+                            </div>
+                        </div>
+                        <p class="calories-compact-help">Nutrition is per serving; logging uses whole-number servings.</p>
+                    </EditForm>
+                </section>
+
+                <section class="calories-panel" aria-labelledby="calories-saved-foods-heading">
+                    <div class="calories-panel-heading">
+                        <div>
+                            <p class="calories-eyebrow">Available when logging</p>
+                            <h2 id="calories-saved-foods-heading">Saved foods</h2>
+                        </div>
+                        <span class="calories-item-count">@foods.Count item(s)</span>
+                    </div>
+                    @if (foods.Count == 0)
+                    {
+                        <p class="calories-empty-state">No saved foods yet. Add a food above to use it again later.</p>
+                    }
+                    else
+                    {
+                        <div class="calories-food-list">
+                            @foreach (var food in foods)
+                            {
+                                <article class="calories-food-item" @key="food.Id">
+                                    <div class="calories-food-copy">
+                                        <strong>@food.Name</strong>
+                                        <span>@food.CaloriesPerServing.ToString("N0", CultureInfo.CurrentCulture) kcal per serving</span>
+                                        <span>Carbs @FormatMacro(food.CarbohydratesGrams) · Protein @FormatMacro(food.ProteinGrams) · Fat @FormatMacro(food.FatGrams)</span>
+                                    </div>
+                                    <div class="calories-food-actions">
+                                        @if (foodPendingDeleteId == food.Id)
+                                        {
+                                            <span class="calories-delete-confirmation">Delete this saved food?</span>
+                                            <button class="btn btn-danger btn-sm" type="button" @onclick="() => RemoveFoodAsync(food.Id)">Delete</button>
+                                            <button class="btn btn-outline-secondary btn-sm" type="button" @onclick="CancelFoodDelete">Keep</button>
+                                        }
+                                        else
+                                        {
+                                            <button class="btn btn-outline-primary btn-sm" type="button" @onclick="() => EditFood(food)">Edit</button>
+                                            <button class="btn btn-outline-danger btn-sm" type="button" @onclick="() => BeginFoodDelete(food.Id)">Delete</button>
+                                        }
+                                    </div>
+                                </article>
+                            }
+                        </div>
+                    }
+                </section>
+            </section>
+        }
+        else
+        {
+            <section id="calories-statistics-panel" class="calories-tab-panel" role="tabpanel" aria-labelledby="calories-statistics-tab" tabindex="0">
+                <section class="calories-panel" aria-labelledby="calories-history-heading">
+                    <div class="calories-panel-heading">
+                        <div>
+                            <p class="calories-eyebrow">Calories only · all logged foods</p>
+                            <h2 id="calories-history-heading">History</h2>
+                        </div>
+                        <div class="calories-history-total">
+                            <strong>@HistoryTotal.ToString("N0", CultureInfo.CurrentCulture)</strong>
+                            <span>kcal in range</span>
+                        </div>
+                    </div>
+
+                    <div class="calories-history-period" role="group" aria-label="History period">
+                        <button class="calories-entry-mode-button @(historyPeriod == HistoryPeriod.Daily ? "active" : null)" type="button" aria-pressed="@(historyPeriod == HistoryPeriod.Daily)" @onclick="() => ChangeHistoryPeriodAsync(HistoryPeriod.Daily)">Daily</button>
+                        <button class="calories-entry-mode-button @(historyPeriod == HistoryPeriod.Weekly ? "active" : null)" type="button" aria-pressed="@(historyPeriod == HistoryPeriod.Weekly)" @onclick="() => ChangeHistoryPeriodAsync(HistoryPeriod.Weekly)">Weekly</button>
+                        <button class="calories-entry-mode-button @(historyPeriod == HistoryPeriod.Monthly ? "active" : null)" type="button" aria-pressed="@(historyPeriod == HistoryPeriod.Monthly)" @onclick="() => ChangeHistoryPeriodAsync(HistoryPeriod.Monthly)">Monthly</button>
+                    </div>
+
+                    @if (isLoadingHistory)
+                    {
+                        <p class="calories-empty-state" role="status">Loading history…</p>
+                    }
+                    else if (historyError is not null)
+                    {
+                        <div class="alert alert-danger" role="alert">@historyError</div>
+                    }
+                    else
+                    {
+                        <p class="calories-history-range">@HistoryRangeText</p>
+                        <div class="calories-history-chart-scroll" tabindex="0" aria-label="Scrollable calorie history chart">
+                            <div class="calories-history-chart" role="group" aria-label="@ChartAccessibleLabel">
+                                <strong class="calories-chart-axis-heading">kcal</strong>
+                                <div class="calories-chart-axis-labels" aria-hidden="true">
+                                    @for (var tickIndex = 4; tickIndex >= 0; tickIndex--)
+                                    {
+                                        <span>@GetChartTickValue(tickIndex).ToString("N0", CultureInfo.CurrentCulture)</span>
+                                    }
+                                </div>
+                                <div class="calories-chart-columns" style="--calories-chart-columns: @historyPoints.Count; --calories-chart-column-width: @(ChartColumnWidth)px">
+                                    @for (var index = 0; index < historyPoints.Count; index++)
+                                    {
+                                        var pointIndex = index;
+                                        var point = historyPoints[index];
+                                        var isSelected = selectedChartPointIndex == pointIndex;
+                                        <button class="calories-chart-column @(isSelected ? "selected" : null)"
+                                                type="button"
+                                                aria-pressed="@isSelected"
+                                                aria-label="@($"{point.Label}: {point.Calories:N0} kilocalories")"
+                                                title="@($"{point.Label}: {point.Calories:N0} kcal")"
+                                                @onclick="() => SelectChartPoint(pointIndex)">
+                                            <span class="calories-chart-bar-space">
+                                                <span class="calories-chart-bar" style="height: @(GetBarHeightPercent(point.Calories))%"></span>
+                                            </span>
+                                            <span class="calories-chart-label">@point.Label</span>
+                                        </button>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                        @if (SelectedChartPoint is { } selectedPoint)
+                        {
+                            <div class="calories-chart-selection" role="status" aria-live="polite">
+                                <strong>@selectedPoint.Label</strong>
+                                <strong>@selectedPoint.Calories.ToString("N0", CultureInfo.CurrentCulture) kcal</strong>
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="calories-chart-selection-hint">Tap or click a column to see its calorie total.</p>
+                        }
+                        <div class="calories-history-average">
+                            <span>Average per @HistoryPeriodLabel.ToLowerInvariant()</span>
+                            <strong>@HistoryAverage.ToString("N0", CultureInfo.CurrentCulture) kcal</strong>
+                        </div>
+                        <div class="calories-history-table-wrap">
+                            <table class="calories-history-table">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">@HistoryPeriodLabel</th>
+                                        <th scope="col">Total calories</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var point in historyPoints.AsEnumerable().Reverse())
+                                    {
+                                        <tr @key="point.Start">
+                                            <th scope="row">@point.Label</th>
+                                            <td>@point.Calories.ToString("N0", CultureInfo.CurrentCulture) kcal</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </section>
+            </section>
+        }
+    }
+</div>
+
+@code {
+    private readonly CancellationTokenSource lifetimeCancellation = new();
+    private List<CaloriesFood> foods = [];
+    private List<CaloriesLogEntry> weekEntries = [];
+    private List<CaloriesLogEntry> dayEntries = [];
+    private List<CaloriesChartPoint> historyPoints = [];
+    private CaloriesFoodDraft foodDraft = new();
+    private CaloriesEntryDraft savedEntryDraft = new();
+    private CustomCaloriesEntryDraft customEntryDraft = new();
+    private CaloriesGoalDraft goalDraft = new();
+    private CaloriesTab activeTab = CaloriesTab.Daily;
+    private EntryMode entryMode = EntryMode.SavedFood;
+    private HistoryPeriod historyPeriod = HistoryPeriod.Daily;
+    private DateOnly today;
+    private DateOnly selectedDate;
+    private DateOnly historyFrom;
+    private DateOnly historyThrough;
+    private int? dailyGoal;
+    private int? editingFoodId;
+    private int? foodPendingDeleteId;
+    private int? selectedChartPointIndex;
+    private bool showTabletEntryForm;
+    private string entryTime = "12:00";
+    private string? entryNotes;
+    private string? statusMessage;
+    private string? loadError;
+    private string? historyError;
+    private bool statusIsError;
+    private bool isLoading = true;
+    private bool isLoadingHistory;
+    private bool isSavingFood;
+    private bool isSavingEntry;
+    private bool isSavingGoal;
+    private bool isNotificationsStarted;
+    private bool isDisposed;
+    private bool isTabletMode => TabletMode;
+
+    [Parameter]
+    public bool TabletMode { get; set; }
+
+    private DateOnly WeekStart => StartOfWeek(selectedDate);
+    private DateOnly WeekEnd => WeekStart.AddDays(6);
+    private long DailyCalories => dayEntries.Sum(entry => (long)entry.Calories);
+    private long WeeklyCalories => weekEntries.Sum(entry => (long)entry.Calories);
+    private int? DailyCarbohydrates => SumMacro(dayEntries, entry => entry.CarbohydratesGrams);
+    private int? DailyProtein => SumMacro(dayEntries, entry => entry.ProteinGrams);
+    private int? DailyFat => SumMacro(dayEntries, entry => entry.FatGrams);
+    private int? WeeklyCarbohydrates => SumMacro(weekEntries, entry => entry.CarbohydratesGrams);
+    private int? WeeklyProtein => SumMacro(weekEntries, entry => entry.ProteinGrams);
+    private int? WeeklyFat => SumMacro(weekEntries, entry => entry.FatGrams);
+    private int GoalProgressPercent => dailyGoal is > 0
+        ? (int)Math.Clamp(Math.Round(DailyCalories * 100d / dailyGoal.Value), 0, 100)
+        : 0;
+    private long HistoryTotal => historyPoints.Sum(point => point.Calories);
+    private long HistoryAverage => historyPoints.Count == 0
+        ? 0
+        : (long)Math.Round(historyPoints.Average(point => point.Calories));
+    private int ChartColumnWidth => historyPeriod == HistoryPeriod.Daily ? 42 : 62;
+    private long ChartAxisMaximum => Math.Max(
+        500,
+        ((historyPoints.Count == 0 ? 0 : historyPoints.Max(point => point.Calories)) + 499) / 500 * 500);
+    private CaloriesChartPoint? SelectedChartPoint =>
+        selectedChartPointIndex is int index && index >= 0 && index < historyPoints.Count
+            ? historyPoints[index]
+            : null;
+    private string HistoryPeriodLabel => historyPeriod switch
+    {
+        HistoryPeriod.Daily => "Day",
+        HistoryPeriod.Weekly => "Week",
+        _ => "Month"
+    };
+    private string HistoryRangeText => historyPeriod switch
+    {
+        HistoryPeriod.Daily => $"Last 30 days · {historyFrom.ToString("d MMM", CultureInfo.CurrentCulture)}–{historyThrough.ToString("d MMM yyyy", CultureInfo.CurrentCulture)}",
+        HistoryPeriod.Weekly => $"Last 12 calendar weeks · {historyFrom.ToString("d MMM yyyy", CultureInfo.CurrentCulture)}–{historyThrough.ToString("d MMM yyyy", CultureInfo.CurrentCulture)}",
+        _ => $"Last 12 calendar months · {historyFrom.ToString("MMM yyyy", CultureInfo.CurrentCulture)}–{historyThrough.ToString("MMM yyyy", CultureInfo.CurrentCulture)}"
+    };
+    private string ChartAccessibleLabel => $"{HistoryPeriodLabel} calorie totals for {HistoryRangeText}. Total {HistoryTotal:N0} kilocalories.";
+
+    protected override void OnInitialized()
+    {
+        NotificationEventSource.NotificationReceived += HandleNotificationReceivedAsync;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+        {
+            return;
+        }
+
+        try
+        {
+            await InitializeTrackerAsync(lifetimeCancellation.Token);
+        }
+        catch (OperationCanceledException) when (lifetimeCancellation.IsCancellationRequested)
+        {
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(exception, "Could not initialize the Calories tracker.");
+            loadError = "The Calories tracker could not be loaded. Check the connection and try again.";
+        }
+        finally
+        {
+            isLoading = false;
+            if (!isDisposed)
+            {
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+    }
+
+    private async Task LoadTrackerDataAsync(CancellationToken cancellationToken)
+    {
+        var foodsTask = CaloriesService.GetFoodsAsync(cancellationToken);
+        var goalTask = CaloriesService.GetDailyGoalAsync(cancellationToken);
+        var entriesTask = CaloriesService.GetEntriesAsync(WeekStart, WeekEnd, cancellationToken);
+        await Task.WhenAll(foodsTask, goalTask, entriesTask);
+
+        foods = await foodsTask;
+        dailyGoal = await goalTask;
+        goalDraft.Calories = dailyGoal;
+        SetWeekEntries(await entriesTask);
+    }
+
+    private async Task RetryLoadingAsync()
+    {
+        loadError = null;
+        isLoading = true;
+        await InvokeAsync(StateHasChanged);
+        try
+        {
+            await InitializeTrackerAsync(lifetimeCancellation.Token);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            Logger.LogError(exception, "Could not reload the Calories tracker.");
+            loadError = "The Calories tracker could not be loaded. Check the connection and try again.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task InitializeTrackerAsync(CancellationToken cancellationToken)
+    {
+        var clock = await JS.InvokeAsync<BrowserClock>(
+            "homeServerPageCalories.getLocalClock",
+            cancellationToken);
+        today = DateOnly.ParseExact(clock.Date, "yyyy-MM-dd", CultureInfo.InvariantCulture);
+        selectedDate = today;
+        entryTime = clock.Time;
+        await LoadTrackerDataAsync(cancellationToken);
+        if (!isNotificationsStarted)
+        {
+            await NotificationEventSource.StartAsync(cancellationToken);
+            isNotificationsStarted = true;
+        }
+    }
+
+    private async Task SelectTabAsync(CaloriesTab tab)
+    {
+        activeTab = tab;
+        showTabletEntryForm = false;
+        ClearStatus();
+        if (tab == CaloriesTab.Statistics)
+        {
+            await LoadHistoryAsync();
+        }
+        else if (tab == CaloriesTab.Foods)
+        {
+            await LoadFoodsAsync();
+        }
+    }
+
+    private async Task OnSelectedDateChangedAsync(DateOnly date)
+    {
+        selectedDate = date > today ? today : date;
+        ClearStatus();
+        await LoadSelectedWeekAsync();
+    }
+
+    private void OnEntryTimeChanged(ChangeEventArgs args)
+    {
+        if (args.Value is string value && TimeOnly.TryParseExact(
+                value,
+                "HH:mm",
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.None,
+                out _))
+        {
+            entryTime = value;
+        }
+    }
+
+    private async Task GoToPreviousDayAsync()
+    {
+        if (selectedDate > DateOnly.MinValue)
+        {
+            selectedDate = selectedDate.AddDays(-1);
+            await LoadSelectedWeekAsync();
+        }
+    }
+
+    private async Task GoToNextDayAsync()
+    {
+        if (selectedDate < today)
+        {
+            selectedDate = selectedDate.AddDays(1);
+            await LoadSelectedWeekAsync();
+        }
+    }
+
+    private async Task GoToTodayAsync()
+    {
+        selectedDate = today;
+        await LoadSelectedWeekAsync();
+    }
+
+    private async Task<bool> LoadSelectedWeekAsync()
+    {
+        try
+        {
+            var entries = await CaloriesService.GetEntriesAsync(WeekStart, WeekEnd, lifetimeCancellation.Token);
+            SetWeekEntries(entries);
+            return true;
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            Logger.LogError(exception, "Could not load Calories entries for {Date}.", selectedDate);
+            SetStatus("Entries for this week could not be loaded.", isError: true);
+            return false;
+        }
+    }
+
+    private void SetWeekEntries(List<CaloriesLogEntry> entries)
+    {
+        weekEntries = entries;
+        dayEntries = entries
+            .Where(entry => entry.LocalDate == selectedDate)
+            .OrderBy(entry => entry.LoggedAt.UtcDateTime)
+            .ThenBy(entry => entry.Id)
+            .ToList();
+    }
+
+    private async Task SaveGoalAsync()
+    {
+        if (goalDraft.Calories is not int calories)
+        {
+            return;
+        }
+
+        isSavingGoal = true;
+        try
+        {
+            dailyGoal = await CaloriesService.SetDailyGoalAsync(calories, lifetimeCancellation.Token);
+            SetStatus("Daily calorie goal saved.");
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            Logger.LogError(exception, "Could not save the daily calorie goal.");
+            SetStatus("The daily goal could not be saved.", isError: true);
+        }
+        finally
+        {
+            isSavingGoal = false;
+        }
+    }
+
+    private async Task AddSavedEntryAsync()
+    {
+        var selectedFood = foods.FirstOrDefault(food => food.Id == savedEntryDraft.FoodId);
+        if (selectedFood is null || savedEntryDraft.Servings is not int servings)
+        {
+            return;
+        }
+
+        try
+        {
+            var entry = new CaloriesLogEntry(
+                0,
+                selectedFood.Name,
+                checked(selectedFood.CaloriesPerServing * servings),
+                MultiplyMacro(selectedFood.CarbohydratesGrams, servings),
+                MultiplyMacro(selectedFood.ProteinGrams, servings),
+                MultiplyMacro(selectedFood.FatGrams, servings),
+                servings,
+                selectedDate,
+                await GetLoggedAtAsync(),
+                NormalizeNote(entryNotes));
+            if (await SaveEntryAsync(entry))
+            {
+                savedEntryDraft = new CaloriesEntryDraft();
+            }
+        }
+        catch (OverflowException exception)
+        {
+            Logger.LogWarning(exception, "The servings count is too large to calculate nutrition.");
+            SetStatus("That serving count is too large to calculate. Use a smaller number.", isError: true);
+        }
+    }
+
+    private async Task AddCustomEntryAsync()
+    {
+        if (customEntryDraft.Name is null || customEntryDraft.Calories is not int calories)
+        {
+            return;
+        }
+
+        var entry = new CaloriesLogEntry(
+            0,
+            customEntryDraft.Name.Trim(),
+            calories,
+            customEntryDraft.CarbohydratesGrams,
+            customEntryDraft.ProteinGrams,
+            customEntryDraft.FatGrams,
+            null,
+            selectedDate,
+            await GetLoggedAtAsync(),
+            NormalizeNote(entryNotes));
+        if (await SaveEntryAsync(entry))
+        {
+            customEntryDraft = new CustomCaloriesEntryDraft();
+        }
+    }
+
+    private async Task<bool> SaveEntryAsync(CaloriesLogEntry entry)
+    {
+        isSavingEntry = true;
+        try
+        {
+            await CaloriesService.AddEntryAsync(entry, lifetimeCancellation.Token);
+            var entriesLoaded = await LoadSelectedWeekAsync();
+            showTabletEntryForm = false;
+            entryNotes = null;
+            if (entriesLoaded)
+            {
+                SetStatus("Food added to the daily log.");
+            }
+
+            return true;
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            Logger.LogError(exception, "Could not add food to the Calories log.");
+            SetStatus("The food could not be added to the log.", isError: true);
+            return false;
+        }
+        finally
+        {
+            isSavingEntry = false;
+        }
+    }
+
+    private async Task<DateTimeOffset> GetLoggedAtAsync()
+    {
+        var offsetMinutes = await JS.InvokeAsync<int>(
+            "homeServerPageCalories.getOffsetMinutes",
+            selectedDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+            entryTime);
+        var localDateTime = DateTime.SpecifyKind(
+            selectedDate.ToDateTime(TimeOnly.ParseExact(entryTime, "HH:mm", CultureInfo.InvariantCulture)),
+            DateTimeKind.Unspecified);
+        return new DateTimeOffset(localDateTime, TimeSpan.FromMinutes(offsetMinutes));
+    }
+
+    private async Task SaveFoodAsync()
+    {
+        if (foodDraft.Name is null || foodDraft.CaloriesPerServing is not int calories)
+        {
+            return;
+        }
+
+        isSavingFood = true;
+        try
+        {
+            var food = new CaloriesFood(
+                editingFoodId ?? 0,
+                foodDraft.Name.Trim(),
+                calories,
+                foodDraft.CarbohydratesGrams,
+                foodDraft.ProteinGrams,
+                foodDraft.FatGrams);
+            var isNewFood = editingFoodId is null;
+            var succeeded = editingFoodId is int id
+                ? await CaloriesService.UpdateFoodAsync(
+                    food with { Id = id },
+                    lifetimeCancellation.Token)
+                : await AddFoodAsync(food);
+
+            if (!succeeded)
+            {
+                SetStatus("The saved food could not be found. Refresh and try again.", isError: true);
+                return;
+            }
+
+            foodDraft = new CaloriesFoodDraft();
+            editingFoodId = null;
+            if (await LoadFoodsAsync())
+            {
+                SetStatus(isNewFood ? "Saved food added." : "Saved food updated.");
+            }
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            Logger.LogError(exception, "Could not save a reusable Calories food.");
+            SetStatus("The saved food could not be saved.", isError: true);
+        }
+        finally
+        {
+            isSavingFood = false;
+        }
+    }
+
+    private async Task<bool> AddFoodAsync(CaloriesFood food)
+    {
+        await CaloriesService.AddFoodAsync(food, lifetimeCancellation.Token);
+        return true;
+    }
+
+    private void EditFood(CaloriesFood food)
+    {
+        editingFoodId = food.Id;
+        foodDraft = new CaloriesFoodDraft
+        {
+            Name = food.Name,
+            CaloriesPerServing = food.CaloriesPerServing,
+            CarbohydratesGrams = food.CarbohydratesGrams,
+            ProteinGrams = food.ProteinGrams,
+            FatGrams = food.FatGrams
+        };
+        foodPendingDeleteId = null;
+        ClearStatus();
+    }
+
+    private void CancelFoodEdit()
+    {
+        editingFoodId = null;
+        foodDraft = new CaloriesFoodDraft();
+    }
+
+    private void BeginFoodDelete(int id)
+    {
+        foodPendingDeleteId = id;
+        editingFoodId = null;
+    }
+
+    private void CancelFoodDelete() => foodPendingDeleteId = null;
+
+    private async Task RemoveFoodAsync(int id)
+    {
+        try
+        {
+            var removed = await CaloriesService.RemoveFoodAsync(id, lifetimeCancellation.Token);
+            if (!removed)
+            {
+                SetStatus("The saved food could not be found. Refresh and try again.", isError: true);
+                return;
+            }
+
+            foodPendingDeleteId = null;
+            await LoadFoodsAsync();
+            SetStatus("Saved food deleted. Existing history is unchanged.");
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            Logger.LogError(exception, "Could not delete saved food {FoodId}.", id);
+            SetStatus("The saved food could not be deleted.", isError: true);
+        }
+    }
+
+    private async Task<bool> LoadFoodsAsync()
+    {
+        try
+        {
+            foods = await CaloriesService.GetFoodsAsync(lifetimeCancellation.Token);
+            return true;
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            Logger.LogError(exception, "Could not load reusable Calories foods.");
+            SetStatus("Saved foods could not be loaded.", isError: true);
+            return false;
+        }
+    }
+
+    private async Task ChangeHistoryPeriodAsync(HistoryPeriod period)
+    {
+        historyPeriod = period;
+        await LoadHistoryAsync();
+    }
+
+    private async Task LoadHistoryAsync()
+    {
+        isLoadingHistory = true;
+        historyError = null;
+        selectedChartPointIndex = null;
+        try
+        {
+            (historyFrom, historyThrough) = GetHistoryRange(historyPeriod, today);
+            var entries = await CaloriesService.GetEntriesAsync(
+                historyFrom,
+                historyThrough,
+                lifetimeCancellation.Token);
+            historyPoints = CreateHistoryPoints(entries, historyPeriod, historyFrom, historyThrough);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            Logger.LogError(exception, "Could not load {Period} Calories history.", historyPeriod);
+            historyError = "Calories history could not be loaded. Check the connection and try again.";
+        }
+        finally
+        {
+            isLoadingHistory = false;
+        }
+    }
+
+    private async Task HandleNotificationReceivedAsync(string notificationType)
+    {
+        if (notificationType != RealtimeNotificationTypes.CaloriesChanged || isDisposed || today == default)
+        {
+            return;
+        }
+
+        await InvokeAsync(async () =>
+        {
+            try
+            {
+                await LoadTrackerDataAsync(lifetimeCancellation.Token);
+                if (activeTab == CaloriesTab.Statistics)
+                {
+                    await LoadHistoryAsync();
+                }
+                else if (activeTab == CaloriesTab.Foods)
+                {
+                    await LoadFoodsAsync();
+                }
+            }
+            catch (Exception exception) when (exception is not OperationCanceledException)
+            {
+                Logger.LogError(exception, "Could not refresh Calories data after a realtime update.");
+                SetStatus("New tracker data was detected, but refreshing it failed.", isError: true);
+            }
+
+            StateHasChanged();
+        });
+    }
+
+    private int GetBarHeightPercent(long calories) =>
+        (int)Math.Clamp(Math.Round(calories * 100d / ChartAxisMaximum), 1, 100);
+
+    private long GetChartTickValue(int tickIndex) => ChartAxisMaximum * tickIndex / 4;
+
+    private void SelectChartPoint(int index) => selectedChartPointIndex = index;
+
+    private void OpenTabletEntryForm()
+    {
+        showTabletEntryForm = true;
+        ClearStatus();
+    }
+
+    private void CloseTabletEntryForm() => showTabletEntryForm = false;
+
+    private static List<CaloriesChartPoint> CreateHistoryPoints(
+        IEnumerable<CaloriesLogEntry> entries,
+        HistoryPeriod period,
+        DateOnly from,
+        DateOnly through)
+    {
+        var caloriesByDay = entries
+            .GroupBy(entry => entry.LocalDate)
+            .ToDictionary(group => group.Key, group => group.Sum(entry => (long)entry.Calories));
+
+        if (period == HistoryPeriod.Daily)
+        {
+            var points = new List<CaloriesChartPoint>();
+            for (var date = from; date <= through; date = date.AddDays(1))
+            {
+                points.Add(new CaloriesChartPoint(
+                    date,
+                    date.ToString("d MMM", CultureInfo.CurrentCulture),
+                    caloriesByDay.GetValueOrDefault(date)));
+            }
+
+            return points;
+        }
+
+        if (period == HistoryPeriod.Weekly)
+        {
+            var points = new List<CaloriesChartPoint>();
+            for (var weekStart = from; weekStart <= through; weekStart = weekStart.AddDays(7))
+            {
+                var weekEnd = weekStart.AddDays(6);
+                var calories = caloriesByDay
+                    .Where(pair => pair.Key >= weekStart && pair.Key <= weekEnd)
+                    .Sum(pair => pair.Value);
+                points.Add(new CaloriesChartPoint(
+                    weekStart,
+                    weekStart.ToString("d MMM", CultureInfo.CurrentCulture),
+                    calories));
+            }
+
+            return points;
+        }
+
+        var monthPoints = new List<CaloriesChartPoint>();
+        for (var monthStart = from; monthStart <= through; monthStart = monthStart.AddMonths(1))
+        {
+            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+            var calories = caloriesByDay
+                .Where(pair => pair.Key >= monthStart && pair.Key <= monthEnd)
+                .Sum(pair => pair.Value);
+            monthPoints.Add(new CaloriesChartPoint(
+                monthStart,
+                monthStart.ToString("MMM yy", CultureInfo.CurrentCulture),
+                calories));
+        }
+
+        return monthPoints;
+    }
+
+    private static (DateOnly From, DateOnly Through) GetHistoryRange(HistoryPeriod period, DateOnly currentDate)
+    {
+        if (period == HistoryPeriod.Daily)
+        {
+            return (currentDate.AddDays(-29), currentDate);
+        }
+
+        if (period == HistoryPeriod.Weekly)
+        {
+            var thisWeek = StartOfWeek(currentDate);
+            return (thisWeek.AddDays(-77), thisWeek.AddDays(6));
+        }
+
+        var currentMonth = new DateOnly(currentDate.Year, currentDate.Month, 1);
+        return (currentMonth.AddMonths(-11), currentMonth.AddMonths(1).AddDays(-1));
+    }
+
+    private static DateOnly StartOfWeek(DateOnly date) =>
+        date.AddDays(-(((int)date.DayOfWeek + 6) % 7));
+
+    private static int? SumMacro(
+        IEnumerable<CaloriesLogEntry> entries,
+        Func<CaloriesLogEntry, int?> selector)
+    {
+        var knownValues = entries
+            .Select(selector)
+            .Where(value => value.HasValue)
+            .Select(value => value!.Value)
+            .ToList();
+        return knownValues.Count == 0 ? null : knownValues.Sum();
+    }
+
+    private static int? MultiplyMacro(int? value, int servings) =>
+        value is int grams ? checked(grams * servings) : null;
+
+    private static string FormatMacro(int? value) =>
+        value is int grams ? $"{grams.ToString(CultureInfo.CurrentCulture)} g" : "—";
+
+    private static string? NormalizeNote(string? note) =>
+        string.IsNullOrWhiteSpace(note) ? null : note.Trim();
+
+    private static string FormatEntryMacros(CaloriesLogEntry entry)
+    {
+        var macros = new List<string>();
+        if (entry.CarbohydratesGrams is int carbs)
+        {
+            macros.Add($"Carbs {carbs} g");
+        }
+
+        if (entry.ProteinGrams is int protein)
+        {
+            macros.Add($"Protein {protein} g");
+        }
+
+        if (entry.FatGrams is int fat)
+        {
+            macros.Add($"Fat {fat} g");
+        }
+
+        return macros.Count == 0 ? "Macros not recorded" : string.Join(" · ", macros);
+    }
+
+    private void SetStatus(string message, bool isError = false)
+    {
+        statusMessage = message;
+        statusIsError = isError;
+    }
+
+    private void ClearStatus()
+    {
+        statusMessage = null;
+        statusIsError = false;
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        isDisposed = true;
+        lifetimeCancellation.Cancel();
+        NotificationEventSource.NotificationReceived -= HandleNotificationReceivedAsync;
+        if (isNotificationsStarted)
+        {
+            await NotificationEventSource.StopAsync();
+        }
+
+        lifetimeCancellation.Dispose();
+    }
+
+    private enum CaloriesTab
+    {
+        Daily,
+        Foods,
+        Statistics
+    }
+
+    private enum EntryMode
+    {
+        SavedFood,
+        CustomFood
+    }
+
+    private enum HistoryPeriod
+    {
+        Daily,
+        Weekly,
+        Monthly
+    }
+
+    private sealed record BrowserClock(string Date, string Time);
+
+    private sealed record CaloriesChartPoint(DateOnly Start, string Label, long Calories);
+}
