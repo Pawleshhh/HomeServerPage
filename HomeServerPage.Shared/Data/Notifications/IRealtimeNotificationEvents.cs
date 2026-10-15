@@ -23,4 +23,5 @@ public static class RealtimeNotificationContract
 public static class RealtimeNotificationTypes
 {
     public const string FridgeChanged = "fridge.changed";
+    public const string CaloriesChanged = "calories.changed";
 }

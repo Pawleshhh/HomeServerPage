@@ -26,9 +26,12 @@
     --app-transport-soft: #e1f0ef;
     --app-astronomy: #6f5aa3;
     --app-astronomy-soft: #eee9f8;
+    --app-calories: #d05a3a;
+    --app-calories-soft: #fce9e2;
     --app-fridge-border: #b9d6bd;
     --app-transport-border: #add2d3;
     --app-astronomy-border: #cfc4e6;
+    --app-calories-border: #edbca9;
     --app-danger-border: #e7b2a5;
     --app-overlay: rgb(25 40 31 / 58%);
     --app-radius-sm: 0.6rem;
@@ -68,9 +71,12 @@
     --app-transport-soft: #1d363b;
     --app-astronomy: #b9a5ee;
     --app-astronomy-soft: #302a47;
+    --app-calories: #f19a7c;
+    --app-calories-soft: #3d2928;
     --app-fridge-border: #477254;
     --app-transport-border: #3d7379;
     --app-astronomy-border: #65578b;
+    --app-calories-border: #805747;
     --app-danger-border: #824a4a;
     --app-overlay: rgb(0 0 0 / 70%);
     --app-shadow-sm: 0 0.35rem 1rem rgb(0 0 0 / 24%);

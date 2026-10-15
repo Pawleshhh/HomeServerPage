@@ -86,6 +86,12 @@
     --page-accent-border: var(--app-astronomy-border);
 }
 
+.page-header-calories {
+    --page-accent: var(--app-calories);
+    --page-accent-soft: var(--app-calories-soft);
+    --page-accent-border: var(--app-calories-border);
+}
+
 @media (max-width: 767.98px) {
     .page-header {
         align-items: flex-start;

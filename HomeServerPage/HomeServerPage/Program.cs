@@ -4,6 +4,7 @@ using HomeServerPage.Client.Pages;
 using HomeServerPage.Components;
 using HomeServerPage.Data;
 using HomeServerPage.Data.Astronomy;
+using HomeServerPage.Data.Calories;
 using HomeServerPage.Data.Astronomy.Telescopes;
 using HomeServerPage.Data.Fridge;
 using HomeServerPage.Data.Notifications;
@@ -37,6 +38,7 @@ builder.Services.AddSingleton<IRealtimeNotificationPublisher>(services =>
 
 var fridgeConnection = builder.Configuration.GetConnectionString("FridgeDbConnection");
 var astronomyConnection = builder.Configuration.GetConnectionString("AstronomyDbConnection");
+var caloriesConnection = builder.Configuration.GetConnectionString("CaloriesDbConnection");
 
 builder.Services.AddDbContextFactory<FridgeDbContext>(op => op.UseSqlite(fridgeConnection));
 builder.Services.AddScoped<IFridgeService, FridgeService>();
@@ -45,6 +47,9 @@ builder.Services.AddDbContextFactory<AstronomyDbContext>(op => op.UseSqlite(astr
 builder.Services.AddScoped<IAstronomyService, AstronomyService>();
 builder.Services.AddScoped<IObservationPointService, ObservationPointService>();
 builder.Services.AddScoped<ITelescopeService, TelescopeService>();
+
+builder.Services.AddDbContextFactory<CaloriesDbContext>(op => op.UseSqlite(caloriesConnection));
+builder.Services.AddScoped<ICaloriesService, CaloriesService>();
 if (builder.Environment.IsDevelopment())
 {
     builder.Services.AddScoped<IWeatherService, MockWeatherService>();
@@ -100,6 +105,14 @@ using (var scope = app.Services.CreateScope())
     using (var astronomyDb = astronomyDbFactory.CreateDbContext())
     {
         astronomyDb.Database.Migrate();
+    }
+
+    var caloriesDbFactory = scope.ServiceProvider
+        .GetRequiredService<IDbContextFactory<CaloriesDbContext>>();
+
+    using (var caloriesDb = caloriesDbFactory.CreateDbContext())
+    {
+        caloriesDb.Database.Migrate();
     }
 }
 

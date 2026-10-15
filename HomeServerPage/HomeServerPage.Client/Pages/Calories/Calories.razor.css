@@ -1,0 +1,1033 @@
+.calories-page {
+    max-width: 94rem;
+    padding-bottom: 2rem;
+}
+
+.calories-loading,
+.calories-empty-state {
+    padding: 1rem;
+    border: 1px dashed var(--app-calories-border);
+    border-radius: var(--app-radius);
+    color: var(--app-text-muted);
+    background: var(--app-surface);
+}
+
+.calories-status {
+    margin-bottom: 1rem;
+}
+
+.calories-tabs,
+.calories-history-period,
+.calories-entry-mode {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.5rem;
+}
+
+.calories-tabs {
+    position: sticky;
+    z-index: 2;
+    top: 0;
+    margin-bottom: 1rem;
+    padding: 0.4rem;
+    border: 1px solid var(--app-border);
+    border-radius: var(--app-radius);
+    background: var(--app-surface);
+    box-shadow: var(--app-shadow-sm);
+}
+
+.calories-tab {
+    display: inline-flex;
+    min-width: 0;
+    min-height: 3.25rem;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.55rem 0.65rem;
+    border: 1px solid transparent;
+    border-radius: var(--app-radius-sm);
+    color: var(--app-text-muted);
+    background: transparent;
+    font-weight: 750;
+    line-height: 1.15;
+    text-align: center;
+}
+
+.calories-tab.active {
+    border-color: var(--app-calories-border);
+    color: var(--app-calories);
+    background: var(--app-calories-soft);
+}
+
+.calories-tab:focus-visible,
+.calories-entry-mode-button:focus-visible,
+.calories-day-step:focus-visible {
+    outline: 3px solid var(--app-focus);
+    outline-offset: 2px;
+}
+
+.calories-tab-panel {
+    display: grid;
+    gap: 1rem;
+    min-width: 0;
+}
+
+.calories-date-toolbar {
+    display: grid;
+    grid-template-columns: 3.25rem minmax(10rem, 18rem) 3.25rem auto;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.calories-day-step {
+    width: 3.25rem;
+    min-height: 3rem;
+    padding: 0.45rem;
+}
+
+.calories-date-picker {
+    min-width: 0;
+}
+
+.calories-today-button {
+    min-height: 3rem;
+}
+
+.calories-daily-overview {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem;
+}
+
+.calories-summary-card,
+.calories-panel {
+    min-width: 0;
+    border: 1px solid var(--app-calories-border);
+    border-radius: var(--app-radius);
+    background: linear-gradient(140deg, var(--app-surface) 0%, var(--app-calories-soft) 100%);
+    box-shadow: var(--app-shadow-sm);
+}
+
+.calories-summary-card {
+    padding: 1.1rem;
+}
+
+.calories-total-card {
+    border-color: var(--app-calories);
+}
+
+.calories-summary-heading,
+.calories-panel-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.calories-summary-heading h2,
+.calories-panel-heading h2 {
+    margin: 0;
+    color: var(--app-text);
+    font-size: 1.12rem;
+    font-weight: 750;
+}
+
+.calories-eyebrow {
+    margin: 0 0 0.25rem;
+    color: var(--app-text-muted);
+    font-size: 0.73rem;
+    font-weight: 750;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.calories-summary-icon {
+    display: inline-flex;
+    flex: 0 0 2.5rem;
+    width: 2.5rem;
+    height: 2.5rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    color: var(--app-calories);
+    background: var(--app-surface);
+    font-size: 1.15rem;
+}
+
+.calories-total-value {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    margin: 0.65rem 0 0;
+    color: var(--app-calories);
+    font-variant-numeric: tabular-nums;
+}
+
+.calories-total-value strong {
+    font-size: clamp(1.8rem, 4vw, 2.4rem);
+    line-height: 1;
+}
+
+.calories-total-value span,
+.calories-goal-caption,
+.calories-item-count,
+.calories-history-range,
+.calories-immutable-note {
+    color: var(--app-text-muted);
+    font-size: 0.82rem;
+}
+
+.calories-goal-progress {
+    height: 0.7rem;
+    margin-top: 0.85rem;
+    overflow: hidden;
+    border-radius: 999px;
+    background: var(--app-border);
+}
+
+.calories-goal-progress span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--app-calories);
+    transition: width 180ms ease;
+}
+
+.calories-goal-caption {
+    margin: 0.45rem 0 0;
+}
+
+.calories-goal-form {
+    margin-top: 0.75rem;
+}
+
+.calories-goal-input-row {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.calories-goal-input-row .form-control {
+    min-width: 0;
+}
+
+.calories-macro-summary {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.65rem;
+    padding: 0.8rem 1rem;
+    border: 1px solid var(--app-border);
+    border-radius: var(--app-radius);
+    color: var(--app-text);
+    background: var(--app-surface);
+}
+
+.calories-macro-summary > div {
+    display: grid;
+    gap: 0.2rem;
+    min-width: 0;
+}
+
+.calories-macro-summary span {
+    color: var(--app-text-muted);
+    font-size: 0.75rem;
+    font-weight: 750;
+    text-transform: uppercase;
+}
+
+.calories-macro-summary strong {
+    font-size: 0.9rem;
+    overflow-wrap: anywhere;
+}
+
+.calories-macro-note {
+    grid-column: 1 / -1;
+    margin: 0;
+    color: var(--app-text-muted);
+    font-size: 0.78rem;
+}
+
+.calories-panel {
+    padding: 0.95rem;
+}
+
+.calories-panel-heading {
+    align-items: center;
+    margin-bottom: 0.7rem;
+}
+
+.calories-item-count {
+    flex: 0 0 auto;
+    padding: 0.25rem 0.55rem;
+    border: 1px solid var(--app-calories-border);
+    border-radius: 999px;
+    color: var(--app-calories);
+    background: var(--app-surface);
+    font-weight: 700;
+}
+
+.calories-entry-mode {
+    max-width: 32rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-bottom: 0.9rem;
+    padding: 0.25rem;
+    border: 1px solid var(--app-border);
+    border-radius: var(--app-radius-sm);
+    background: var(--app-surface);
+}
+
+.calories-entry-mode-button {
+    min-height: 2.9rem;
+    padding: 0.45rem 0.7rem;
+    border: 1px solid transparent;
+    border-radius: calc(var(--app-radius-sm) - 0.15rem);
+    color: var(--app-text-muted);
+    background: transparent;
+    font-size: 0.9rem;
+    font-weight: 700;
+}
+
+.calories-entry-mode-button.active {
+    border-color: var(--app-calories-border);
+    color: var(--app-calories);
+    background: var(--app-calories-soft);
+}
+
+.calories-compact-form {
+    display: grid;
+    align-items: end;
+    gap: 0.55rem;
+}
+
+.calories-saved-entry-grid {
+    grid-template-columns: minmax(12rem, 1.7fr) minmax(5.5rem, 0.65fr) minmax(8rem, 0.9fr) minmax(11rem, 1.4fr) auto;
+}
+
+.calories-custom-entry-grid {
+    grid-template-columns: minmax(12rem, 1.5fr) repeat(4, minmax(6rem, 1fr)) minmax(8rem, 0.9fr) minmax(11rem, 1.4fr) auto;
+}
+
+.calories-food-entry-grid {
+    grid-template-columns: minmax(11rem, 1.8fr) repeat(4, minmax(7rem, 1fr)) minmax(8rem, 0.9fr);
+}
+
+.calories-compact-field {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+}
+
+.calories-compact-field .form-label {
+    margin-bottom: 0.2rem;
+    color: var(--app-text-muted);
+    font-size: 0.76rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.calories-compact-field .form-control,
+.calories-compact-field .form-select {
+    min-height: 2.5rem;
+    font-size: 0.9rem;
+}
+
+.calories-wide-field {
+    min-width: 0;
+}
+
+.calories-compact-help {
+    margin: 0.4rem 0 0;
+    color: var(--app-text-muted);
+    font-size: 0.76rem;
+}
+
+.calories-log-note {
+    padding-top: 0.2rem;
+    border-top: 1px solid var(--app-border);
+    font-style: italic;
+}
+
+.calories-form-submit {
+    display: flex;
+    align-items: flex-end;
+}
+
+.calories-form-submit .btn {
+    min-height: 2.5rem;
+    white-space: nowrap;
+}
+
+.calories-log-panel {
+    background: var(--app-surface);
+}
+
+.calories-log-total,
+.calories-history-total {
+    color: var(--app-calories);
+    font-variant-numeric: tabular-nums;
+}
+
+.calories-log-list,
+.calories-food-list {
+    display: grid;
+    gap: 0.5rem;
+}
+
+.calories-log-item,
+.calories-food-item {
+    display: grid;
+    grid-template-columns: 4.25rem minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.8rem;
+    border: 1px solid var(--app-border);
+    border-radius: var(--app-radius-sm);
+    color: var(--app-text);
+    background: var(--app-surface-raised);
+}
+
+.calories-log-time {
+    color: var(--app-text-muted);
+    font-size: 0.9rem;
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+}
+
+.calories-log-copy,
+.calories-food-copy {
+    display: grid;
+    gap: 0.15rem;
+    min-width: 0;
+}
+
+.calories-log-copy > span,
+.calories-food-copy > span {
+    color: var(--app-text-muted);
+    font-size: 0.82rem;
+    overflow-wrap: anywhere;
+}
+
+.calories-log-kcal {
+    color: var(--app-calories);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.calories-immutable-note {
+    margin: 0.75rem 0 0;
+}
+
+.calories-food-item {
+    grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.calories-food-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.4rem;
+}
+
+.calories-delete-confirmation {
+    color: var(--app-danger);
+    font-size: 0.84rem;
+    font-weight: 700;
+}
+
+.calories-history-total {
+    display: grid;
+    justify-items: end;
+}
+
+.calories-history-total strong {
+    font-size: 1.3rem;
+}
+
+.calories-history-total span {
+    color: var(--app-text-muted);
+    font-size: 0.8rem;
+}
+
+.calories-history-period {
+    max-width: 28rem;
+    margin: 0.5rem 0 1rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.calories-history-range {
+    margin: 0 0 0.65rem;
+}
+
+.calories-history-chart-scroll {
+    max-width: 100%;
+    overflow-x: auto;
+    padding: 0.5rem;
+    border: 1px solid var(--app-border);
+    border-radius: var(--app-radius-sm);
+    background: var(--app-surface);
+    scrollbar-color: var(--app-border-strong) transparent;
+}
+
+.calories-history-chart {
+    display: grid;
+    grid-template-columns: 3.5rem max-content;
+    grid-template-rows: 1.1rem 10.5rem 1.5rem;
+    width: max-content;
+    min-width: 100%;
+    color: var(--app-text-muted);
+}
+
+.calories-chart-axis-heading {
+    grid-column: 1;
+    grid-row: 1;
+    padding-right: 0.5rem;
+    color: var(--app-text-muted);
+    font-size: 0.72rem;
+    text-align: right;
+}
+
+.calories-chart-axis-labels {
+    display: flex;
+    grid-column: 1;
+    grid-row: 2;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding-right: 0.5rem;
+    color: var(--app-text-muted);
+    font-size: 0.72rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.calories-chart-columns {
+    display: grid;
+    grid-column: 2;
+    grid-row: 2 / span 2;
+    grid-template-columns: repeat(var(--calories-chart-columns), var(--calories-chart-column-width));
+    grid-template-rows: 10.5rem 1.5rem;
+    gap: 0 0.1rem;
+}
+
+.calories-chart-column {
+    display: grid;
+    grid-row: 1 / span 2;
+    grid-template-rows: 10.5rem 1.5rem;
+    min-width: 0;
+    padding: 0 0.1rem;
+    border: 0;
+    border-radius: var(--app-radius-sm);
+    color: var(--app-text-muted);
+    background: transparent;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.calories-chart-bar-space {
+    display: flex;
+    grid-row: 1;
+    align-items: flex-end;
+    justify-content: center;
+    min-height: 0;
+    background-image: linear-gradient(to top, var(--app-border) 1px, transparent 1px);
+    background-repeat: repeat-y;
+    background-size: 100% 25%;
+}
+
+.calories-chart-bar {
+    display: block;
+    width: 1.25rem;
+    min-height: 2px;
+    border-radius: 0.25rem 0.25rem 0 0;
+    background: var(--app-calories);
+}
+
+.calories-chart-column.selected {
+    color: var(--app-calories);
+    background: var(--app-calories-soft);
+}
+
+.calories-chart-column.selected .calories-chart-bar {
+    background: var(--app-accent-deep);
+}
+
+.calories-chart-label {
+    grid-row: 2;
+    align-self: center;
+    overflow: hidden;
+    font-size: 0.68rem;
+    line-height: 1.1;
+    text-align: center;
+    text-overflow: clip;
+    white-space: nowrap;
+}
+
+.calories-chart-column:focus-visible {
+    outline: 3px solid var(--app-focus);
+    outline-offset: -2px;
+}
+
+.calories-chart-selection {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-top: 0.65rem;
+    padding: 0.65rem 0.8rem;
+    border: 1px solid var(--app-calories-border);
+    border-radius: var(--app-radius-sm);
+    color: var(--app-text);
+    background: var(--app-calories-soft);
+    font-variant-numeric: tabular-nums;
+}
+
+.calories-chart-selection strong:last-child {
+    color: var(--app-calories);
+}
+
+.calories-chart-selection-hint {
+    margin: 0.55rem 0 0;
+    color: var(--app-text-muted);
+    font-size: 0.8rem;
+}
+
+.calories-history-average {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin: 0.85rem 0;
+    color: var(--app-text-muted);
+}
+
+.calories-history-average strong {
+    color: var(--app-text);
+    font-variant-numeric: tabular-nums;
+}
+
+.calories-history-table-wrap {
+    max-height: 20rem;
+    overflow: auto;
+    border: 1px solid var(--app-border);
+    border-radius: var(--app-radius-sm);
+}
+
+.calories-history-table {
+    width: 100%;
+    border-collapse: collapse;
+    color: var(--app-text);
+    background: var(--app-surface);
+}
+
+.calories-history-table th,
+.calories-history-table td {
+    padding: 0.65rem 0.8rem;
+    border-bottom: 1px solid var(--app-border);
+    text-align: left;
+}
+
+.calories-history-table thead {
+    position: sticky;
+    top: 0;
+    color: var(--app-text-muted);
+    background: var(--app-surface-muted);
+    font-size: 0.8rem;
+}
+
+.calories-history-table tbody tr:last-child th,
+.calories-history-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.calories-history-table td {
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+}
+
+@media (max-width: 1100px) {
+    .calories-saved-entry-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .calories-food-entry-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .calories-custom-entry-grid {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+
+    .calories-wide-field {
+        grid-column: span 2;
+    }
+}
+
+::deep .calories-page .form-control,
+::deep .calories-page .form-select {
+    min-height: 2.85rem;
+    border-color: var(--app-border-strong);
+    color: var(--app-text);
+    background-color: var(--app-surface);
+}
+
+::deep .calories-page .form-label {
+    margin-bottom: 0.35rem;
+}
+
+::deep .calories-page .validation-message {
+    color: var(--app-danger);
+    font-size: 0.8rem;
+}
+
+@media (max-width: 767.98px) {
+    .calories-daily-overview {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .calories-total-card {
+        grid-column: 1 / -1;
+    }
+
+    .calories-summary-card {
+        padding: 0.9rem;
+    }
+
+    .calories-macro-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .calories-panel {
+        padding: 0.8rem;
+    }
+
+    .calories-saved-entry-grid,
+    .calories-food-entry-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .calories-custom-entry-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .calories-wide-field {
+        grid-column: span 2;
+    }
+
+    .calories-log-item {
+        grid-template-columns: 3.25rem minmax(0, 1fr);
+    }
+
+    .calories-log-kcal {
+        grid-column: 2;
+        justify-self: start;
+    }
+
+    .calories-food-item {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .calories-food-actions {
+        justify-content: flex-start;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .calories-page {
+        padding-right: 0.75rem;
+        padding-left: 0.75rem;
+    }
+
+    .calories-tabs {
+        gap: 0.2rem;
+        padding: 0.25rem;
+    }
+
+    .calories-tab {
+        min-height: 3rem;
+        flex-direction: column;
+        gap: 0.15rem;
+        padding: 0.35rem 0.15rem;
+        font-size: 0.76rem;
+    }
+
+    .calories-tab i {
+        font-size: 1rem;
+    }
+
+    .calories-date-toolbar {
+        grid-template-columns: 2.75rem minmax(0, 1fr) 2.75rem;
+    }
+
+    .calories-day-step {
+        width: 2.75rem;
+    }
+
+    .calories-today-button {
+        grid-column: 1 / -1;
+        min-height: 2.75rem;
+    }
+
+    .calories-daily-overview {
+        gap: 0.5rem;
+    }
+
+    .calories-summary-card {
+        padding: 0.75rem;
+    }
+
+    .calories-summary-heading h2 {
+        font-size: 0.98rem;
+    }
+
+    .calories-summary-icon {
+        flex-basis: 2rem;
+        width: 2rem;
+        height: 2rem;
+        font-size: 0.95rem;
+    }
+
+    .calories-total-value strong {
+        font-size: 1.8rem;
+    }
+
+    .calories-goal-input-row {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .calories-goal-input-row .btn {
+        width: 100%;
+    }
+
+    .calories-saved-entry-grid,
+    .calories-custom-entry-grid,
+    .calories-food-entry-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .calories-form-submit {
+        grid-column: 1 / -1;
+    }
+
+    .calories-form-submit .btn {
+        width: 100%;
+    }
+
+    .calories-entry-mode-button {
+        min-height: 3.1rem;
+        padding-right: 0.35rem;
+        padding-left: 0.35rem;
+        font-size: 0.82rem;
+    }
+
+    .calories-history-average {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+}
+
+@media (min-width: 768px) and (max-width: 1100px) {
+    .calories-page {
+        padding-bottom: 0.15rem;
+    }
+
+    .calories-status {
+        margin: 0 0 0.3rem;
+        padding: 0.35rem 0.6rem;
+        font-size: 0.8rem;
+    }
+
+    .calories-tabs {
+        gap: 0.25rem;
+        margin-bottom: 0.35rem;
+        padding: 0.2rem;
+    }
+
+    .calories-tab {
+        min-height: 2.35rem;
+        gap: 0.3rem;
+        padding: 0.25rem;
+        font-size: 0.84rem;
+    }
+
+    .calories-tablet-daily {
+        display: grid;
+        grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.4fr);
+        grid-template-rows: auto auto minmax(0, 1fr);
+        grid-template-areas:
+            "date date"
+            "overview macros"
+            "log log";
+        gap: 0.45rem 0.6rem;
+        height: calc(100dvh - 7.25rem);
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    .calories-tablet-date-toolbar {
+        grid-area: date;
+        grid-template-columns: 2.5rem minmax(8rem, 13rem) 2.5rem auto;
+        gap: 0.35rem;
+    }
+
+    .calories-tablet-date-toolbar .calories-day-step,
+    .calories-tablet-date-toolbar .calories-today-button,
+    .calories-tablet-date-toolbar ::deep .form-control {
+        min-height: 2.4rem;
+    }
+
+    .calories-tablet-date-toolbar .calories-day-step {
+        width: 2.5rem;
+    }
+
+    .calories-tablet-overview {
+        grid-area: overview;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0;
+        min-height: 0;
+    }
+
+    .calories-tablet-overview .calories-summary-card {
+        padding: 0.5rem 0.7rem;
+    }
+
+    .calories-tablet-overview .calories-eyebrow {
+        margin-bottom: 0.1rem;
+        font-size: 0.64rem;
+    }
+
+    .calories-tablet-overview .calories-summary-heading h2 {
+        font-size: 0.95rem;
+        white-space: nowrap;
+    }
+
+    .calories-tablet-overview .calories-summary-icon {
+        flex-basis: 1.85rem;
+        width: 1.85rem;
+        height: 1.85rem;
+        font-size: 0.9rem;
+    }
+
+    .calories-tablet-overview .calories-total-value {
+        gap: 0.35rem;
+        margin-top: 0.25rem;
+    }
+
+    .calories-tablet-overview .calories-total-value strong {
+        font-size: 1.55rem;
+    }
+
+    .calories-tablet-overview .calories-goal-progress {
+        height: 0.4rem;
+        margin-top: 0.35rem;
+    }
+
+    .calories-tablet-overview .calories-goal-caption {
+        margin-top: 0.2rem;
+        font-size: 0.7rem;
+    }
+
+    .calories-tablet-macro-summary {
+        grid-area: macros;
+        display: flex;
+        align-items: center;
+        min-width: 0;
+        padding: 0.5rem 0.7rem;
+    }
+
+    .calories-tablet-macro-summary > div {
+        gap: 0.25rem;
+    }
+
+    .calories-tablet-macro-summary span {
+        font-size: 0.64rem;
+    }
+
+    .calories-tablet-macro-summary strong {
+        font-size: 0.82rem;
+        line-height: 1.25;
+    }
+
+    .calories-tablet-log-panel {
+        grid-area: log;
+        display: flex;
+        min-height: 0;
+        flex-direction: column;
+        padding: 0.55rem 0.7rem;
+    }
+
+    .calories-tablet-log-panel .calories-panel-heading {
+        flex: 0 0 auto;
+        margin-bottom: 0.35rem;
+    }
+
+    .calories-tablet-log-panel .calories-panel-heading h2 {
+        font-size: 0.95rem;
+    }
+
+    .calories-tablet-log-actions {
+        display: flex;
+        flex: 0 0 auto;
+        align-items: center;
+        gap: 0.45rem;
+    }
+
+    .calories-tablet-log-actions .btn {
+        min-height: 2.25rem;
+    }
+
+    .calories-tablet-log-panel .calories-log-list {
+        flex: 1 1 auto;
+        align-content: start;
+        min-height: 0;
+        overflow-y: auto;
+        gap: 0.3rem;
+    }
+
+    .calories-tablet-log-panel .calories-log-item {
+        grid-template-columns: 3.25rem minmax(0, 1fr) auto;
+        gap: 0.55rem;
+        padding: 0.4rem 0.55rem;
+    }
+
+    .calories-tablet-log-panel .calories-log-copy > span {
+        font-size: 0.74rem;
+    }
+
+    .calories-tablet-log-panel .calories-log-kcal {
+        font-size: 0.85rem;
+    }
+
+    .calories-tablet-log-panel .calories-immutable-note {
+        display: none;
+    }
+
+    .calories-tablet-entry-backdrop {
+        position: fixed;
+        z-index: 1050;
+        inset: 0;
+        padding: 0;
+        border: 0;
+        background: var(--app-overlay);
+    }
+
+    .calories-tablet-entry-dialog {
+        position: fixed;
+        z-index: 1051;
+        top: 50%;
+        left: 50%;
+        width: min(92vw, 58rem);
+        max-height: calc(100dvh - 5rem);
+        overflow-y: auto;
+        padding: 0.8rem;
+        transform: translate(-50%, -50%);
+        background: var(--app-surface);
+        box-shadow: var(--app-shadow-lg);
+    }
+
+    .calories-tablet-entry-dialog .calories-panel-heading {
+        margin-bottom: 0.55rem;
+    }
+
+    .calories-tablet-entry-dialog .calories-entry-mode {
+        margin-bottom: 0.55rem;
+    }
+}
