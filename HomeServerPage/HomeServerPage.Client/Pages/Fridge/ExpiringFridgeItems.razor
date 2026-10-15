@@ -1,11 +1,17 @@
 @using HomeServerPage.Data.Fridge
+@using HomeServerPage.Data.Calories
 @using HomeServerPage.Data.Notifications
 @implements IDisposable
 @inject IFridgeService FridgeService
+@inject ICaloriesService CaloriesService
 @inject HomeServerPage.Data.IDateTimeService DateTimeService
 @inject HomeServerPage.Client.Data.TabletDashboardRefreshService DashboardRefreshService
+@inject IJSRuntime JS
+@inject ILogger<ExpiringFridgeItems> Logger
 
-<section class="dashboard-card dashboard-card-fridge card h-100" aria-labelledby="expiring-fridge-heading">
+<script type="module" src="@Assets["Pages/Calories/Calories.razor.js"]"></script>
+
+<section class="dashboard-card dashboard-card-fridge card h-100 @(CompactTablet ? "fridge-widget-compact-tablet" : null)" aria-labelledby="expiring-fridge-heading">
     <div class="card-body">
         <div class="dashboard-card-header">
             <div class="dashboard-card-heading">
@@ -45,6 +51,33 @@
                 }
             </div>
         }
+
+        <div class="fridge-calories-progress" aria-label="Calories consumed today">
+            <span class="fridge-calories-progress-label">Calories today</span>
+            @if (caloriesGoal is int goal && caloriesError is null && !isLoadingCalories)
+            {
+                <div class="fridge-calories-progress-track"
+                     role="progressbar"
+                     aria-label="Calories consumed today"
+                     aria-valuemin="0"
+                     aria-valuemax="@goal"
+                     aria-valuenow="@Math.Min(caloriesConsumed, goal)"
+                     aria-valuetext="@($"{caloriesConsumed:N0} of {goal:N0} kcal")">
+                    <span style="width: @(CaloriesProgressPercent)%"></span>
+                </div>
+            }
+            else
+            {
+                <div class="fridge-calories-progress-track" aria-hidden="true">
+                    <span></span>
+                </div>
+            }
+            <span class="fridge-calories-progress-value"
+                  aria-live="polite"
+                  title="@(caloriesGoal is null ? "Set a daily goal in Calories to track progress." : null)">
+                @CaloriesTodayValue
+            </span>
+        </div>
     </div>
 </section>
 
@@ -55,8 +88,26 @@
     [Parameter]
     public bool AutoRefresh { get; set; }
 
+    [Parameter]
+    public bool CompactTablet { get; set; }
+
     private List<FridgeItem>? Items;
     private string? errorMessage;
+    private int? caloriesGoal;
+    private long caloriesConsumed;
+    private string? caloriesError;
+    private bool isLoadingCalories = true;
+
+    private int CaloriesProgressPercent => caloriesGoal is > 0
+        ? (int)Math.Clamp(Math.Round(caloriesConsumed * 100d / caloriesGoal.Value), 0, 100)
+        : 0;
+
+    private string CaloriesTodayValue => isLoadingCalories
+        ? "Loading…"
+        : caloriesError is not null
+            ? "Unavailable"
+            : caloriesConsumed.ToString("N0", System.Globalization.CultureInfo.CurrentCulture) +
+                (caloriesGoal is null ? " kcal" : $" / {caloriesGoal.Value.ToString("N0", System.Globalization.CultureInfo.CurrentCulture)} kcal");
 
     protected override async Task OnInitializedAsync()
     {
@@ -67,6 +118,15 @@
         }
 
         await this.LoadItemsAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await this.LoadCaloriesAsync();
+            await InvokeAsync(StateHasChanged);
+        }
     }
 
     private async Task LoadItemsAsync()
@@ -91,13 +151,55 @@
     private Task HandleRefreshRequestedAsync() => InvokeAsync(async () =>
     {
         await this.LoadItemsAsync();
+        await this.LoadCaloriesAsync();
         this.StateHasChanged();
     });
 
     private Task HandleNotificationReceivedAsync(string notificationType) =>
-        notificationType == RealtimeNotificationTypes.FridgeChanged
-            ? this.HandleRefreshRequestedAsync()
-            : Task.CompletedTask;
+        notificationType switch
+        {
+            RealtimeNotificationTypes.FridgeChanged => this.HandleRefreshRequestedAsync(),
+            RealtimeNotificationTypes.CaloriesChanged => this.HandleCaloriesRefreshAsync(),
+            _ => Task.CompletedTask
+        };
+
+    private Task HandleCaloriesRefreshAsync() => InvokeAsync(async () =>
+    {
+        await this.LoadCaloriesAsync();
+        this.StateHasChanged();
+    });
+
+    private async Task LoadCaloriesAsync()
+    {
+        isLoadingCalories = true;
+        caloriesError = null;
+
+        try
+        {
+            var clock = await JS.InvokeAsync<BrowserClock>("homeServerPageCalories.getLocalClock");
+            var today = DateOnly.ParseExact(
+                clock.Date,
+                "yyyy-MM-dd",
+                System.Globalization.CultureInfo.InvariantCulture);
+            var goalTask = CaloriesService.GetDailyGoalAsync();
+            var entriesTask = CaloriesService.GetEntriesAsync(today, today);
+            await Task.WhenAll(goalTask, entriesTask);
+
+            caloriesGoal = await goalTask;
+            caloriesConsumed = (await entriesTask).Sum(entry => (long)entry.Calories);
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(exception, "Could not load today's calorie total for the fridge widget.");
+            caloriesError = "Unavailable";
+        }
+        finally
+        {
+            isLoadingCalories = false;
+        }
+    }
+
+    private sealed record BrowserClock(string Date, string Time);
 
     public void Dispose()
     {

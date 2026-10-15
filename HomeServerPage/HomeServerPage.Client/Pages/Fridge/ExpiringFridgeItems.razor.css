@@ -8,7 +8,49 @@
     justify-content: space-between;
     min-width: 0;
     gap: 0.8rem;
-    padding: 0.75rem 0;
+    padding: 0.45rem 0;
+}
+
+.fridge-calories-progress {
+    display: grid;
+    grid-template-columns: auto minmax(2.5rem, 1fr) auto;
+    align-items: center;
+    gap: 0.45rem;
+    min-height: 1.4rem;
+    margin-top: 0.25rem;
+    padding-top: 0.3rem;
+    border-top: 1px solid var(--app-border);
+    color: var(--app-text-muted);
+    font-size: 0.68rem;
+    line-height: 1.1;
+}
+
+.fridge-calories-progress-label,
+.fridge-calories-progress-value {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.fridge-calories-progress-value {
+    color: var(--app-text);
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+}
+
+.fridge-calories-progress-track {
+    height: 0.3rem;
+    overflow: hidden;
+    border-radius: 999px;
+    background: var(--app-border);
+}
+
+.fridge-calories-progress-track span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--app-calories);
+    transition: width 180ms ease;
 }
 
 .fridge-expiring-item:first-child {
