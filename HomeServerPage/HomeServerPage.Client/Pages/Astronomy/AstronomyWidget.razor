@@ -80,7 +80,11 @@
         await this.LoadObservationsAsync();
     }
 
-    private Task HandleRefreshRequestedAsync() => InvokeAsync(this.LoadObservationsAsync);
+    private Task HandleRefreshRequestedAsync() => InvokeAsync(async () =>
+    {
+        await this.LoadObservationsAsync();
+        this.StateHasChanged();
+    });
 
     private async Task LoadObservationsAsync()
     {

@@ -125,7 +125,11 @@
         }
     }
 
-    private Task HandleRefreshRequestedAsync() => InvokeAsync(this.LoadWeatherAsync);
+    private Task HandleRefreshRequestedAsync() => InvokeAsync(async () =>
+    {
+        await this.LoadWeatherAsync();
+        this.StateHasChanged();
+    });
 
     public void Dispose()
     {

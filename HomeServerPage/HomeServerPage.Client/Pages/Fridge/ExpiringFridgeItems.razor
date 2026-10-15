@@ -88,11 +88,15 @@
         }
     }
 
-    private Task HandleRefreshRequestedAsync() => InvokeAsync(this.LoadItemsAsync);
+    private Task HandleRefreshRequestedAsync() => InvokeAsync(async () =>
+    {
+        await this.LoadItemsAsync();
+        this.StateHasChanged();
+    });
 
     private Task HandleNotificationReceivedAsync(string notificationType) =>
         notificationType == RealtimeNotificationTypes.FridgeChanged
-            ? InvokeAsync(this.LoadItemsAsync)
+            ? this.HandleRefreshRequestedAsync()
             : Task.CompletedTask;
 
     public void Dispose()
