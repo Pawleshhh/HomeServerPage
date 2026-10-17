@@ -385,6 +385,33 @@
     background: var(--app-surface-raised);
 }
 
+.calories-entry-edit-form {
+    grid-column: 1 / -1;
+    min-width: 0;
+}
+
+.calories-entry-edit-grid {
+    grid-template-columns: minmax(10rem, 1.6fr) repeat(4, minmax(5.5rem, 1fr)) minmax(5.5rem, 0.75fr) minmax(7rem, 0.85fr) auto;
+}
+
+.calories-entry-edit-actions,
+.calories-log-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.3rem;
+}
+
+.calories-entry-edit-actions {
+    align-self: end;
+}
+
+.calories-log-actions .btn,
+.calories-entry-edit-actions .btn {
+    min-height: 2.25rem;
+}
+
 .calories-log-time {
     color: var(--app-text-muted);
     font-size: 0.9rem;
@@ -655,8 +682,16 @@
         grid-template-columns: repeat(5, minmax(0, 1fr));
     }
 
+    .calories-entry-edit-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
     .calories-wide-field {
         grid-column: span 2;
+    }
+
+    .calories-entry-edit-actions {
+        grid-column: 1 / -1;
     }
 }
 
@@ -703,6 +738,10 @@
         grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
+    .calories-entry-edit-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
     .calories-custom-entry-grid {
         grid-template-columns: repeat(4, minmax(0, 1fr));
     }
@@ -711,13 +750,24 @@
         grid-column: span 2;
     }
 
+    .calories-entry-edit-actions {
+        grid-column: 1 / -1;
+    }
+
     .calories-log-item {
-        grid-template-columns: 3.25rem minmax(0, 1fr);
+        grid-template-columns: 3.25rem minmax(0, 1fr) auto;
+        gap: 0.45rem;
+        padding: 0.65rem;
     }
 
     .calories-log-kcal {
         grid-column: 2;
         justify-self: start;
+    }
+
+    .calories-log-actions {
+        grid-column: 1 / -1;
+        justify-content: flex-start;
     }
 
     .calories-food-item {
@@ -799,11 +849,13 @@
 
     .calories-saved-entry-grid,
     .calories-custom-entry-grid,
-    .calories-food-entry-grid {
+    .calories-food-entry-grid,
+    .calories-entry-edit-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .calories-form-submit {
+    .calories-form-submit,
+    .calories-entry-edit-actions {
         grid-column: 1 / -1;
     }
 
@@ -983,7 +1035,7 @@
     }
 
     .calories-tablet-log-panel .calories-log-item {
-        grid-template-columns: 3.25rem minmax(0, 1fr) auto;
+        grid-template-columns: 3rem minmax(0, 1fr) auto auto;
         gap: 0.55rem;
         padding: 0.4rem 0.55rem;
     }
@@ -994,6 +1046,17 @@
 
     .calories-tablet-log-panel .calories-log-kcal {
         font-size: 0.85rem;
+    }
+
+    .calories-tablet-log-panel .calories-log-actions {
+        grid-column: auto;
+        flex-wrap: nowrap;
+    }
+
+    .calories-tablet-log-panel .calories-log-actions .btn {
+        min-height: 2rem;
+        padding: 0.2rem 0.45rem;
+        font-size: 0.72rem;
     }
 
     .calories-tablet-log-panel .calories-immutable-note {

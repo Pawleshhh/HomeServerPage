@@ -19,6 +19,12 @@ public interface ICaloriesService
         CaloriesLogEntry entry,
         CancellationToken cancellationToken = default);
 
+    Task<bool> UpdateEntryAsync(
+        CaloriesLogEntry entry,
+        CancellationToken cancellationToken = default);
+
+    Task<bool> RemoveEntryAsync(int id, CancellationToken cancellationToken = default);
+
     Task<int?> GetDailyGoalAsync(CancellationToken cancellationToken = default);
 
     Task<int> SetDailyGoalAsync(int calories, CancellationToken cancellationToken = default);

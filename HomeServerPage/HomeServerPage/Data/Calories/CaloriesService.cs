@@ -103,6 +103,41 @@ public sealed class CaloriesService(
         return addedEntry.Entity;
     }
 
+    public async Task<bool> UpdateEntryAsync(
+        CaloriesLogEntry entry,
+        CancellationToken cancellationToken = default)
+    {
+        await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        var entity = await dbContext.Entries.FindAsync([entry.Id], cancellationToken);
+        if (entity is null)
+        {
+            return false;
+        }
+
+        dbContext.Entry(entity).CurrentValues.SetValues(entry with
+        {
+            Name = NormalizeName(entry.Name)
+        });
+        await dbContext.SaveChangesAsync(cancellationToken);
+        await this.PublishChangedAsync(cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> RemoveEntryAsync(int id, CancellationToken cancellationToken = default)
+    {
+        await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        var entity = await dbContext.Entries.FindAsync([id], cancellationToken);
+        if (entity is null)
+        {
+            return false;
+        }
+
+        dbContext.Entries.Remove(entity);
+        await dbContext.SaveChangesAsync(cancellationToken);
+        await this.PublishChangedAsync(cancellationToken);
+        return true;
+    }
+
     public async Task<int?> GetDailyGoalAsync(CancellationToken cancellationToken = default)
     {
         await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);

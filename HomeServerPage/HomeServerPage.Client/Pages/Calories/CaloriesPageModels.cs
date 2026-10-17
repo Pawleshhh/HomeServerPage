@@ -52,6 +52,35 @@ public sealed class CustomCaloriesEntryDraft
     public int? FatGrams { get; set; }
 }
 
+public sealed class CaloriesLoggedEntryDraft
+{
+    [Required]
+    [StringLength(160)]
+    public string? Name { get; set; }
+
+    [Required]
+    [Range(1, int.MaxValue)]
+    public int? Calories { get; set; }
+
+    [Range(0, int.MaxValue)]
+    public int? CarbohydratesGrams { get; set; }
+
+    [Range(0, int.MaxValue)]
+    public int? ProteinGrams { get; set; }
+
+    [Range(0, int.MaxValue)]
+    public int? FatGrams { get; set; }
+
+    [Range(1, int.MaxValue)]
+    public int? Servings { get; set; }
+
+    [Required]
+    public string? Time { get; set; }
+
+    [StringLength(500)]
+    public string? Notes { get; set; }
+}
+
 public sealed class CaloriesGoalDraft
 {
     [Required]

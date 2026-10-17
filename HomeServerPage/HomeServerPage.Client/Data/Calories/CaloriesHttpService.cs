@@ -62,6 +62,25 @@ public sealed class CaloriesHttpService(HttpClient httpClient) : ICaloriesServic
             ?? throw new InvalidOperationException("The Calories API returned no created entry.");
     }
 
+    public async Task<bool> UpdateEntryAsync(
+        CaloriesLogEntry entry,
+        CancellationToken cancellationToken = default)
+    {
+        using var response = await httpClient.PutAsJsonAsync(
+            $"api/calories/entries/{entry.Id}",
+            entry,
+            cancellationToken);
+        return response.IsSuccessStatusCode;
+    }
+
+    public async Task<bool> RemoveEntryAsync(int id, CancellationToken cancellationToken = default)
+    {
+        using var response = await httpClient.DeleteAsync(
+            $"api/calories/entries/{id}",
+            cancellationToken);
+        return response.IsSuccessStatusCode;
+    }
+
     public async Task<int?> GetDailyGoalAsync(CancellationToken cancellationToken = default)
     {
         var response = await httpClient.GetFromJsonAsync<CaloriesGoalResponse>(

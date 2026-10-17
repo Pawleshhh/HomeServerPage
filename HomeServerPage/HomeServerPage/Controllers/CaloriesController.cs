@@ -73,15 +73,42 @@ public sealed class CaloriesController(ICaloriesService caloriesService) : Contr
             return BadRequest(validationError);
         }
 
-        var todayAtEntryOffset = DateOnly.FromDateTime(
-            DateTimeOffset.UtcNow.ToOffset(entry.LoggedAt.Offset).DateTime);
-        if (entry.LocalDate > todayAtEntryOffset ||
-            entry.LocalDate != DateOnly.FromDateTime(entry.LoggedAt.DateTime))
+        if (!HasValidEntryDate(entry))
         {
             return BadRequest("The entry date and time must be today or earlier and match.");
         }
 
         return Ok(await caloriesService.AddEntryAsync(entry, cancellationToken));
+    }
+
+    [HttpPut("entries/{id:int}")]
+    public async Task<IActionResult> UpdateEntry(
+        int id,
+        [FromBody] CaloriesLogEntry entry,
+        CancellationToken cancellationToken)
+    {
+        var validationError = ValidateEntry(entry);
+        if (validationError is not null)
+        {
+            return BadRequest(validationError);
+        }
+
+        if (!HasValidEntryDate(entry))
+        {
+            return BadRequest("The entry date and time must be today or earlier and match.");
+        }
+
+        var updated = await caloriesService.UpdateEntryAsync(
+            entry with { Id = id },
+            cancellationToken);
+        return updated ? NoContent() : NotFound();
+    }
+
+    [HttpDelete("entries/{id:int}")]
+    public async Task<IActionResult> RemoveEntry(int id, CancellationToken cancellationToken)
+    {
+        var removed = await caloriesService.RemoveEntryAsync(id, cancellationToken);
+        return removed ? NoContent() : NotFound();
     }
 
     [HttpGet("goal")]
@@ -136,4 +163,12 @@ public sealed class CaloriesController(ICaloriesService caloriesService) : Contr
 
     private static bool HasNegativeMacros(int? carbohydrates, int? protein, int? fat) =>
         carbohydrates < 0 || protein < 0 || fat < 0;
+
+    private static bool HasValidEntryDate(CaloriesLogEntry entry)
+    {
+        var todayAtEntryOffset = DateOnly.FromDateTime(
+            DateTimeOffset.UtcNow.ToOffset(entry.LoggedAt.Offset).DateTime);
+        return entry.LocalDate <= todayAtEntryOffset &&
+            entry.LocalDate == DateOnly.FromDateTime(entry.LoggedAt.DateTime);
+    }
 }

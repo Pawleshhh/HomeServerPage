@@ -359,27 +359,115 @@
                             @foreach (var entry in dayEntries)
                             {
                                 <article class="calories-log-item" @key="entry.Id">
-                                    <time class="calories-log-time" datetime="@entry.LoggedAt.ToString("O", CultureInfo.InvariantCulture)">@entry.LoggedAt.ToString("HH:mm", CultureInfo.CurrentCulture)</time>
-                                    <div class="calories-log-copy">
-                                        <strong>@entry.Name</strong>
-                                        @if (entry.Servings is int servings)
-                                        {
-                                            <span>@servings serving(s)</span>
-                                        }
-                                        <span>@FormatEntryMacros(entry)</span>
-                                        @if (!string.IsNullOrWhiteSpace(entry.Notes))
-                                        {
-                                            <span class="calories-log-note">@entry.Notes</span>
-                                        }
-                                    </div>
-                                    <strong class="calories-log-kcal">@entry.Calories.ToString("N0", CultureInfo.CurrentCulture) kcal</strong>
+                                    @if (editingEntryId == entry.Id)
+                                    {
+                                        <EditForm class="calories-entry-edit-form"
+                                                  Model="entryEditDraft"
+                                                  OnValidSubmit="SaveEntryEditAsync"
+                                                  FormName="CaloriesEntryEditForm">
+                                            <DataAnnotationsValidator />
+                                            <div class="calories-compact-form calories-entry-edit-grid">
+                                                <div class="calories-compact-field calories-wide-field">
+                                                    <label class="form-label" for="@($"edit-entry-name-{entry.Id}")">Food name</label>
+                                                    <InputText id="@($"edit-entry-name-{entry.Id}")" class="form-control" @bind-Value="entryEditDraft.Name" maxlength="160" />
+                                                    <ValidationMessage For="() => entryEditDraft.Name" />
+                                                </div>
+                                                <div class="calories-compact-field">
+                                                    <label class="form-label" for="@($"edit-entry-kcal-{entry.Id}")">Calories (kcal)</label>
+                                                    <InputNumber id="@($"edit-entry-kcal-{entry.Id}")" class="form-control" @bind-Value="entryEditDraft.Calories" min="1" step="1" />
+                                                    <ValidationMessage For="() => entryEditDraft.Calories" />
+                                                </div>
+                                                <div class="calories-compact-field">
+                                                    <label class="form-label" for="@($"edit-entry-carbs-{entry.Id}")">Carbs (g)</label>
+                                                    <InputNumber id="@($"edit-entry-carbs-{entry.Id}")" class="form-control" @bind-Value="entryEditDraft.CarbohydratesGrams" min="0" step="1" />
+                                                </div>
+                                                <div class="calories-compact-field">
+                                                    <label class="form-label" for="@($"edit-entry-protein-{entry.Id}")">Protein (g)</label>
+                                                    <InputNumber id="@($"edit-entry-protein-{entry.Id}")" class="form-control" @bind-Value="entryEditDraft.ProteinGrams" min="0" step="1" />
+                                                </div>
+                                                <div class="calories-compact-field">
+                                                    <label class="form-label" for="@($"edit-entry-fat-{entry.Id}")">Fat (g)</label>
+                                                    <InputNumber id="@($"edit-entry-fat-{entry.Id}")" class="form-control" @bind-Value="entryEditDraft.FatGrams" min="0" step="1" />
+                                                </div>
+                                                <div class="calories-compact-field">
+                                                    <label class="form-label" for="@($"edit-entry-servings-{entry.Id}")">Servings</label>
+                                                    <InputNumber id="@($"edit-entry-servings-{entry.Id}")" class="form-control" @bind-Value="entryEditDraft.Servings" min="1" step="1" />
+                                                    <ValidationMessage For="() => entryEditDraft.Servings" />
+                                                </div>
+                                                <div class="calories-compact-field">
+                                                    <label class="form-label" for="@($"edit-entry-time-{entry.Id}")">Time eaten</label>
+                                                    <input id="@($"edit-entry-time-{entry.Id}")"
+                                                           class="form-control"
+                                                           type="time"
+                                                           value="@entryEditDraft.Time"
+                                                           @onchange="OnEntryEditTimeChanged" />
+                                                </div>
+                                                <div class="calories-compact-field calories-wide-field">
+                                                    <label class="form-label" for="@($"edit-entry-notes-{entry.Id}")">Note (optional)</label>
+                                                    <InputText id="@($"edit-entry-notes-{entry.Id}")" class="form-control" @bind-Value="entryEditDraft.Notes" maxlength="500" />
+                                                </div>
+                                                <div class="calories-entry-edit-actions">
+                                                    <button class="btn btn-primary btn-sm" type="submit" disabled="@isSavingEntryEdit">
+                                                        @(isSavingEntryEdit ? "Saving…" : "Save")
+                                                    </button>
+                                                    <button class="btn btn-outline-secondary btn-sm" type="button" @onclick="CancelEntryEdit">Cancel</button>
+                                                </div>
+                                            </div>
+                                        </EditForm>
+                                    }
+                                    else
+                                    {
+                                        <time class="calories-log-time" datetime="@entry.LoggedAt.ToString("O", CultureInfo.InvariantCulture)">@entry.LoggedAt.ToString("HH:mm", CultureInfo.CurrentCulture)</time>
+                                        <div class="calories-log-copy">
+                                            <strong>@entry.Name</strong>
+                                            @if (entry.Servings is int servings)
+                                            {
+                                                <span>@servings serving(s)</span>
+                                            }
+                                            <span>@FormatEntryMacros(entry)</span>
+                                            @if (!string.IsNullOrWhiteSpace(entry.Notes))
+                                            {
+                                                <span class="calories-log-note">@entry.Notes</span>
+                                            }
+                                        </div>
+                                        <strong class="calories-log-kcal">@entry.Calories.ToString("N0", CultureInfo.CurrentCulture) kcal</strong>
+                                        <div class="calories-log-actions">
+                                            @if (entryPendingDeleteId == entry.Id)
+                                            {
+                                                <span class="calories-delete-confirmation">Delete this entry?</span>
+                                                <button class="btn btn-danger btn-sm"
+                                                        type="button"
+                                                        disabled="@isDeletingEntry"
+                                                        @onclick="() => RemoveLoggedEntryAsync(entry.Id)">
+                                                    @(isDeletingEntry ? "Deleting…" : "Delete")
+                                                </button>
+                                                <button class="btn btn-outline-secondary btn-sm"
+                                                        type="button"
+                                                        disabled="@isDeletingEntry"
+                                                        @onclick="CancelEntryDelete">
+                                                    Keep
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <button class="btn btn-outline-primary btn-sm"
+                                                        type="button"
+                                                        aria-label="@($"Edit {entry.Name}")"
+                                                        @onclick="() => EditLoggedEntry(entry)">
+                                                    Edit
+                                                </button>
+                                                <button class="btn btn-outline-danger btn-sm"
+                                                        type="button"
+                                                        aria-label="@($"Delete {entry.Name}")"
+                                                        @onclick="() => BeginEntryDelete(entry.Id)">
+                                                    Delete
+                                                </button>
+                                            }
+                                        </div>
+                                    }
                                 </article>
                             }
                         </div>
-                        @if (!isTabletMode)
-                        {
-                            <p class="calories-immutable-note">Logged entries are saved as history snapshots and cannot be edited or deleted.</p>
-                        }
                     }
                 </section>
             </section>
@@ -592,6 +680,7 @@
     private CaloriesFoodDraft foodDraft = new();
     private CaloriesEntryDraft savedEntryDraft = new();
     private CustomCaloriesEntryDraft customEntryDraft = new();
+    private CaloriesLoggedEntryDraft entryEditDraft = new();
     private CaloriesGoalDraft goalDraft = new();
     private CaloriesTab activeTab = CaloriesTab.Daily;
     private EntryMode entryMode = EntryMode.SavedFood;
@@ -603,6 +692,8 @@
     private int? dailyGoal;
     private int? editingFoodId;
     private int? foodPendingDeleteId;
+    private int? editingEntryId;
+    private int? entryPendingDeleteId;
     private int? selectedChartPointIndex;
     private bool showTabletEntryForm;
     private string entryTime = "12:00";
@@ -615,6 +706,8 @@
     private bool isLoadingHistory;
     private bool isSavingFood;
     private bool isSavingEntry;
+    private bool isSavingEntryEdit;
+    private bool isDeletingEntry;
     private bool isSavingGoal;
     private bool isNotificationsStarted;
     private bool isDisposed;
@@ -768,6 +861,8 @@
     private async Task OnSelectedDateChangedAsync(DateOnly date)
     {
         selectedDate = date > today ? today : date;
+        CancelEntryEdit();
+        CancelEntryDelete();
         ClearStatus();
         await LoadSelectedWeekAsync();
     }
@@ -785,11 +880,27 @@
         }
     }
 
+    private void OnEntryEditTimeChanged(ChangeEventArgs args)
+    {
+        if (args.Value is string value &&
+            TimeOnly.TryParseExact(
+                value,
+                "HH:mm",
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.None,
+                out _))
+        {
+            entryEditDraft.Time = value;
+        }
+    }
+
     private async Task GoToPreviousDayAsync()
     {
         if (selectedDate > DateOnly.MinValue)
         {
             selectedDate = selectedDate.AddDays(-1);
+            CancelEntryEdit();
+            CancelEntryDelete();
             await LoadSelectedWeekAsync();
         }
     }
@@ -799,6 +910,8 @@
         if (selectedDate < today)
         {
             selectedDate = selectedDate.AddDays(1);
+            CancelEntryEdit();
+            CancelEntryDelete();
             await LoadSelectedWeekAsync();
         }
     }
@@ -806,6 +919,8 @@
     private async Task GoToTodayAsync()
     {
         selectedDate = today;
+        CancelEntryEdit();
+        CancelEntryDelete();
         await LoadSelectedWeekAsync();
     }
 
@@ -944,7 +1059,9 @@
         }
     }
 
-    private async Task<DateTimeOffset> GetLoggedAtAsync()
+    private Task<DateTimeOffset> GetLoggedAtAsync() => GetLoggedAtAsync(entryTime);
+
+    private async Task<DateTimeOffset> GetLoggedAtAsync(string timeValue)
     {
         caloriesJsModule ??= await JS.InvokeAsync<IJSObjectReference>(
             "import",
@@ -954,11 +1071,130 @@
             "getOffsetMinutes",
             lifetimeCancellation.Token,
             selectedDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
-            entryTime);
+            timeValue);
         var localDateTime = DateTime.SpecifyKind(
-            selectedDate.ToDateTime(TimeOnly.ParseExact(entryTime, "HH:mm", CultureInfo.InvariantCulture)),
+            selectedDate.ToDateTime(TimeOnly.ParseExact(timeValue, "HH:mm", CultureInfo.InvariantCulture)),
             DateTimeKind.Unspecified);
         return new DateTimeOffset(localDateTime, TimeSpan.FromMinutes(offsetMinutes));
+    }
+
+    private void EditLoggedEntry(CaloriesLogEntry entry)
+    {
+        editingEntryId = entry.Id;
+        entryPendingDeleteId = null;
+        entryEditDraft = new CaloriesLoggedEntryDraft
+        {
+            Name = entry.Name,
+            Calories = entry.Calories,
+            CarbohydratesGrams = entry.CarbohydratesGrams,
+            ProteinGrams = entry.ProteinGrams,
+            FatGrams = entry.FatGrams,
+            Servings = entry.Servings,
+            Time = entry.LoggedAt.ToString("HH:mm", CultureInfo.InvariantCulture),
+            Notes = entry.Notes
+        };
+        ClearStatus();
+    }
+
+    private void CancelEntryEdit()
+    {
+        editingEntryId = null;
+        entryEditDraft = new CaloriesLoggedEntryDraft();
+    }
+
+    private async Task SaveEntryEditAsync()
+    {
+        if (editingEntryId is not int entryId ||
+            entryEditDraft.Name is null ||
+            entryEditDraft.Calories is not int calories ||
+            entryEditDraft.Time is not string time)
+        {
+            return;
+        }
+
+        isSavingEntryEdit = true;
+        try
+        {
+            var originalEntry = dayEntries.FirstOrDefault(entry => entry.Id == entryId);
+            if (originalEntry is null)
+            {
+                CancelEntryEdit();
+                SetStatus("This log entry is no longer available. Refresh the daily log.", isError: true);
+                return;
+            }
+
+            var updatedEntry = originalEntry with
+            {
+                Name = entryEditDraft.Name.Trim(),
+                Calories = calories,
+                CarbohydratesGrams = entryEditDraft.CarbohydratesGrams,
+                ProteinGrams = entryEditDraft.ProteinGrams,
+                FatGrams = entryEditDraft.FatGrams,
+                Servings = entryEditDraft.Servings,
+                LocalDate = selectedDate,
+                LoggedAt = await GetLoggedAtAsync(time),
+                Notes = NormalizeNote(entryEditDraft.Notes)
+            };
+
+            if (!await CaloriesService.UpdateEntryAsync(updatedEntry, lifetimeCancellation.Token))
+            {
+                CancelEntryEdit();
+                SetStatus("This log entry could not be found. Refresh the daily log.", isError: true);
+                return;
+            }
+
+            CancelEntryEdit();
+            if (await LoadSelectedWeekAsync())
+            {
+                SetStatus("Daily log entry updated.");
+            }
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            Logger.LogError(exception, "Could not update Calories log entry {EntryId}.", entryId);
+            SetStatus("The log entry could not be updated.", isError: true);
+        }
+        finally
+        {
+            isSavingEntryEdit = false;
+        }
+    }
+
+    private void BeginEntryDelete(int id)
+    {
+        entryPendingDeleteId = id;
+        CancelEntryEdit();
+    }
+
+    private void CancelEntryDelete() => entryPendingDeleteId = null;
+
+    private async Task RemoveLoggedEntryAsync(int id)
+    {
+        isDeletingEntry = true;
+        try
+        {
+            if (!await CaloriesService.RemoveEntryAsync(id, lifetimeCancellation.Token))
+            {
+                entryPendingDeleteId = null;
+                SetStatus("This log entry could not be found. Refresh the daily log.", isError: true);
+                return;
+            }
+
+            entryPendingDeleteId = null;
+            if (await LoadSelectedWeekAsync())
+            {
+                SetStatus("Daily log entry deleted.");
+            }
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            Logger.LogError(exception, "Could not delete Calories log entry {EntryId}.", id);
+            SetStatus("The log entry could not be deleted.", isError: true);
+        }
+        finally
+        {
+            isDeletingEntry = false;
+        }
     }
 
     private async Task SaveFoodAsync()
