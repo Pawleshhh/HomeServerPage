@@ -12,7 +12,7 @@ Follow the existing service and component patterns when changing behavior. Keep 
 
 ## Product and interaction expectations
 
-- The site has a normal responsive mode and a compact `TabletDashboard` mode. The primary touch display is approximately 1020x600.
+- The site has a normal responsive mode and a compact `TabletDashboard` mode. The primary touch display is approximately 1024x600.
 - Keep normal and tablet navigation, layouts, and page behavior consistent with the existing mode-specific patterns.
 - Preserve light and dark theme support, loading/error states, and correct refresh behavior when changing pages or widgets.
 - Keep project work on the active branch. Do not create another branch, stash changes, or commit unless the user explicitly asks.
