@@ -48,6 +48,8 @@ public partial class AstronomyWidget
 
     private Task HandleRefreshRequestedAsync() => InvokeAsync(async () =>
     {
+        this.isLoading = true;
+        this.StateHasChanged();
         await this.LoadObservationsAsync();
         this.StateHasChanged();
     });

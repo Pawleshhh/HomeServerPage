@@ -31,6 +31,8 @@ public partial class ExpiringFridgeItems
 
     private List<FridgeItem>? Items;
     private string? errorMessage;
+    private bool isLoadingItems = true;
+    private bool isRefreshing;
     private int? caloriesGoal;
     private long caloriesConsumed;
     private string? caloriesError;
@@ -69,6 +71,7 @@ public partial class ExpiringFridgeItems
 
     private async Task LoadItemsAsync()
     {
+        this.isLoadingItems = true;
         this.errorMessage = null;
 
         try
@@ -84,13 +87,27 @@ public partial class ExpiringFridgeItems
         {
             this.errorMessage = "Could not load fridge items.";
         }
+        finally
+        {
+            this.isLoadingItems = false;
+        }
     }
 
     private Task HandleRefreshRequestedAsync() => InvokeAsync(async () =>
     {
-        await this.LoadItemsAsync();
-        await this.LoadCaloriesAsync();
+        this.isRefreshing = true;
         this.StateHasChanged();
+
+        try
+        {
+            await this.LoadItemsAsync();
+            await this.LoadCaloriesAsync();
+        }
+        finally
+        {
+            this.isRefreshing = false;
+            this.StateHasChanged();
+        }
     });
 
     private Task HandleWidgetRefreshRequestedAsync(string widgetId) =>

@@ -1,0 +1,34 @@
+@if (RefreshEnabled)
+{
+    <button class="dashboard-card-icon dashboard-card-icon-button"
+            type="button"
+            aria-label="@RefreshLabel"
+            title="@RefreshLabel"
+            disabled="@IsLoading"
+            @onclick="OnRefresh">
+        <i class="bi @IconClass" aria-hidden="true"></i>
+    </button>
+}
+else
+{
+    <span class="dashboard-card-icon" aria-hidden="true">
+        <i class="bi @IconClass"></i>
+    </span>
+}
+
+@code {
+    [Parameter]
+    public string IconClass { get; set; } = string.Empty;
+
+    [Parameter]
+    public string RefreshLabel { get; set; } = "Refresh widget";
+
+    [Parameter]
+    public bool RefreshEnabled { get; set; }
+
+    [Parameter]
+    public bool IsLoading { get; set; }
+
+    [Parameter]
+    public EventCallback OnRefresh { get; set; }
+}

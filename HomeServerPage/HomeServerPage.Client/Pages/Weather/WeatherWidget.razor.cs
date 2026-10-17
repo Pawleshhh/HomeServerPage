@@ -63,6 +63,8 @@ public partial class WeatherWidget
 
     private Task HandleRefreshRequestedAsync() => InvokeAsync(async () =>
     {
+        this.isLoading = true;
+        this.StateHasChanged();
         await this.LoadWeatherAsync();
         this.StateHasChanged();
     });

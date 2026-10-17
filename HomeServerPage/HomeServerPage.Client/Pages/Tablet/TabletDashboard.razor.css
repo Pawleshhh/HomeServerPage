@@ -53,6 +53,27 @@
     font-size: 0.9rem;
 }
 
+.tablet-dashboard-item ::deep .dashboard-card-icon-button {
+    appearance: none;
+    padding: 0;
+    border: 0;
+    cursor: pointer;
+}
+
+.tablet-dashboard-item ::deep .dashboard-card-icon-button:not(:disabled):hover {
+    filter: brightness(0.9);
+}
+
+.tablet-dashboard-item ::deep .dashboard-card-icon-button:focus-visible {
+    outline: 2px solid var(--app-text);
+    outline-offset: 2px;
+}
+
+.tablet-dashboard-item ::deep .dashboard-card-icon-button:disabled {
+    cursor: wait;
+    opacity: 0.65;
+}
+
 .tablet-dashboard-item-fridge {
     grid-column: span 5;
 }

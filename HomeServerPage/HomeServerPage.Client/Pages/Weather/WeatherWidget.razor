@@ -7,7 +7,11 @@
     <div class="card-body">
         <div class="dashboard-card-header">
             <div class="dashboard-card-heading">
-                <span class="dashboard-card-icon" aria-hidden="true"><i class="bi @this.WeatherIconClass"></i></span>
+                <DashboardCardRefreshIcon IconClass="@this.WeatherIconClass"
+                                          RefreshLabel="Refresh weather"
+                                          RefreshEnabled="@AutoRefresh"
+                                          IsLoading="@this.isLoading"
+                                          OnRefresh="this.HandleRefreshRequestedAsync" />
                 <div>
                     <h2 id="weather-widget-heading" class="dashboard-card-title">Weather</h2>
                     <p class="dashboard-card-subtitle">Current conditions in @this.LocationLabel.</p>

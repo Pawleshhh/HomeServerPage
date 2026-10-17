@@ -29,6 +29,7 @@ public partial class PublicTransportWidget
 
     private List<DepartureBoard>? Boards;
     private string? errorMessage;
+    private bool isLoading = true;
 
     protected override async Task OnInitializedAsync()
     {
@@ -42,6 +43,7 @@ public partial class PublicTransportWidget
 
     private async Task LoadDeparturesAsync()
     {
+        this.isLoading = true;
         this.errorMessage = null;
 
         try
@@ -52,10 +54,16 @@ public partial class PublicTransportWidget
         {
             this.errorMessage = "Could not load departures.";
         }
+        finally
+        {
+            this.isLoading = false;
+        }
     }
 
     private Task HandleRefreshRequestedAsync() => InvokeAsync(async () =>
     {
+        this.isLoading = true;
+        this.StateHasChanged();
         await this.LoadDeparturesAsync();
         this.StateHasChanged();
     });
