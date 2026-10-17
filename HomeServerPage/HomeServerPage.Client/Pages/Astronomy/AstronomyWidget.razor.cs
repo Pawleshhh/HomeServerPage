@@ -14,6 +14,7 @@ using HomeServerPage.Shared.Extensions;
 using HomeServerPage.Data;
 using HomeServerPage.Data.Astronomy;
 using HomeServerPage.Data.Weather;
+using HomeServerPage.Client.Data;
 
 namespace HomeServerPage.Client.Pages.Astronomy;
 
@@ -39,7 +40,7 @@ public partial class AstronomyWidget
     {
         if (AutoRefresh)
         {
-            DashboardRefreshService.RefreshRequested += this.HandleRefreshRequestedAsync;
+            DashboardRefreshService.WidgetRefreshRequested += this.HandleWidgetRefreshRequestedAsync;
         }
 
         await this.LoadObservationsAsync();
@@ -50,6 +51,11 @@ public partial class AstronomyWidget
         await this.LoadObservationsAsync();
         this.StateHasChanged();
     });
+
+    private Task HandleWidgetRefreshRequestedAsync(string widgetId) =>
+        widgetId == TabletDashboardWidgetRefreshOptions.Astronomy
+            ? this.HandleRefreshRequestedAsync()
+            : Task.CompletedTask;
 
     private async Task LoadObservationsAsync()
     {
@@ -90,7 +96,7 @@ public partial class AstronomyWidget
     {
         if (AutoRefresh)
         {
-            DashboardRefreshService.RefreshRequested -= this.HandleRefreshRequestedAsync;
+            DashboardRefreshService.WidgetRefreshRequested -= this.HandleWidgetRefreshRequestedAsync;
         }
     }
 }

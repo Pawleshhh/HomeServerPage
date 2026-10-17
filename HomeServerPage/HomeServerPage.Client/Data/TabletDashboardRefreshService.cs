@@ -10,7 +10,7 @@ public sealed class TabletDashboardRefreshService(
     IRealtimeNotificationEventSource notificationEventSource,
     ILogger<TabletDashboardRefreshService> logger)
 {
-    public event Func<Task>? RefreshRequested;
+    public event Func<string, Task>? WidgetRefreshRequested;
     public event Func<string, Task>? NotificationReceived;
 
     public async Task RunAsync(CancellationToken cancellationToken)
@@ -25,15 +25,28 @@ public sealed class TabletDashboardRefreshService(
                 throw new InvalidOperationException("The tablet dashboard refresh settings are invalid.");
             }
 
-            await this.SyncAndGetUtcNowAsync(cancellationToken);
+            var refreshIntervals = new Dictionary<string, int>
+            {
+                [TabletDashboardWidgetRefreshOptions.Fridge] = settings.Widgets.FridgeIntervalMinutes,
+                [TabletDashboardWidgetRefreshOptions.PublicTransport] = settings.Widgets.PublicTransportIntervalMinutes,
+                [TabletDashboardWidgetRefreshOptions.Weather] = settings.Widgets.WeatherIntervalMinutes,
+                [TabletDashboardWidgetRefreshOptions.Astronomy] = settings.Widgets.AstronomyIntervalMinutes
+            };
+
+            var nowUtc = await this.SyncAndGetUtcNowAsync(cancellationToken);
+            var nextRefreshTimes = refreshIntervals.ToDictionary(
+                pair => pair.Key,
+                pair => GetNextRefreshTime(
+                    TimeZoneInfo.ConvertTime(nowUtc, AstronomyDefaults.LocalTimeZone),
+                    pair.Value,
+                    activeFrom,
+                    activeUntil));
 
             while (true)
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                var nowUtc = this.GetUtcNow();
-                var nowInPoland = TimeZoneInfo.ConvertTime(nowUtc, AstronomyDefaults.LocalTimeZone);
-                var nextRefresh = GetNextRefreshTime(nowInPoland, settings, activeFrom, activeUntil);
+                var nextRefresh = nextRefreshTimes.MinBy(pair => pair.Value).Value;
                 var delay = nextRefresh - nowUtc;
 
                 if (delay > TimeSpan.Zero)
@@ -42,14 +55,31 @@ public sealed class TabletDashboardRefreshService(
                 }
 
                 nowUtc = await this.SyncAndGetUtcNowAsync(cancellationToken);
-                nowInPoland = TimeZoneInfo.ConvertTime(nowUtc, AstronomyDefaults.LocalTimeZone);
+                var nowInPoland = TimeZoneInfo.ConvertTime(nowUtc, AstronomyDefaults.LocalTimeZone);
 
-                if (nowUtc < nextRefresh || !IsWithinActiveRange(nowInPoland, activeFrom, activeUntil))
+                if (nowUtc < nextRefresh)
                 {
                     continue;
                 }
 
-                await this.NotifySubscribersAsync(this.RefreshRequested);
+                foreach (var (widgetId, scheduledAt) in nextRefreshTimes.ToList())
+                {
+                    if (scheduledAt > nowUtc)
+                    {
+                        continue;
+                    }
+
+                    if (IsWithinActiveRange(nowInPoland, activeFrom, activeUntil))
+                    {
+                        await this.NotifySubscribersAsync(this.WidgetRefreshRequested, widgetId);
+                    }
+
+                    nextRefreshTimes[widgetId] = GetNextRefreshTime(
+                        nowInPoland,
+                        refreshIntervals[widgetId],
+                        activeFrom,
+                        activeUntil);
+                }
             }
         }
         finally
@@ -117,7 +147,7 @@ public sealed class TabletDashboardRefreshService(
 
     private static DateTimeOffset GetNextRefreshTime(
         DateTimeOffset nowInPoland,
-        TabletDashboardRefreshOptions settings,
+        int intervalMinutes,
         TimeOnly activeFrom,
         TimeOnly activeUntil)
     {
@@ -137,7 +167,7 @@ public sealed class TabletDashboardRefreshService(
         }
         else
         {
-            var interval = TimeSpan.FromMinutes(settings.IntervalMinutes);
+            var interval = TimeSpan.FromMinutes(intervalMinutes);
             var elapsed = localNow - activeStart;
             var intervalsElapsed = elapsed.Ticks / interval.Ticks + 1;
             nextRefresh = activeStart.AddTicks(intervalsElapsed * interval.Ticks);

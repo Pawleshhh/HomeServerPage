@@ -12,6 +12,7 @@ using HomeServerPage.Client.Layout;
 using HomeServerPage.Client.Shared;
 using HomeServerPage.Shared.Extensions;
 using HomeServerPage.Data.Weather;
+using HomeServerPage.Client.Data;
 
 namespace HomeServerPage.Client.Pages.Weather;
 
@@ -33,7 +34,7 @@ public partial class WeatherWidget
     {
         if (AutoRefresh)
         {
-            DashboardRefreshService.RefreshRequested += this.HandleRefreshRequestedAsync;
+            DashboardRefreshService.WidgetRefreshRequested += this.HandleWidgetRefreshRequestedAsync;
         }
 
         await this.LoadWeatherAsync();
@@ -66,11 +67,16 @@ public partial class WeatherWidget
         this.StateHasChanged();
     });
 
+    private Task HandleWidgetRefreshRequestedAsync(string widgetId) =>
+        widgetId == TabletDashboardWidgetRefreshOptions.Weather
+            ? this.HandleRefreshRequestedAsync()
+            : Task.CompletedTask;
+
     public void Dispose()
     {
         if (AutoRefresh)
         {
-            DashboardRefreshService.RefreshRequested -= this.HandleRefreshRequestedAsync;
+            DashboardRefreshService.WidgetRefreshRequested -= this.HandleWidgetRefreshRequestedAsync;
         }
     }
 }

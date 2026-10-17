@@ -12,6 +12,7 @@ using HomeServerPage.Client.Layout;
 using HomeServerPage.Client.Shared;
 using HomeServerPage.Shared.Extensions;
 using HomeServerPage.Data.PublicTransport;
+using HomeServerPage.Client.Data;
 
 namespace HomeServerPage.Client.Pages.PublicTransport;
 
@@ -33,7 +34,7 @@ public partial class PublicTransportWidget
     {
         if (AutoRefresh)
         {
-            DashboardRefreshService.RefreshRequested += this.HandleRefreshRequestedAsync;
+            DashboardRefreshService.WidgetRefreshRequested += this.HandleWidgetRefreshRequestedAsync;
         }
 
         await this.LoadDeparturesAsync();
@@ -59,11 +60,16 @@ public partial class PublicTransportWidget
         this.StateHasChanged();
     });
 
+    private Task HandleWidgetRefreshRequestedAsync(string widgetId) =>
+        widgetId == TabletDashboardWidgetRefreshOptions.PublicTransport
+            ? this.HandleRefreshRequestedAsync()
+            : Task.CompletedTask;
+
     public void Dispose()
     {
         if (AutoRefresh)
         {
-            DashboardRefreshService.RefreshRequested -= this.HandleRefreshRequestedAsync;
+            DashboardRefreshService.WidgetRefreshRequested -= this.HandleWidgetRefreshRequestedAsync;
         }
     }
 }

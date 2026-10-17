@@ -14,6 +14,7 @@ using HomeServerPage.Shared.Extensions;
 using HomeServerPage.Data.Fridge;
 using HomeServerPage.Data.Calories;
 using HomeServerPage.Data.Notifications;
+using HomeServerPage.Client.Data;
 
 namespace HomeServerPage.Client.Pages.Fridge;
 
@@ -50,7 +51,7 @@ public partial class ExpiringFridgeItems
     {
         if (AutoRefresh)
         {
-            DashboardRefreshService.RefreshRequested += this.HandleRefreshRequestedAsync;
+            DashboardRefreshService.WidgetRefreshRequested += this.HandleWidgetRefreshRequestedAsync;
             DashboardRefreshService.NotificationReceived += this.HandleNotificationReceivedAsync;
         }
 
@@ -91,6 +92,11 @@ public partial class ExpiringFridgeItems
         await this.LoadCaloriesAsync();
         this.StateHasChanged();
     });
+
+    private Task HandleWidgetRefreshRequestedAsync(string widgetId) =>
+        widgetId == TabletDashboardWidgetRefreshOptions.Fridge
+            ? this.HandleRefreshRequestedAsync()
+            : Task.CompletedTask;
 
     private Task HandleNotificationReceivedAsync(string notificationType) =>
         notificationType switch
@@ -143,7 +149,7 @@ public partial class ExpiringFridgeItems
     {
         if (AutoRefresh)
         {
-            DashboardRefreshService.RefreshRequested -= this.HandleRefreshRequestedAsync;
+            DashboardRefreshService.WidgetRefreshRequested -= this.HandleWidgetRefreshRequestedAsync;
             DashboardRefreshService.NotificationReceived -= this.HandleNotificationReceivedAsync;
         }
     }
