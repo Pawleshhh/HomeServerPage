@@ -153,9 +153,11 @@ public sealed class CaloriesController(ICaloriesService caloriesService) : Contr
         if (entry.Calories <= 0 ||
             HasNegativeMacros(entry.CarbohydratesGrams, entry.ProteinGrams, entry.FatGrams) ||
             entry.Servings is <= 0 ||
+            (entry.Servings is decimal servings &&
+                servings != decimal.Round(servings, 2)) ||
             entry.Notes?.Length > 500)
         {
-            return "Calories and servings must be positive, optional macros cannot be negative, and notes must be at most 500 characters.";
+            return "Calories and servings must be positive, servings may have at most two decimals, optional macros cannot be negative, and notes must be at most 500 characters.";
         }
 
         return null;

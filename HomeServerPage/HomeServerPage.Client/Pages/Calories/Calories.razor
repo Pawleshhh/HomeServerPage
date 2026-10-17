@@ -256,8 +256,8 @@
                                     }
                                 </div>
                                 <div class="calories-compact-field">
-                                    <label class="form-label" for="calories-serving-count">Servings</label>
-                                    <InputNumber id="calories-serving-count" class="form-control" @bind-Value="savedEntryDraft.Servings" min="1" step="1" />
+                                    <label class="form-label" for="calories-serving-count">Serving multiplier</label>
+                                    <InputNumber id="calories-serving-count" class="form-control" @bind-Value="savedEntryDraft.Servings" min="0.01" step="0.01" />
                                     <ValidationMessage For="() => savedEntryDraft.Servings" />
                                 </div>
                                 <div class="calories-compact-field">
@@ -274,7 +274,7 @@
                                     </button>
                                 </div>
                             </div>
-                            <p class="calories-compact-help">Time uses device local time; adjust it for entries from earlier.</p>
+                            <p class="calories-compact-help">Nutrition is multiplied by this factor and rounded to whole numbers. Time uses device local time.</p>
                         </EditForm>
                     }
                     else
@@ -390,9 +390,17 @@
                                                     <InputNumber id="@($"edit-entry-fat-{entry.Id}")" class="form-control" @bind-Value="entryEditDraft.FatGrams" min="0" step="1" />
                                                 </div>
                                                 <div class="calories-compact-field">
-                                                    <label class="form-label" for="@($"edit-entry-servings-{entry.Id}")">Servings</label>
-                                                    <InputNumber id="@($"edit-entry-servings-{entry.Id}")" class="form-control" @bind-Value="entryEditDraft.Servings" min="1" step="1" />
-                                                    <ValidationMessage For="() => entryEditDraft.Servings" />
+                                                    @if (entryEditDraft.Servings is not null)
+                                                    {
+                                                        <label class="form-label" for="@($"edit-entry-servings-{entry.Id}")">Serving multiplier</label>
+                                                        <InputNumber id="@($"edit-entry-servings-{entry.Id}")"
+                                                                     class="form-control"
+                                                                     @bind-Value="entryEditDraft.Servings"
+                                                                     @bind-Value:after="ScaleEditedEntryForServingsChange"
+                                                                     min="0.01"
+                                                                     step="0.01" />
+                                                        <ValidationMessage For="() => entryEditDraft.Servings" />
+                                                    }
                                                 </div>
                                                 <div class="calories-compact-field">
                                                     <label class="form-label" for="@($"edit-entry-time-{entry.Id}")">Time eaten</label>
@@ -420,9 +428,9 @@
                                         <time class="calories-log-time" datetime="@entry.LoggedAt.ToString("O", CultureInfo.InvariantCulture)">@entry.LoggedAt.ToString("HH:mm", CultureInfo.CurrentCulture)</time>
                                         <div class="calories-log-copy">
                                             <strong>@entry.Name</strong>
-                                            @if (entry.Servings is int servings)
+                                            @if (entry.Servings is decimal servings)
                                             {
-                                                <span>@servings serving(s)</span>
+                                                <span>@servings.ToString("0.##", CultureInfo.CurrentCulture) serving(s)</span>
                                             }
                                             <span>@FormatEntryMacros(entry)</span>
                                             @if (!string.IsNullOrWhiteSpace(entry.Notes))
@@ -521,7 +529,7 @@
                                 </button>
                             </div>
                         </div>
-                        <p class="calories-compact-help">Nutrition is per serving; logging uses whole-number servings.</p>
+                        <p class="calories-compact-help">Nutrition is per serving; choose a multiplier up to two decimal places.</p>
                     </EditForm>
                 </section>
 
@@ -695,6 +703,7 @@
     private int? editingEntryId;
     private int? entryPendingDeleteId;
     private int? selectedChartPointIndex;
+    private decimal? entryEditServingsBaseline;
     private bool showTabletEntryForm;
     private string entryTime = "12:00";
     private string? entryNotes;
@@ -977,7 +986,7 @@
     private async Task AddSavedEntryAsync()
     {
         var selectedFood = foods.FirstOrDefault(food => food.Id == savedEntryDraft.FoodId);
-        if (selectedFood is null || savedEntryDraft.Servings is not int servings)
+        if (selectedFood is null || savedEntryDraft.Servings is not decimal servings)
         {
             return;
         }
@@ -987,10 +996,10 @@
             var entry = new CaloriesLogEntry(
                 0,
                 selectedFood.Name,
-                checked(selectedFood.CaloriesPerServing * servings),
-                MultiplyMacro(selectedFood.CarbohydratesGrams, servings),
-                MultiplyMacro(selectedFood.ProteinGrams, servings),
-                MultiplyMacro(selectedFood.FatGrams, servings),
+                ScaleCalories(selectedFood.CaloriesPerServing, servings),
+                ScaleMacro(selectedFood.CarbohydratesGrams, servings),
+                ScaleMacro(selectedFood.ProteinGrams, servings),
+                ScaleMacro(selectedFood.FatGrams, servings),
                 servings,
                 selectedDate,
                 await GetLoggedAtAsync(),
@@ -1002,8 +1011,13 @@
         }
         catch (OverflowException exception)
         {
-            Logger.LogWarning(exception, "The servings count is too large to calculate nutrition.");
-            SetStatus("That serving count is too large to calculate. Use a smaller number.", isError: true);
+            Logger.LogWarning(exception, "The serving multiplier is too large to calculate nutrition.");
+            SetStatus("That serving multiplier is too large to calculate. Use a smaller value.", isError: true);
+        }
+        catch (ArgumentOutOfRangeException exception)
+        {
+            Logger.LogWarning(exception, "The serving multiplier rounds the food's calories below one kcal.");
+            SetStatus("That serving multiplier results in less than 1 kcal. Use a larger value.", isError: true);
         }
     }
 
@@ -1093,12 +1107,54 @@
             Time = entry.LoggedAt.ToString("HH:mm", CultureInfo.InvariantCulture),
             Notes = entry.Notes
         };
+        entryEditServingsBaseline = entry.Servings;
         ClearStatus();
+    }
+
+    private void ScaleEditedEntryForServingsChange()
+    {
+        if (entryEditServingsBaseline is not decimal previousServings ||
+            entryEditDraft.Servings is not decimal nextServings ||
+            previousServings <= 0 ||
+            nextServings <= 0)
+        {
+            return;
+        }
+
+        if (nextServings != decimal.Round(nextServings, 2))
+        {
+            entryEditDraft.Servings = previousServings;
+            SetStatus("Serving multipliers can use up to two decimal places.", isError: true);
+            return;
+        }
+
+        try
+        {
+            var factor = nextServings / previousServings;
+            entryEditDraft.Calories = ScaleCalories(entryEditDraft.Calories ?? 0, factor);
+            entryEditDraft.CarbohydratesGrams = ScaleMacro(entryEditDraft.CarbohydratesGrams, factor);
+            entryEditDraft.ProteinGrams = ScaleMacro(entryEditDraft.ProteinGrams, factor);
+            entryEditDraft.FatGrams = ScaleMacro(entryEditDraft.FatGrams, factor);
+            entryEditServingsBaseline = nextServings;
+        }
+        catch (OverflowException exception)
+        {
+            entryEditDraft.Servings = previousServings;
+            Logger.LogWarning(exception, "The edited serving multiplier is too large to calculate nutrition.");
+            SetStatus("That serving multiplier is too large to calculate. Use a smaller value.", isError: true);
+        }
+        catch (ArgumentOutOfRangeException exception)
+        {
+            entryEditDraft.Servings = previousServings;
+            Logger.LogWarning(exception, "The edited serving multiplier rounds the food's calories below one kcal.");
+            SetStatus("That serving multiplier results in less than 1 kcal. Use a larger value.", isError: true);
+        }
     }
 
     private void CancelEntryEdit()
     {
         editingEntryId = null;
+        entryEditServingsBaseline = null;
         entryEditDraft = new CaloriesLoggedEntryDraft();
     }
 
@@ -1484,8 +1540,22 @@
         return knownValues.Count == 0 ? null : knownValues.Sum();
     }
 
-    private static int? MultiplyMacro(int? value, int servings) =>
-        value is int grams ? checked(grams * servings) : null;
+    private static int ScaleCalories(int calories, decimal multiplier)
+    {
+        var scaledCalories = ScaleNutritionValue(calories, multiplier);
+        return scaledCalories > 0
+            ? scaledCalories
+            : throw new ArgumentOutOfRangeException(nameof(multiplier));
+    }
+
+    private static int? ScaleMacro(int? grams, decimal multiplier) =>
+        grams is int value ? ScaleNutritionValue(value, multiplier) : null;
+
+    private static int ScaleNutritionValue(int value, decimal multiplier) =>
+        checked(decimal.ToInt32(decimal.Round(
+            value * multiplier,
+            decimals: 0,
+            MidpointRounding.AwayFromZero)));
 
     private static string FormatMacro(int? value) =>
         value is int grams ? $"{grams.ToString(CultureInfo.CurrentCulture)} g" : "—";

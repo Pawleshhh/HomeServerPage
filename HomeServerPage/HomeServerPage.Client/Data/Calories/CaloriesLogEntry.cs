@@ -7,7 +7,7 @@ public record CaloriesLogEntry(
     int? CarbohydratesGrams,
     int? ProteinGrams,
     int? FatGrams,
-    int? Servings,
+    decimal? Servings,
     DateOnly LocalDate,
     DateTimeOffset LoggedAt,
     string? Notes = null);

@@ -22,14 +22,24 @@ public sealed class CaloriesFoodDraft
     public int? FatGrams { get; set; }
 }
 
-public sealed class CaloriesEntryDraft
+public sealed class CaloriesEntryDraft : IValidatableObject
 {
     [Required]
     public int? FoodId { get; set; }
 
     [Required]
-    [Range(1, int.MaxValue)]
-    public int? Servings { get; set; } = 1;
+    [Range(typeof(decimal), "0.01", "79228162514264337593543950335")]
+    public decimal? Servings { get; set; } = 1m;
+
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        if (Servings is decimal servings && servings != decimal.Round(servings, 2))
+        {
+            yield return new ValidationResult(
+                "Use at most two decimal places.",
+                [nameof(Servings)]);
+        }
+    }
 }
 
 public sealed class CustomCaloriesEntryDraft
@@ -52,7 +62,7 @@ public sealed class CustomCaloriesEntryDraft
     public int? FatGrams { get; set; }
 }
 
-public sealed class CaloriesLoggedEntryDraft
+public sealed class CaloriesLoggedEntryDraft : IValidatableObject
 {
     [Required]
     [StringLength(160)]
@@ -71,14 +81,24 @@ public sealed class CaloriesLoggedEntryDraft
     [Range(0, int.MaxValue)]
     public int? FatGrams { get; set; }
 
-    [Range(1, int.MaxValue)]
-    public int? Servings { get; set; }
+    [Range(typeof(decimal), "0.01", "79228162514264337593543950335")]
+    public decimal? Servings { get; set; }
 
     [Required]
     public string? Time { get; set; }
 
     [StringLength(500)]
     public string? Notes { get; set; }
+
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        if (Servings is decimal servings && servings != decimal.Round(servings, 2))
+        {
+            yield return new ValidationResult(
+                "Use at most two decimal places.",
+                [nameof(Servings)]);
+        }
+    }
 }
 
 public sealed class CaloriesGoalDraft

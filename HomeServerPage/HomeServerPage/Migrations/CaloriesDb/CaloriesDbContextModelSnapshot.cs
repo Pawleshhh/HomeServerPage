@@ -83,8 +83,8 @@ namespace HomeServerPage.Migrations.CaloriesDb
                     b.Property<int?>("ProteinGrams")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int?>("Servings")
-                        .HasColumnType("INTEGER");
+                    b.Property<decimal?>("Servings")
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
@@ -96,7 +96,7 @@ namespace HomeServerPage.Migrations.CaloriesDb
 
                             t.HasCheckConstraint("CK_CaloriesEntries_Macros", "(CarbohydratesGrams IS NULL OR CarbohydratesGrams >= 0) AND (ProteinGrams IS NULL OR ProteinGrams >= 0) AND (FatGrams IS NULL OR FatGrams >= 0)");
 
-                            t.HasCheckConstraint("CK_CaloriesEntries_Servings", "Servings IS NULL OR Servings > 0");
+                            t.HasCheckConstraint("CK_CaloriesEntries_Servings", "Servings IS NULL OR CAST(Servings AS REAL) > 0");
                         });
                 });
 

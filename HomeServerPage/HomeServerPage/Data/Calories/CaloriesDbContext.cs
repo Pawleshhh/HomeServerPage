@@ -40,6 +40,8 @@ public sealed class CaloriesDbContext(DbContextOptions<CaloriesDbContext> option
                 .HasColumnType("TEXT");
             entity.Property(entry => entry.Notes)
                 .HasMaxLength(500);
+            entity.Property(entry => entry.Servings)
+                .HasColumnType("TEXT");
             entity.HasIndex(entry => entry.LocalDate);
             entity.ToTable(table =>
             {
@@ -49,7 +51,9 @@ public sealed class CaloriesDbContext(DbContextOptions<CaloriesDbContext> option
                     "(CarbohydratesGrams IS NULL OR CarbohydratesGrams >= 0) " +
                     "AND (ProteinGrams IS NULL OR ProteinGrams >= 0) " +
                     "AND (FatGrams IS NULL OR FatGrams >= 0)");
-                table.HasCheckConstraint("CK_CaloriesEntries_Servings", "Servings IS NULL OR Servings > 0");
+                table.HasCheckConstraint(
+                    "CK_CaloriesEntries_Servings",
+                    "Servings IS NULL OR CAST(Servings AS REAL) > 0");
             });
         });
 
