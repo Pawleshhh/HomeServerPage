@@ -1,4 +1,4 @@
-﻿@inject NavigationManager NavigationManager
+@inject NavigationManager NavigationManager
 
 <Router AppAssembly="typeof(Program).Assembly" NotFoundPage="typeof(Pages.NotFound)">
     <Found Context="routeData">
@@ -6,10 +6,3 @@
         <FocusOnNavigate RouteData="routeData" Selector="h1" />
     </Found>
 </Router>
-
-@code {
-    private Type CurrentLayout => NavigationManager.ToBaseRelativePath(NavigationManager.Uri)
-        .StartsWith("tablet-dashboard/", StringComparison.OrdinalIgnoreCase)
-        ? typeof(Layout.TabletLayout)
-        : typeof(Layout.MainLayout);
-}

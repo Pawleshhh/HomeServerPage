@@ -55,30 +55,3 @@
         }
     </div>
 </section>
-
-@code {
-    private WeatherForecastModel? forecast;
-    private bool isLoading = true;
-    private string? loadError;
-
-    private string LocationLabel => forecast?.Current.Location.Name ?? "Szczecin";
-
-    protected override async Task OnInitializedAsync()
-    {
-        try
-        {
-            forecast = await WeatherService.GetForecastAsync();
-        }
-        catch (Exception)
-        {
-            loadError = "Could not load the weather forecast.";
-        }
-        finally
-        {
-            isLoading = false;
-        }
-    }
-
-    private static string GetIconClass(WeatherCondition condition) =>
-        WeatherConditionIcons.GetIconClass(condition.Text);
-}

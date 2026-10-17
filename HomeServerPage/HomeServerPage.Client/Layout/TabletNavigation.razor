@@ -43,21 +43,3 @@
         <span class="tablet-navigation-icon" aria-hidden="true"><i class="bi bi-stars"></i></span>
     </NavLink>
 </nav>
-
-@code {
-    [Parameter]
-    public EventCallback OnScreensaverRequested { get; set; }
-
-    private DateTime? currentDateTime;
-
-    protected override async Task OnInitializedAsync()
-    {
-        await DateTimeService.SyncAsync();
-        this.currentDateTime = DateTimeService.Now;
-    }
-
-    private void RefreshPage()
-    {
-        NavigationManager.Refresh(forceReload: true);
-    }
-}

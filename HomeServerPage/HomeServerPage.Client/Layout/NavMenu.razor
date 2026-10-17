@@ -1,4 +1,4 @@
-﻿@implements IDisposable
+@implements IDisposable
 @inject NavigationManager NavigationManager
 
 <header class="app-header">
@@ -66,31 +66,3 @@
         <button class="nav-backdrop" type="button" aria-label="Close navigation menu" @onclick="CloseMenu"></button>
     }
 </header>
-
-@code {
-    private bool isMenuOpen;
-    protected override void OnInitialized()
-    {
-        NavigationManager.LocationChanged += OnLocationChanged;
-    }
-
-    private void ToggleMenu() => isMenuOpen = !isMenuOpen;
-
-    private void CloseMenu() => isMenuOpen = false;
-
-    private void OnLocationChanged(object? sender, LocationChangedEventArgs args)
-    {
-        if (!isMenuOpen)
-        {
-            return;
-        }
-
-        isMenuOpen = false;
-        _ = InvokeAsync(StateHasChanged);
-    }
-
-    public void Dispose()
-    {
-        NavigationManager.LocationChanged -= OnLocationChanged;
-    }
-}

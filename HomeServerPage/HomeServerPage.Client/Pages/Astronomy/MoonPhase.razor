@@ -14,24 +14,3 @@
         </div>
     </div>
 }
-
-@code {
-    [Parameter]
-    public WeatherAstronomy? Astronomy { get; set; }
-
-    [Parameter]
-    public bool Large { get; set; }
-
-    private string PhaseClass => Astronomy?.MoonPhase.Trim().ToLowerInvariant() switch
-    {
-        "new moon" => "moon-phase-new",
-        "waxing crescent" => "moon-phase-waxing-crescent",
-        "first quarter" => "moon-phase-first-quarter",
-        "waxing gibbous" => "moon-phase-waxing-gibbous",
-        "full moon" => "moon-phase-full",
-        "waning gibbous" => "moon-phase-waning-gibbous",
-        "last quarter" or "third quarter" => "moon-phase-last-quarter",
-        "waning crescent" => "moon-phase-waning-crescent",
-        _ => "moon-phase-full"
-    };
-}

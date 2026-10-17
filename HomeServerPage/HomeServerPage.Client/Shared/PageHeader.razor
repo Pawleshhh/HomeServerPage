@@ -14,20 +14,3 @@
         </div>
     }
 </section>
-
-@code {
-    [Parameter]
-    public string Title { get; set; } = string.Empty;
-
-    [Parameter]
-    public string? Description { get; set; }
-
-    [Parameter]
-    public string Accent { get; set; } = "home";
-
-    [Parameter]
-    public string HeadingId { get; set; } = "page-title";
-
-    [Parameter]
-    public RenderFragment? Actions { get; set; }
-}

@@ -1,4 +1,4 @@
-﻿@page "/public-transport"
+@page "/public-transport"
 @page "/tablet-dashboard/public-transport"
 @using HomeServerPage.Data.PublicTransport
 @inject IPublicTransportService PublicTransportService
@@ -76,33 +76,3 @@
         </section>
     }
 </div>
-
-@code {
-    private List<DepartureBoard> boards = [];
-    private bool isLoading;
-    private string? errorMessage;
-
-    protected override async Task OnInitializedAsync()
-    {
-        await LoadBoardsAsync();
-    }
-
-    private async Task LoadBoardsAsync()
-    {
-        isLoading = true;
-        errorMessage = null;
-        try
-        {
-            boards = await PublicTransportService.GetDepartureBoardsAsync();
-        }
-        catch (Exception)
-        {
-            errorMessage = "Could not load the departure boards.";
-        }
-        finally
-        {
-            isLoading = false;
-        }
-    }
-
-}

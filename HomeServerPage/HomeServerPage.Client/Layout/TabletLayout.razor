@@ -16,31 +16,3 @@
         </button>
     </div>
 }
-
-@code {
-    private bool isScreensaverActive;
-    private bool shouldUpdateFocus;
-    private ElementReference shell;
-    private ElementReference wakeButton;
-
-    private void ActivateScreensaver()
-    {
-        isScreensaverActive = true;
-        shouldUpdateFocus = true;
-    }
-
-    private void DeactivateScreensaver()
-    {
-        isScreensaverActive = false;
-        shouldUpdateFocus = true;
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (shouldUpdateFocus)
-        {
-            shouldUpdateFocus = false;
-            await (isScreensaverActive ? wakeButton : shell).FocusAsync(preventScroll: true);
-        }
-    }
-}

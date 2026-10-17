@@ -25,29 +25,3 @@
         </div>
     </section>
 </div>
-
-@code {
-    private readonly CancellationTokenSource refreshCancellation = new();
-    private Task refreshTask = Task.CompletedTask;
-
-    protected override void OnInitialized()
-    {
-        this.refreshTask = DashboardRefreshService.RunAsync(this.refreshCancellation.Token);
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        this.refreshCancellation.Cancel();
-        try
-        {
-            await this.refreshTask;
-        }
-        catch (OperationCanceledException)
-        {
-        }
-        finally
-        {
-            this.refreshCancellation.Dispose();
-        }
-    }
-}
