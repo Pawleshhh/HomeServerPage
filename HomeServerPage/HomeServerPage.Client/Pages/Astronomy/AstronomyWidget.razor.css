@@ -24,7 +24,7 @@
     text-align: center;
 }
 
-.astronomy-widget ::deep .moon-phase-large .moon-phase-disc {
+.astronomy-widget ::deep .moon-phase-large .moon-phase-visual {
     flex-basis: 5rem;
     width: 5rem;
     height: 5rem;
