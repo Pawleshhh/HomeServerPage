@@ -160,6 +160,7 @@
         {
             RealtimeNotificationTypes.FridgeChanged => this.HandleRefreshRequestedAsync(),
             RealtimeNotificationTypes.CaloriesChanged => this.HandleCaloriesRefreshAsync(),
+            RealtimeNotificationTypes.ConnectionRestored => this.HandleRefreshRequestedAsync(),
             _ => Task.CompletedTask
         };
 

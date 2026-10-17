@@ -10,6 +10,9 @@ public sealed class SignalRRealtimeNotificationEventSource(
     private HubConnection? connection;
     private CancellationTokenSource? lifetimeCancellation;
     private Task? connectionTask;
+    private static readonly TimeSpan HealthCheckInterval = TimeSpan.FromSeconds(20);
+    private static readonly TimeSpan HealthCheckTimeout = TimeSpan.FromSeconds(10);
+    private static readonly TimeSpan ReconnectDelay = TimeSpan.FromSeconds(5);
 
     public event Func<string, Task>? NotificationReceived;
 
@@ -87,22 +90,17 @@ public sealed class SignalRRealtimeNotificationEventSource(
         {
             try
             {
-                await hubConnection.StartAsync(cancellationToken);
-                var disconnected = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-                Func<Exception?, Task> onClosed = _ =>
+                if (hubConnection.State != HubConnectionState.Connected)
                 {
-                    disconnected.TrySetResult();
-                    return Task.CompletedTask;
-                };
-                hubConnection.Closed += onClosed;
-
-                if (hubConnection.State == HubConnectionState.Disconnected)
-                {
-                    disconnected.TrySetResult();
+                    await hubConnection.StartAsync(cancellationToken);
+                    logger.LogInformation("Connected to the realtime notifications hub.");
+                    await this.NotifySubscribersAsync(RealtimeNotificationTypes.ConnectionRestored);
                 }
 
-                await disconnected.Task.WaitAsync(cancellationToken);
-                hubConnection.Closed -= onClosed;
+                using var healthCheckCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                healthCheckCancellation.CancelAfter(HealthCheckTimeout);
+                await hubConnection.InvokeAsync("Ping", healthCheckCancellation.Token);
+                await Task.Delay(HealthCheckInterval, cancellationToken);
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
@@ -110,10 +108,22 @@ public sealed class SignalRRealtimeNotificationEventSource(
             }
             catch (Exception exception)
             {
-                logger.LogError(exception, "Could not connect to the realtime notifications hub.");
-            }
+                logger.LogWarning(exception, "Realtime notifications hub health check failed; reconnecting.");
+                try
+                {
+                    await hubConnection.StopAsync(cancellationToken);
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    return;
+                }
+                catch (Exception stopException)
+                {
+                    logger.LogWarning(stopException, "Could not stop the unhealthy realtime notifications connection.");
+                }
 
-            await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
+                await Task.Delay(ReconnectDelay, cancellationToken);
+            }
         }
     }
 
