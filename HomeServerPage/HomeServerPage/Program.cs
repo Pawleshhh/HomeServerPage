@@ -1,120 +1,17 @@
-using HomeServerPage.Client.Data.Astronomy.Telescopes;
-using HomeServerPage.Client.Data;
-using HomeServerPage.Client.Pages;
 using HomeServerPage.Components;
-using HomeServerPage.Data;
-using HomeServerPage.Data.Astronomy;
-using HomeServerPage.Data.Calories;
-using HomeServerPage.Data.Astronomy.Telescopes;
-using HomeServerPage.Data.Fridge;
 using HomeServerPage.Data.Notifications;
-using HomeServerPage.Data.PublicTransport;
-using HomeServerPage.Data.Weather;
+using HomeServerPage.DependencyInjection;
 using HomeServerPage.Hubs;
-using Microsoft.EntityFrameworkCore;
+using HomeServerPage.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddRazorComponents()
-    .AddInteractiveServerComponents()
-    .AddInteractiveWebAssemblyComponents();
-
-builder.Services.AddControllers();
-builder.Services.AddSignalR();
-
-builder.Services.AddSingleton<IDateTimeService, DateTimeService>();
-builder.Services.AddOptions<TabletDashboardRefreshOptions>()
-    .Bind(builder.Configuration.GetSection(TabletDashboardRefreshOptions.SectionName))
-    .Validate(options => options.IsValid, "Tablet dashboard refresh settings must use a positive interval up to 1440 minutes and a valid same-day active range.")
-    .ValidateOnStart();
-builder.Services.AddScoped<ITabletDashboardRefreshSettingsProvider, OptionsTabletDashboardRefreshSettingsProvider>();
-builder.Services.AddScoped<TabletDashboardRefreshService>();
-builder.Services.AddSingleton<RealtimeNotificationService>();
-builder.Services.AddSingleton<IRealtimeNotificationEventSource>(services =>
-    services.GetRequiredService<RealtimeNotificationService>());
-builder.Services.AddSingleton<IRealtimeNotificationPublisher>(services =>
-    services.GetRequiredService<RealtimeNotificationService>());
-
-var fridgeConnection = builder.Configuration.GetConnectionString("FridgeDbConnection");
-var astronomyConnection = builder.Configuration.GetConnectionString("AstronomyDbConnection");
-var caloriesConnection = builder.Configuration.GetConnectionString("CaloriesDbConnection");
-
-builder.Services.AddDbContextFactory<FridgeDbContext>(op => op.UseSqlite(fridgeConnection));
-builder.Services.AddScoped<IFridgeService, FridgeService>();
-
-builder.Services.AddDbContextFactory<AstronomyDbContext>(op => op.UseSqlite(astronomyConnection));
-builder.Services.AddScoped<IAstronomyService, AstronomyService>();
-builder.Services.AddScoped<IObservationPointService, ObservationPointService>();
-builder.Services.AddScoped<ITelescopeService, TelescopeService>();
-
-builder.Services.AddDbContextFactory<CaloriesDbContext>(op => op.UseSqlite(caloriesConnection));
-builder.Services.AddScoped<ICaloriesService, CaloriesService>();
-if (builder.Environment.IsDevelopment())
-{
-    builder.Services.AddScoped<IWeatherService, MockWeatherService>();
-}
-else
-{
-    builder.Services.AddOptions<WeatherApiOptions>()
-        .Configure(options =>
-        {
-            options.ApiKey = builder.Configuration["WEATHER_API"]
-                ?? builder.Configuration["WeatherApi:ApiKey"]
-                ?? string.Empty;
-            options.Location = builder.Configuration["WeatherApi:Location"] ?? "Szczecin";
-            options.ForecastDays = int.TryParse(
-                builder.Configuration["WeatherApi:ForecastDays"],
-                out var forecastDays)
-                ? Math.Clamp(forecastDays, 1, 14)
-                : 3;
-        });
-    builder.Services.AddHttpClient<IWeatherService, WeatherApiService>(client =>
-    {
-        client.BaseAddress = new Uri("https://api.weatherapi.com/v1/");
-    });
-}
-
-if (builder.Environment.IsDevelopment())
-{
-    builder.Services.AddScoped<IPublicTransportService, PublicTransportMockService>();
-}
-else
-{
-    builder.Services.AddHttpClient<IPublicTransportService, PublicTransportService>(client =>
-    {
-        client.BaseAddress = new Uri("https://www.zditm.szczecin.pl/api/v2/");
-    });
-}
+builder.Services.AddHomeServerPageServices(builder.Configuration, builder.Environment);
 
 var app = builder.Build();
 
-using (var scope = app.Services.CreateScope())
-{
-    var fridgeDbFactory = scope.ServiceProvider
-        .GetRequiredService<IDbContextFactory<FridgeDbContext>>();
-
-    using (var fridgeDb = fridgeDbFactory.CreateDbContext())
-    {
-        fridgeDb.Database.Migrate();
-    }
-
-    var astronomyDbFactory = scope.ServiceProvider
-        .GetRequiredService<IDbContextFactory<AstronomyDbContext>>();
-
-    using (var astronomyDb = astronomyDbFactory.CreateDbContext())
-    {
-        astronomyDb.Database.Migrate();
-    }
-
-    var caloriesDbFactory = scope.ServiceProvider
-        .GetRequiredService<IDbContextFactory<CaloriesDbContext>>();
-
-    using (var caloriesDb = caloriesDbFactory.CreateDbContext())
-    {
-        caloriesDb.Database.Migrate();
-    }
-}
+app.Services.MigrateApplicationDatabases();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
