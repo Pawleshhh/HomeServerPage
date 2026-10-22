@@ -22,6 +22,7 @@ Follow the existing service and component patterns when changing behavior. Keep 
 ## Implementation and verification
 
 - Keep changes focused and consistent with the existing project structure and conventions.
+- Always qualify references to private instance fields with `this.` (for example, `this.isLoading`), including in Razor component code and code-behind files.
 - Use the existing SQLite, SignalR, date/time, configuration, and client-service abstractions rather than introducing parallel mechanisms.
 - Keep credentials and private configuration out of committed files. The server currently supports supplying the weather API key through the `WEATHER_API` configuration key.
 - Build the solution with `dotnet build HomeServerPage.slnx` after code changes; run relevant tests when present.

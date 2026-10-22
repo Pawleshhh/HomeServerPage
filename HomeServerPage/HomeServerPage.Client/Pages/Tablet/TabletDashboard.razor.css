@@ -108,7 +108,7 @@
     }
 
     .tablet-dashboard-item-fridge ::deep .fridge-widget-compact-tablet .fridge-calories-progress-track {
-        height: 0.25rem;
+        height: 0.45rem;
     }
 }
 

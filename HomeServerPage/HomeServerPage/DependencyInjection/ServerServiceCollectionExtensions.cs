@@ -4,6 +4,7 @@ using HomeServerPage.Data;
 using HomeServerPage.Data.Astronomy;
 using HomeServerPage.Data.Astronomy.Telescopes;
 using HomeServerPage.Data.Calories;
+using HomeServerPage.Data.Exercise;
 using HomeServerPage.Data.Fridge;
 using HomeServerPage.Data.Notifications;
 using HomeServerPage.Data.PublicTransport;
@@ -44,6 +45,7 @@ public static class ServerServiceCollectionExtensions
         AddFridgeServices(services, configuration);
         AddAstronomyServices(services, configuration);
         AddCaloriesServices(services, configuration);
+        AddExerciseServices(services, configuration);
         AddWeatherServices(services, configuration, environment);
         AddPublicTransportServices(services, environment);
 
@@ -71,6 +73,13 @@ public static class ServerServiceCollectionExtensions
         var connectionString = configuration.GetConnectionString("CaloriesDbConnection");
         services.AddDbContextFactory<CaloriesDbContext>(options => options.UseSqlite(connectionString));
         services.AddScoped<ICaloriesService, CaloriesService>();
+    }
+
+    private static void AddExerciseServices(IServiceCollection services, IConfiguration configuration)
+    {
+        var connectionString = configuration.GetConnectionString("ExerciseDbConnection");
+        services.AddDbContextFactory<ExerciseDbContext>(options => options.UseSqlite(connectionString));
+        services.AddScoped<IExerciseService, ExerciseService>();
     }
 
     private static void AddWeatherServices(

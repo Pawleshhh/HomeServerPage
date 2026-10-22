@@ -1,8 +1,10 @@
 @implements IAsyncDisposable
 @using System.Globalization
 @using HomeServerPage.Data.Calories
+@using HomeServerPage.Data.Exercise
 @using HomeServerPage.Data.Notifications
 @inject ICaloriesService CaloriesService
+@inject IExerciseService ExerciseService
 @inject IRealtimeNotificationEventSource NotificationEventSource
 @inject IJSRuntime JS
 @inject ILogger<Calories> Logger
@@ -14,52 +16,52 @@
                 Description="Track daily food, nutrition, and calorie history."
                 Accent="calories" />
 
-    @if (isLoading)
+    @if (this.isLoading)
     {
-        <div class="calories-loading" role="status">Loading your calorie tracker…</div>
+        <div class="calories-loading" role="status">Loading your calorie tracker...</div>
     }
-    else if (loadError is not null)
+    else if (this.loadError is not null)
     {
         <div class="alert alert-danger" role="alert">
-            <p class="mb-2">@loadError</p>
+            <p class="mb-2">@this.loadError</p>
             <button class="btn btn-outline-secondary" type="button" @onclick="RetryLoadingAsync">Try again</button>
         </div>
     }
     else
     {
-        @if (statusMessage is not null)
+        @if (this.statusMessage is not null)
         {
-            <div class="alert @(statusIsError ? "alert-danger" : "alert-success") calories-status" role="status" aria-live="polite">
-                @statusMessage
+            <div class="alert @(this.statusIsError ? "alert-danger" : "alert-success") calories-status" role="status" aria-live="polite">
+                @this.statusMessage
             </div>
         }
 
         <div class="calories-tabs" role="tablist" aria-label="Calories tracker sections">
             <button id="calories-daily-tab"
-                    class="calories-tab @(activeTab == CaloriesTab.Daily ? "active" : null)"
+                    class="calories-tab @(this.activeTab == CaloriesTab.Daily ? "active" : null)"
                     type="button"
                     role="tab"
-                    aria-selected="@(activeTab == CaloriesTab.Daily)"
+                    aria-selected="@(this.activeTab == CaloriesTab.Daily)"
                     aria-controls="calories-daily-panel"
                     @onclick="() => SelectTabAsync(CaloriesTab.Daily)">
                 <i class="bi bi-calendar-day" aria-hidden="true"></i>
                 Daily log
             </button>
             <button id="calories-foods-tab"
-                    class="calories-tab @(activeTab == CaloriesTab.Foods ? "active" : null)"
+                    class="calories-tab @(this.activeTab == CaloriesTab.Foods ? "active" : null)"
                     type="button"
                     role="tab"
-                    aria-selected="@(activeTab == CaloriesTab.Foods)"
+                    aria-selected="@(this.activeTab == CaloriesTab.Foods)"
                     aria-controls="calories-foods-panel"
                     @onclick="() => SelectTabAsync(CaloriesTab.Foods)">
                 <i class="bi bi-bookmark-heart" aria-hidden="true"></i>
                 Foods
             </button>
             <button id="calories-statistics-tab"
-                    class="calories-tab @(activeTab == CaloriesTab.Statistics ? "active" : null)"
+                    class="calories-tab @(this.activeTab == CaloriesTab.Statistics ? "active" : null)"
                     type="button"
                     role="tab"
-                    aria-selected="@(activeTab == CaloriesTab.Statistics)"
+                    aria-selected="@(this.activeTab == CaloriesTab.Statistics)"
                     aria-controls="calories-statistics-panel"
                     @onclick="() => SelectTabAsync(CaloriesTab.Statistics)">
                 <i class="bi bi-bar-chart-line" aria-hidden="true"></i>
@@ -67,7 +69,7 @@
             </button>
         </div>
 
-        @if (activeTab == CaloriesTab.Daily)
+        @if (this.activeTab == CaloriesTab.Daily)
         {
             <section id="calories-daily-panel"
                      class="calories-tab-panel @(isTabletMode ? "calories-tablet-daily" : null)"
@@ -83,21 +85,21 @@
                         <InputDate id="calories-selected-date"
                                    class="form-control"
                                    TValue="DateOnly"
-                                   Value="selectedDate"
+                                   Value="this.selectedDate"
                                    ValueChanged="OnSelectedDateChangedAsync"
-                                   ValueExpression="() => selectedDate"
-                                   Max="today.ToDateTime(TimeOnly.MinValue)" />
+                                   ValueExpression="() => this.selectedDate"
+                                   Max="this.today.ToDateTime(TimeOnly.MinValue)" />
                     </div>
                     <button class="btn btn-outline-secondary calories-day-step"
                             type="button"
                             aria-label="Next day"
-                            disabled="@(selectedDate >= today)"
+                            disabled="@(this.selectedDate >= this.today)"
                             @onclick="GoToNextDayAsync">
                         <i class="bi bi-chevron-right" aria-hidden="true"></i>
                     </button>
                     <button class="btn btn-outline-primary calories-today-button"
                             type="button"
-                            disabled="@(selectedDate == today)"
+                            disabled="@(this.selectedDate == this.today)"
                             @onclick="GoToTodayAsync">
                         Today
                     </button>
@@ -109,25 +111,48 @@
                             <div>
                                 <p class="calories-eyebrow">Selected day</p>
                                 <h2 id="daily-total-heading">@(isTabletMode
-                                    ? selectedDate.ToString("ddd, d MMM", CultureInfo.CurrentCulture)
-                                    : selectedDate.ToString("dddd, d MMMM yyyy", CultureInfo.CurrentCulture))</h2>
+                                    ? this.selectedDate.ToString("ddd, d MMM", CultureInfo.CurrentCulture)
+                                    : this.selectedDate.ToString("dddd, d MMMM yyyy", CultureInfo.CurrentCulture))</h2>
                             </div>
                             <span class="calories-summary-icon" aria-hidden="true"><i class="bi bi-fire"></i></span>
                         </div>
-                        <p class="calories-total-value"><strong>@DailyCalories.ToString("N0", CultureInfo.CurrentCulture)</strong><span>kcal</span></p>
-                        @if (dailyGoal is int goal)
+                        <p class="calories-total-value"><strong>@DailyCalories.ToString("N0", CultureInfo.CurrentCulture)</strong><span>kcal consumed</span></p>
+                        <p class="calories-exercise-total">
+                            Exercise: <strong>-@DailyBurned.ToString("N0", CultureInfo.CurrentCulture) kcal</strong>
+                            <span aria-hidden="true"> · </span>
+                            Net: <strong>@NetDailyCalories.ToString("N0", CultureInfo.CurrentCulture) kcal</strong>
+                        </p>
+                        @if (this.dailyGoal is int goal)
                         {
-                            <div class="calories-goal-progress" role="progressbar" aria-label="Daily calorie goal progress" aria-valuemin="0" aria-valuemax="@goal" aria-valuenow="@Math.Min(DailyCalories, goal)">
-                                <span style="width: @(GoalProgressPercent)%"></span>
+                            <div class="calories-goal-progress"
+                                 role="progressbar"
+                                 aria-label="Net calories against daily goal"
+                                 aria-valuemin="0"
+                                 aria-valuemax="@goal"
+                                 aria-valuenow="@Math.Clamp(NetDailyCalories, 0, goal)"
+                                 aria-valuetext="@($"Net {NetDailyCalories:N0} kcal; {DailyCalories:N0} kcal consumed and {DailyBurned:N0} kcal burned; goal {goal:N0} kcal" + (DailyCalories > goal ? $"; consumed {DailyCalories - goal:N0} kcal over goal" : string.Empty))">
+                                <span style="width: @(this.GoalProgressPercent)%"></span>
+                                @if (this.DailyBurned > 0)
+                                {
+                                    <span class="calories-goal-burned" style="width: @(this.BurnedProgressPercent)%; z-index: @(this.BurnedProgressPercent <= this.OverGoalProgressPercent ? 2 : 1)" title="@($"{this.DailyBurned:N0} kcal burned")"></span>
+                                }
+                                @if (this.OverGoalProgressPercent > 0)
+                                {
+                                    <span class="calories-goal-over-goal" style="width: @(this.OverGoalProgressPercent)%; z-index: @(this.OverGoalProgressPercent < this.BurnedProgressPercent ? 2 : 1)" title="@($"{DailyCalories - goal:N0} kcal consumed over goal")"></span>
+                                }
                             </div>
                             <p class="calories-goal-caption">
-                                @if (DailyCalories <= goal)
+                                @if (NetDailyCalories < 0)
                                 {
-                                    <span>@((goal - DailyCalories).ToString("N0", CultureInfo.CurrentCulture)) kcal remaining of @goal.ToString("N0", CultureInfo.CurrentCulture)</span>
+                                    <span>@NetDailyCalories.ToString("N0", CultureInfo.CurrentCulture) kcal net · @((goal - NetDailyCalories).ToString("N0", CultureInfo.CurrentCulture)) kcal below goal</span>
+                                }
+                                else if (NetDailyCalories <= goal)
+                                {
+                                    <span>@((goal - NetDailyCalories).ToString("N0", CultureInfo.CurrentCulture)) kcal remaining of @goal.ToString("N0", CultureInfo.CurrentCulture) (net)</span>
                                 }
                                 else
                                 {
-                                    <span>@((DailyCalories - goal).ToString("N0", CultureInfo.CurrentCulture)) kcal over your @goal.ToString("N0", CultureInfo.CurrentCulture) goal</span>
+                                    <span>@((NetDailyCalories - goal).ToString("N0", CultureInfo.CurrentCulture)) kcal net over your @goal.ToString("N0", CultureInfo.CurrentCulture) goal</span>
                                 }
                             </p>
                         }
@@ -142,13 +167,13 @@
                         <section class="calories-summary-card" aria-labelledby="weekly-total-heading">
                             <div class="calories-summary-heading">
                                 <div>
-                                    <p class="calories-eyebrow">Monday–Sunday</p>
+                                    <p class="calories-eyebrow">Monday-Sunday</p>
                                     <h2 id="weekly-total-heading">Selected week</h2>
                                 </div>
                                 <span class="calories-summary-icon" aria-hidden="true"><i class="bi bi-calendar-week"></i></span>
                             </div>
                             <p class="calories-total-value"><strong>@WeeklyCalories.ToString("N0", CultureInfo.CurrentCulture)</strong><span>kcal</span></p>
-                            <p class="calories-goal-caption">@WeekStart.ToString("d MMM", CultureInfo.CurrentCulture) – @WeekEnd.ToString("d MMM", CultureInfo.CurrentCulture)</p>
+                            <p class="calories-goal-caption">@WeekStart.ToString("d MMM", CultureInfo.CurrentCulture) - @WeekEnd.ToString("d MMM", CultureInfo.CurrentCulture)</p>
                         </section>
 
                         <section class="calories-summary-card calories-goal-card" aria-labelledby="calories-goal-heading">
@@ -159,14 +184,14 @@
                                 </div>
                                 <span class="calories-summary-icon" aria-hidden="true"><i class="bi bi-bullseye"></i></span>
                             </div>
-                            <EditForm class="calories-goal-form" Model="goalDraft" OnValidSubmit="SaveGoalAsync" FormName="CaloriesGoalForm">
+                            <EditForm class="calories-goal-form" Model="this.goalDraft" OnValidSubmit="SaveGoalAsync" FormName="CaloriesGoalForm">
                                 <DataAnnotationsValidator />
                                 <div class="calories-goal-input-row">
                                     <label class="visually-hidden" for="calories-goal-input">Daily calorie goal in kcal</label>
-                                    <InputNumber id="calories-goal-input" class="form-control" @bind-Value="goalDraft.Calories" min="1" step="1" placeholder="e.g. 2000" />
-                                    <button class="btn btn-primary" type="submit" disabled="@isSavingGoal">Save</button>
+                                    <InputNumber id="calories-goal-input" class="form-control" @bind-Value="this.goalDraft.Calories" min="1" step="1" placeholder="e.g. 2000" />
+                                    <button class="btn btn-primary" type="submit" disabled="@this.isSavingGoal">Save</button>
                                 </div>
-                                <ValidationMessage For="() => goalDraft.Calories" />
+                                <ValidationMessage For="() => this.goalDraft.Calories" />
                             </EditForm>
                         </section>
                     }
@@ -175,28 +200,28 @@
                 <section class="calories-macro-summary @(isTabletMode ? "calories-tablet-macro-summary" : null)"
                          aria-label="@(isTabletMode ? "Daily macronutrient totals" : "Daily and weekly macronutrient totals")">
                     <div>
-                        <span>Today · recorded</span>
-                        <strong>Carbs @FormatMacro(DailyCarbohydrates) · Protein @FormatMacro(DailyProtein) · Fat @FormatMacro(DailyFat)</strong>
+                        <span>Today | recorded</span>
+                        <strong>Carbs @FormatMacro(DailyCarbohydrates) | Protein @FormatMacro(DailyProtein) | Fat @FormatMacro(DailyFat)</strong>
                     </div>
                     @if (!isTabletMode)
                     {
                         <div>
-                            <span>Selected week · recorded</span>
-                            <strong>Carbs @FormatMacro(WeeklyCarbohydrates) · Protein @FormatMacro(WeeklyProtein) · Fat @FormatMacro(WeeklyFat)</strong>
+                            <span>Selected week | recorded</span>
+                            <strong>Carbs @FormatMacro(WeeklyCarbohydrates) | Protein @FormatMacro(WeeklyProtein) | Fat @FormatMacro(WeeklyFat)</strong>
                         </div>
                         <p class="calories-macro-note">Only entries with recorded macro values are included in these totals.</p>
                     }
                 </section>
 
-                @if (isTabletMode && showTabletEntryForm)
+                @if (isTabletMode && this.showTabletEntryForm)
                 {
                     <button class="calories-tablet-entry-backdrop"
                             type="button"
-                            aria-label="Close food entry form"
+                            aria-label="Close entry form"
                             @onclick="CloseTabletEntryForm"></button>
                 }
 
-                @if (!isTabletMode || showTabletEntryForm)
+                @if (!isTabletMode || this.showTabletEntryForm)
                 {
                 <section class="calories-panel calories-entry-panel @(isTabletMode ? "calories-tablet-entry-dialog" : null)"
                          aria-labelledby="log-food-heading"
@@ -206,9 +231,9 @@
                         <div>
                             @if (!isTabletMode)
                             {
-                                <p class="calories-eyebrow">Add to @selectedDate.ToString("d MMM", CultureInfo.CurrentCulture)</p>
+                                <p class="calories-eyebrow">Add to @this.selectedDate.ToString("d MMM", CultureInfo.CurrentCulture)</p>
                             }
-                            <h2 id="log-food-heading">Log food</h2>
+                            <h2 id="log-food-heading">Log food or exercise</h2>
                         </div>
                         @if (isTabletMode)
                         {
@@ -216,61 +241,106 @@
                         }
                         else
                         {
-                            <span class="calories-item-count">@dayEntries.Count item(s)</span>
+                            <span class="calories-item-count">@this.dayLogRows.Count item(s)</span>
                         }
                     </div>
 
                     <div class="calories-entry-mode" role="group" aria-label="Food entry type">
-                        <button class="calories-entry-mode-button @(entryMode == EntryMode.SavedFood ? "active" : null)"
+                        <button class="calories-entry-mode-button @(this.entryMode == EntryMode.SavedFood ? "active" : null)"
                                 type="button"
-                                aria-pressed="@(entryMode == EntryMode.SavedFood)"
-                                @onclick="() => entryMode = EntryMode.SavedFood">
+                                aria-pressed="@(this.entryMode == EntryMode.SavedFood)"
+                                @onclick="() => this.entryMode = EntryMode.SavedFood">
                             Saved food
                         </button>
-                        <button class="calories-entry-mode-button @(entryMode == EntryMode.CustomFood ? "active" : null)"
+                        <button class="calories-entry-mode-button @(this.entryMode == EntryMode.CustomFood ? "active" : null)"
                                 type="button"
-                                aria-pressed="@(entryMode == EntryMode.CustomFood)"
-                                @onclick="() => entryMode = EntryMode.CustomFood">
+                                aria-pressed="@(this.entryMode == EntryMode.CustomFood)"
+                                @onclick="() => this.entryMode = EntryMode.CustomFood">
                             One-time custom food
+                        </button>
+                        <button class="calories-entry-mode-button @(this.entryMode == EntryMode.Exercise ? "active" : null)"
+                                type="button"
+                                aria-pressed="@(this.entryMode == EntryMode.Exercise)"
+                                @onclick="() => this.entryMode = EntryMode.Exercise">
+                            Exercise
                         </button>
                     </div>
 
-                    @if (entryMode == EntryMode.SavedFood)
+                    @if (this.entryMode == EntryMode.Exercise)
                     {
-                        <EditForm class="calories-entry-form" Model="savedEntryDraft" OnValidSubmit="AddSavedEntryAsync" FormName="CaloriesSavedEntryForm">
+                        <EditForm class="calories-entry-form" Model="this.exerciseDraft" OnValidSubmit="AddExerciseAsync" FormName="CaloriesExerciseForm">
+                            <DataAnnotationsValidator />
+                            <div class="calories-compact-form calories-saved-entry-grid">
+                                <div class="calories-compact-field">
+                                    <label class="form-label" for="calories-exercise-type">Exercise</label>
+                                    <select id="calories-exercise-type"
+                                            class="form-select"
+                                            value="@this.exerciseDraft.Type"
+                                            @onchange="args => OnExerciseTypeChanged(Enum.Parse<ExerciseType>(args.Value?.ToString() ?? nameof(ExerciseType.Gym)))">
+                                        @foreach (var type in Enum.GetValues<ExerciseType>())
+                                        {
+                                            <option value="@type">@ExerciseCalorieCalculator.GetDisplayName(type)</option>
+                                        }
+                                    </select>
+                                </div>
+                                @if (ExerciseCalorieCalculator.RequiresDistance(this.exerciseDraft.Type))
+                                {
+                                    <div class="calories-compact-field">
+                                        <label class="form-label" for="calories-exercise-km">Distance (km)</label>
+                                        <InputNumber id="calories-exercise-km" class="form-control" @bind-Value="this.exerciseDraft.DistanceKm" min="0.01" max="1000" step="0.01" />
+                                        <ValidationMessage For="() => this.exerciseDraft.DistanceKm" />
+                                    </div>
+                                }
+                                <div class="calories-compact-field">
+                                    <label class="form-label" for="calories-entry-time">Time</label>
+                                    <input id="calories-entry-time" class="form-control" type="time" value="@this.entryTime" @onchange="OnEntryTimeChanged" />
+                                </div>
+                                <div class="calories-form-submit">
+                                    <button class="btn btn-primary" type="submit" disabled="@(this.isSavingEntry || ExercisePreviewCalories is null)">
+                                        @(this.isSavingEntry ? "Adding..." : ExercisePreviewCalories is int burned ? $"Add (-{burned:N0} kcal)" : "Add exercise")
+                                    </button>
+                                </div>
+                            </div>
+                            <p class="calories-compact-help">Burned calories raise the day's goal. Time uses device local time.</p>
+                        </EditForm>
+                    }
+
+                    else if (this.entryMode == EntryMode.SavedFood)
+                    {
+                        <EditForm class="calories-entry-form" Model="this.savedEntryDraft" OnValidSubmit="AddSavedEntryAsync" FormName="CaloriesSavedEntryForm">
                             <DataAnnotationsValidator />
                             <div class="calories-compact-form calories-saved-entry-grid">
                                 <div class="calories-compact-field calories-wide-field">
                                     <label class="form-label" for="calories-saved-food">Food</label>
-                                    <InputSelect id="calories-saved-food" class="form-select" @bind-Value="savedEntryDraft.FoodId">
+                                    <InputSelect id="calories-saved-food" class="form-select" @bind-Value="this.savedEntryDraft.FoodId">
                                         <option value="">Choose a saved food</option>
-                                        @foreach (var food in foods)
+                                        @foreach (var food in this.foods)
                                         {
-                                            <option value="@food.Id">@food.Name — @food.CaloriesPerServing kcal/serving</option>
+                                            <option value="@food.Id">@food.Name - @food.CaloriesPerServing kcal/serving</option>
                                         }
                                     </InputSelect>
-                                    <ValidationMessage For="() => savedEntryDraft.FoodId" />
-                                    @if (foods.Count == 0)
+                                    <ValidationMessage For="() => this.savedEntryDraft.FoodId" />
+                                    @if (this.foods.Count == 0)
                                     {
                                         <p class="form-text">Add foods in the Foods tab, or use a one-time custom entry.</p>
                                     }
                                 </div>
                                 <div class="calories-compact-field">
                                     <label class="form-label" for="calories-serving-count">Serving multiplier</label>
-                                    <InputNumber id="calories-serving-count" class="form-control" @bind-Value="savedEntryDraft.Servings" min="0.01" step="0.01" />
-                                    <ValidationMessage For="() => savedEntryDraft.Servings" />
+                                    <InputNumber id="calories-serving-count" class="form-control" @bind-Value="this.savedEntryDraft.Servings" min="0.01" step="0.01" />
+                                    <ValidationMessage For="() => this.savedEntryDraft.Servings" />
                                 </div>
                                 <div class="calories-compact-field">
                                     <label class="form-label" for="calories-entry-time">Time eaten</label>
-                                    <input id="calories-entry-time" class="form-control" type="time" value="@entryTime" @onchange="OnEntryTimeChanged" />
+                                    <input id="calories-entry-time" class="form-control" type="time" value="@this.entryTime" @onchange="OnEntryTimeChanged" />
                                 </div>
                                 <div class="calories-compact-field">
                                     <label class="form-label" for="calories-entry-notes">Note (optional)</label>
-                                    <InputText id="calories-entry-notes" class="form-control" @bind-Value="entryNotes" maxlength="500" placeholder="Optional note" />
+                                    <InputText id="calories-entry-notes" class="form-control" @bind-Value="this.entryNotes" maxlength="500" placeholder="Optional note" />
                                 </div>
                                 <div class="calories-form-submit">
-                                    <button class="btn btn-primary" type="submit" disabled="@(isSavingEntry || foods.Count == 0)">
-                                        @(isSavingEntry ? "Adding…" : "Add food")
+                                    <button class="btn btn-primary" type="submit" disabled="@(this.isSavingEntry || this.foods.Count == 0)">
+                                        @(this.isSavingEntry ? "Adding..." : "Add food")
                                     </button>
                                 </div>
                             </div>
@@ -279,42 +349,42 @@
                     }
                     else
                     {
-                        <EditForm class="calories-entry-form" Model="customEntryDraft" OnValidSubmit="AddCustomEntryAsync" FormName="CaloriesCustomEntryForm">
+                        <EditForm class="calories-entry-form" Model="this.customEntryDraft" OnValidSubmit="AddCustomEntryAsync" FormName="CaloriesCustomEntryForm">
                             <DataAnnotationsValidator />
                             <div class="calories-compact-form calories-custom-entry-grid">
                                 <div class="calories-compact-field calories-wide-field">
                                     <label class="form-label" for="calories-custom-name">Food name</label>
-                                    <InputText id="calories-custom-name" class="form-control" @bind-Value="customEntryDraft.Name" maxlength="160" />
-                                    <ValidationMessage For="() => customEntryDraft.Name" />
+                                    <InputText id="calories-custom-name" class="form-control" @bind-Value="this.customEntryDraft.Name" maxlength="160" />
+                                    <ValidationMessage For="() => this.customEntryDraft.Name" />
                                 </div>
                                 <div class="calories-compact-field">
                                     <label class="form-label" for="calories-custom-kcal">Calories (kcal)</label>
-                                    <InputNumber id="calories-custom-kcal" class="form-control" @bind-Value="customEntryDraft.Calories" min="1" step="1" />
-                                    <ValidationMessage For="() => customEntryDraft.Calories" />
+                                    <InputNumber id="calories-custom-kcal" class="form-control" @bind-Value="this.customEntryDraft.Calories" min="1" step="1" />
+                                    <ValidationMessage For="() => this.customEntryDraft.Calories" />
                                 </div>
                                 <div class="calories-compact-field">
                                     <label class="form-label" for="calories-custom-carbs">Carbohydrates (g)</label>
-                                    <InputNumber id="calories-custom-carbs" class="form-control" @bind-Value="customEntryDraft.CarbohydratesGrams" min="0" step="1" />
+                                    <InputNumber id="calories-custom-carbs" class="form-control" @bind-Value="this.customEntryDraft.CarbohydratesGrams" min="0" step="1" />
                                 </div>
                                 <div class="calories-compact-field">
                                     <label class="form-label" for="calories-custom-protein">Protein (g)</label>
-                                    <InputNumber id="calories-custom-protein" class="form-control" @bind-Value="customEntryDraft.ProteinGrams" min="0" step="1" />
+                                    <InputNumber id="calories-custom-protein" class="form-control" @bind-Value="this.customEntryDraft.ProteinGrams" min="0" step="1" />
                                 </div>
                                 <div class="calories-compact-field">
                                     <label class="form-label" for="calories-custom-fat">Fat (g)</label>
-                                    <InputNumber id="calories-custom-fat" class="form-control" @bind-Value="customEntryDraft.FatGrams" min="0" step="1" />
+                                    <InputNumber id="calories-custom-fat" class="form-control" @bind-Value="this.customEntryDraft.FatGrams" min="0" step="1" />
                                 </div>
                                 <div class="calories-compact-field">
                                     <label class="form-label" for="calories-entry-time">Time eaten</label>
-                                    <input id="calories-entry-time" class="form-control" type="time" value="@entryTime" @onchange="OnEntryTimeChanged" />
+                                    <input id="calories-entry-time" class="form-control" type="time" value="@this.entryTime" @onchange="OnEntryTimeChanged" />
                                 </div>
                                 <div class="calories-compact-field calories-wide-field">
                                     <label class="form-label" for="calories-entry-notes">Note (optional)</label>
-                                    <InputText id="calories-entry-notes" class="form-control" @bind-Value="entryNotes" maxlength="500" placeholder="Optional note" />
+                                    <InputText id="calories-entry-notes" class="form-control" @bind-Value="this.entryNotes" maxlength="500" placeholder="Optional note" />
                                 </div>
                                 <div class="calories-form-submit">
-                                    <button class="btn btn-primary" type="submit" disabled="@isSavingEntry">
-                                        @(isSavingEntry ? "Adding…" : "Add custom food")
+                                    <button class="btn btn-primary" type="submit" disabled="@this.isSavingEntry">
+                                        @(this.isSavingEntry ? "Adding..." : "Add custom food")
                                     </button>
                                 </div>
                             </div>
@@ -329,17 +399,17 @@
                         <div>
                             @if (!isTabletMode)
                             {
-                                <p class="calories-eyebrow">Food recorded for this date</p>
+                                <p class="calories-eyebrow">Food and exercise for this date</p>
                             }
                             <h2 id="daily-log-heading">Daily log</h2>
                         </div>
                         @if (isTabletMode)
                         {
                             <div class="calories-tablet-log-actions">
-                                <span class="calories-item-count">@dayEntries.Count item(s)</span>
+                                <span class="calories-item-count">@this.dayLogRows.Count item(s)</span>
                                 <button class="btn btn-primary btn-sm" type="button" @onclick="OpenTabletEntryForm">
                                     <i class="bi bi-plus-lg" aria-hidden="true"></i>
-                                    Add food
+                                    Add
                                 </button>
                             </div>
                         }
@@ -349,57 +419,98 @@
                         }
                     </div>
 
-                    @if (dayEntries.Count == 0)
+                    @if (this.dayLogRows.Count == 0)
                     {
-                        <p class="calories-empty-state">Nothing logged yet. Add a saved or one-time food above.</p>
+                        <p class="calories-empty-state">Nothing logged yet. Add food or exercise above.</p>
                     }
                     else
                     {
                         <div class="calories-log-list">
-                            @foreach (var entry in dayEntries)
+                            @foreach (var row in this.dayLogRows)
                             {
+                                if (row.Exercise is ExerciseEntry exercise)
+                                {
+                                    <article class="calories-log-item calories-exercise-item" @key="@($"exercise-{exercise.Id}")">
+                                        <time class="calories-log-time" datetime="@exercise.LoggedAt.ToString("O", CultureInfo.InvariantCulture)">@exercise.LoggedAt.ToString("HH:mm", CultureInfo.CurrentCulture)</time>
+                                        <div class="calories-log-copy">
+                                            <strong>@ExerciseCalorieCalculator.GetDisplayName(exercise.Type)</strong>
+                                            <span>@FormatExercise(exercise)</span>
+                                        </div>
+                                        <strong class="calories-log-kcal calories-exercise-kcal">-@exercise.CaloriesBurned.ToString("N0", CultureInfo.CurrentCulture) kcal</strong>
+                                        <div class="calories-log-actions">
+                                            @if (this.exercisePendingDeleteId == exercise.Id)
+                                            {
+                                                <span class="calories-delete-confirmation">Delete this exercise?</span>
+                                                <button class="btn btn-danger btn-sm"
+                                                        type="button"
+                                                        disabled="@this.isDeletingEntry"
+                                                        @onclick="() => RemoveExerciseAsync(exercise.Id)">
+                                                    @(this.isDeletingEntry ? "Deleting..." : "Delete")
+                                                </button>
+                                                <button class="btn btn-outline-secondary btn-sm"
+                                                        type="button"
+                                                        disabled="@this.isDeletingEntry"
+                                                        @onclick="() => this.exercisePendingDeleteId = null">
+                                                    Keep
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <button class="btn btn-outline-danger btn-sm"
+                                                        type="button"
+                                                        aria-label="@($"Delete {ExerciseCalorieCalculator.GetDisplayName(exercise.Type)} exercise")"
+                                                        @onclick="() => this.exercisePendingDeleteId = exercise.Id">
+                                                    Delete
+                                                </button>
+                                            }
+                                        </div>
+                                    </article>
+                                    continue;
+                                }
+
+                                var entry = row.Food!;
                                 <article class="calories-log-item" @key="entry.Id">
-                                    @if (editingEntryId == entry.Id)
+                                    @if (this.editingEntryId == entry.Id)
                                     {
                                         <EditForm class="calories-entry-edit-form"
-                                                  Model="entryEditDraft"
+                                                  Model="this.entryEditDraft"
                                                   OnValidSubmit="SaveEntryEditAsync"
                                                   FormName="CaloriesEntryEditForm">
                                             <DataAnnotationsValidator />
                                             <div class="calories-compact-form calories-entry-edit-grid">
                                                 <div class="calories-compact-field calories-wide-field">
                                                     <label class="form-label" for="@($"edit-entry-name-{entry.Id}")">Food name</label>
-                                                    <InputText id="@($"edit-entry-name-{entry.Id}")" class="form-control" @bind-Value="entryEditDraft.Name" maxlength="160" />
-                                                    <ValidationMessage For="() => entryEditDraft.Name" />
+                                                    <InputText id="@($"edit-entry-name-{entry.Id}")" class="form-control" @bind-Value="this.entryEditDraft.Name" maxlength="160" />
+                                                    <ValidationMessage For="() => this.entryEditDraft.Name" />
                                                 </div>
                                                 <div class="calories-compact-field">
                                                     <label class="form-label" for="@($"edit-entry-kcal-{entry.Id}")">Calories (kcal)</label>
-                                                    <InputNumber id="@($"edit-entry-kcal-{entry.Id}")" class="form-control" @bind-Value="entryEditDraft.Calories" min="1" step="1" />
-                                                    <ValidationMessage For="() => entryEditDraft.Calories" />
+                                                    <InputNumber id="@($"edit-entry-kcal-{entry.Id}")" class="form-control" @bind-Value="this.entryEditDraft.Calories" min="1" step="1" />
+                                                    <ValidationMessage For="() => this.entryEditDraft.Calories" />
                                                 </div>
                                                 <div class="calories-compact-field">
                                                     <label class="form-label" for="@($"edit-entry-carbs-{entry.Id}")">Carbs (g)</label>
-                                                    <InputNumber id="@($"edit-entry-carbs-{entry.Id}")" class="form-control" @bind-Value="entryEditDraft.CarbohydratesGrams" min="0" step="1" />
+                                                    <InputNumber id="@($"edit-entry-carbs-{entry.Id}")" class="form-control" @bind-Value="this.entryEditDraft.CarbohydratesGrams" min="0" step="1" />
                                                 </div>
                                                 <div class="calories-compact-field">
                                                     <label class="form-label" for="@($"edit-entry-protein-{entry.Id}")">Protein (g)</label>
-                                                    <InputNumber id="@($"edit-entry-protein-{entry.Id}")" class="form-control" @bind-Value="entryEditDraft.ProteinGrams" min="0" step="1" />
+                                                    <InputNumber id="@($"edit-entry-protein-{entry.Id}")" class="form-control" @bind-Value="this.entryEditDraft.ProteinGrams" min="0" step="1" />
                                                 </div>
                                                 <div class="calories-compact-field">
                                                     <label class="form-label" for="@($"edit-entry-fat-{entry.Id}")">Fat (g)</label>
-                                                    <InputNumber id="@($"edit-entry-fat-{entry.Id}")" class="form-control" @bind-Value="entryEditDraft.FatGrams" min="0" step="1" />
+                                                    <InputNumber id="@($"edit-entry-fat-{entry.Id}")" class="form-control" @bind-Value="this.entryEditDraft.FatGrams" min="0" step="1" />
                                                 </div>
                                                 <div class="calories-compact-field">
-                                                    @if (entryEditDraft.Servings is not null)
+                                                    @if (this.entryEditDraft.Servings is not null)
                                                     {
                                                         <label class="form-label" for="@($"edit-entry-servings-{entry.Id}")">Serving multiplier</label>
                                                         <InputNumber id="@($"edit-entry-servings-{entry.Id}")"
                                                                      class="form-control"
-                                                                     @bind-Value="entryEditDraft.Servings"
+                                                                     @bind-Value="this.entryEditDraft.Servings"
                                                                      @bind-Value:after="ScaleEditedEntryForServingsChange"
                                                                      min="0.01"
                                                                      step="0.01" />
-                                                        <ValidationMessage For="() => entryEditDraft.Servings" />
+                                                        <ValidationMessage For="() => this.entryEditDraft.Servings" />
                                                     }
                                                 </div>
                                                 <div class="calories-compact-field">
@@ -407,16 +518,16 @@
                                                     <input id="@($"edit-entry-time-{entry.Id}")"
                                                            class="form-control"
                                                            type="time"
-                                                           value="@entryEditDraft.Time"
+                                                           value="@this.entryEditDraft.Time"
                                                            @onchange="OnEntryEditTimeChanged" />
                                                 </div>
                                                 <div class="calories-compact-field calories-wide-field">
                                                     <label class="form-label" for="@($"edit-entry-notes-{entry.Id}")">Note (optional)</label>
-                                                    <InputText id="@($"edit-entry-notes-{entry.Id}")" class="form-control" @bind-Value="entryEditDraft.Notes" maxlength="500" />
+                                                    <InputText id="@($"edit-entry-notes-{entry.Id}")" class="form-control" @bind-Value="this.entryEditDraft.Notes" maxlength="500" />
                                                 </div>
                                                 <div class="calories-entry-edit-actions">
-                                                    <button class="btn btn-primary btn-sm" type="submit" disabled="@isSavingEntryEdit">
-                                                        @(isSavingEntryEdit ? "Saving…" : "Save")
+                                                    <button class="btn btn-primary btn-sm" type="submit" disabled="@this.isSavingEntryEdit">
+                                                        @(this.isSavingEntryEdit ? "Saving..." : "Save")
                                                     </button>
                                                     <button class="btn btn-outline-secondary btn-sm" type="button" @onclick="CancelEntryEdit">Cancel</button>
                                                 </div>
@@ -440,18 +551,18 @@
                                         </div>
                                         <strong class="calories-log-kcal">@entry.Calories.ToString("N0", CultureInfo.CurrentCulture) kcal</strong>
                                         <div class="calories-log-actions">
-                                            @if (entryPendingDeleteId == entry.Id)
+                                            @if (this.entryPendingDeleteId == entry.Id)
                                             {
                                                 <span class="calories-delete-confirmation">Delete this entry?</span>
                                                 <button class="btn btn-danger btn-sm"
                                                         type="button"
-                                                        disabled="@isDeletingEntry"
+                                                        disabled="@this.isDeletingEntry"
                                                         @onclick="() => RemoveLoggedEntryAsync(entry.Id)">
-                                                    @(isDeletingEntry ? "Deleting…" : "Delete")
+                                                    @(this.isDeletingEntry ? "Deleting..." : "Delete")
                                                 </button>
                                                 <button class="btn btn-outline-secondary btn-sm"
                                                         type="button"
-                                                        disabled="@isDeletingEntry"
+                                                        disabled="@this.isDeletingEntry"
                                                         @onclick="CancelEntryDelete">
                                                     Keep
                                                 </button>
@@ -480,52 +591,52 @@
                 </section>
             </section>
         }
-        else if (activeTab == CaloriesTab.Foods)
+        else if (this.activeTab == CaloriesTab.Foods)
         {
             <section id="calories-foods-panel" class="calories-tab-panel" role="tabpanel" aria-labelledby="calories-foods-tab" tabindex="0">
                 <section class="calories-panel" aria-labelledby="calories-food-form-heading">
                     <div class="calories-panel-heading">
                         <div>
                             <p class="calories-eyebrow">Reusable items</p>
-                            <h2 id="calories-food-form-heading">@(editingFoodId is null ? "Add a saved food" : "Edit saved food")</h2>
+                            <h2 id="calories-food-form-heading">@(this.editingFoodId is null ? "Add a saved food" : "Edit saved food")</h2>
                         </div>
-                        @if (editingFoodId is not null)
+                        @if (this.editingFoodId is not null)
                         {
                             <button class="btn btn-outline-secondary" type="button" @onclick="CancelFoodEdit">Cancel edit</button>
                         }
                     </div>
 
-                    <EditForm class="calories-food-form" Model="foodDraft" OnValidSubmit="SaveFoodAsync" FormName="CaloriesFoodForm">
+                    <EditForm class="calories-food-form" Model="this.foodDraft" OnValidSubmit="SaveFoodAsync" FormName="CaloriesFoodForm">
                         <DataAnnotationsValidator />
                         <div class="calories-compact-form calories-food-entry-grid">
                             <div class="calories-compact-field calories-wide-field">
                                 <label class="form-label" for="calories-food-name">Food name</label>
-                                <InputText id="calories-food-name" class="form-control" @bind-Value="foodDraft.Name" maxlength="160" placeholder="e.g. Greek yogurt" />
-                                <ValidationMessage For="() => foodDraft.Name" />
+                                <InputText id="calories-food-name" class="form-control" @bind-Value="this.foodDraft.Name" maxlength="160" placeholder="e.g. Greek yogurt" />
+                                <ValidationMessage For="() => this.foodDraft.Name" />
                             </div>
                             <div class="calories-compact-field">
                                 <label class="form-label" for="calories-food-kcal">Calories per serving (kcal)</label>
-                                <InputNumber id="calories-food-kcal" class="form-control" @bind-Value="foodDraft.CaloriesPerServing" min="1" step="1" />
-                                <ValidationMessage For="() => foodDraft.CaloriesPerServing" />
+                                <InputNumber id="calories-food-kcal" class="form-control" @bind-Value="this.foodDraft.CaloriesPerServing" min="1" step="1" />
+                                <ValidationMessage For="() => this.foodDraft.CaloriesPerServing" />
                             </div>
                             <div class="calories-compact-field">
                                 <label class="form-label" for="calories-food-carbs">Carbohydrates per serving (g)</label>
-                                <InputNumber id="calories-food-carbs" class="form-control" @bind-Value="foodDraft.CarbohydratesGrams" min="0" step="1" />
-                                <ValidationMessage For="() => foodDraft.CarbohydratesGrams" />
+                                <InputNumber id="calories-food-carbs" class="form-control" @bind-Value="this.foodDraft.CarbohydratesGrams" min="0" step="1" />
+                                <ValidationMessage For="() => this.foodDraft.CarbohydratesGrams" />
                             </div>
                             <div class="calories-compact-field">
                                 <label class="form-label" for="calories-food-protein">Protein per serving (g)</label>
-                                <InputNumber id="calories-food-protein" class="form-control" @bind-Value="foodDraft.ProteinGrams" min="0" step="1" />
-                                <ValidationMessage For="() => foodDraft.ProteinGrams" />
+                                <InputNumber id="calories-food-protein" class="form-control" @bind-Value="this.foodDraft.ProteinGrams" min="0" step="1" />
+                                <ValidationMessage For="() => this.foodDraft.ProteinGrams" />
                             </div>
                             <div class="calories-compact-field">
                                 <label class="form-label" for="calories-food-fat">Fat per serving (g)</label>
-                                <InputNumber id="calories-food-fat" class="form-control" @bind-Value="foodDraft.FatGrams" min="0" step="1" />
-                                <ValidationMessage For="() => foodDraft.FatGrams" />
+                                <InputNumber id="calories-food-fat" class="form-control" @bind-Value="this.foodDraft.FatGrams" min="0" step="1" />
+                                <ValidationMessage For="() => this.foodDraft.FatGrams" />
                             </div>
                             <div class="calories-form-submit">
-                                <button class="btn btn-primary" type="submit" disabled="@isSavingFood">
-                                    @(isSavingFood ? "Saving…" : editingFoodId is null ? "Save food" : "Save changes")
+                                <button class="btn btn-primary" type="submit" disabled="@this.isSavingFood">
+                                    @(this.isSavingFood ? "Saving..." : this.editingFoodId is null ? "Save food" : "Save changes")
                                 </button>
                             </div>
                         </div>
@@ -539,25 +650,25 @@
                             <p class="calories-eyebrow">Available when logging</p>
                             <h2 id="calories-saved-foods-heading">Saved foods</h2>
                         </div>
-                        <span class="calories-item-count">@foods.Count item(s)</span>
+                        <span class="calories-item-count">@this.foods.Count item(s)</span>
                     </div>
-                    @if (foods.Count == 0)
+                    @if (this.foods.Count == 0)
                     {
                         <p class="calories-empty-state">No saved foods yet. Add a food above to use it again later.</p>
                     }
                     else
                     {
                         <div class="calories-food-list">
-                            @foreach (var food in foods)
+                            @foreach (var food in this.foods)
                             {
                                 <article class="calories-food-item" @key="food.Id">
                                     <div class="calories-food-copy">
                                         <strong>@food.Name</strong>
                                         <span>@food.CaloriesPerServing.ToString("N0", CultureInfo.CurrentCulture) kcal per serving</span>
-                                        <span>Carbs @FormatMacro(food.CarbohydratesGrams) · Protein @FormatMacro(food.ProteinGrams) · Fat @FormatMacro(food.FatGrams)</span>
+                                        <span>Carbs @FormatMacro(food.CarbohydratesGrams) | Protein @FormatMacro(food.ProteinGrams) | Fat @FormatMacro(food.FatGrams)</span>
                                     </div>
                                     <div class="calories-food-actions">
-                                        @if (foodPendingDeleteId == food.Id)
+                                        @if (this.foodPendingDeleteId == food.Id)
                                         {
                                             <span class="calories-delete-confirmation">Delete this saved food?</span>
                                             <button class="btn btn-danger btn-sm" type="button" @onclick="() => RemoveFoodAsync(food.Id)">Delete</button>
@@ -582,7 +693,7 @@
                 <section class="calories-panel" aria-labelledby="calories-history-heading">
                     <div class="calories-panel-heading">
                         <div>
-                            <p class="calories-eyebrow">Calories only · all logged foods</p>
+                            <p class="calories-eyebrow">Calories only | all logged foods</p>
                             <h2 id="calories-history-heading">History</h2>
                         </div>
                         <div class="calories-history-total">
@@ -592,18 +703,18 @@
                     </div>
 
                     <div class="calories-history-period" role="group" aria-label="History period">
-                        <button class="calories-entry-mode-button @(historyPeriod == HistoryPeriod.Daily ? "active" : null)" type="button" aria-pressed="@(historyPeriod == HistoryPeriod.Daily)" @onclick="() => ChangeHistoryPeriodAsync(HistoryPeriod.Daily)">Daily</button>
-                        <button class="calories-entry-mode-button @(historyPeriod == HistoryPeriod.Weekly ? "active" : null)" type="button" aria-pressed="@(historyPeriod == HistoryPeriod.Weekly)" @onclick="() => ChangeHistoryPeriodAsync(HistoryPeriod.Weekly)">Weekly</button>
-                        <button class="calories-entry-mode-button @(historyPeriod == HistoryPeriod.Monthly ? "active" : null)" type="button" aria-pressed="@(historyPeriod == HistoryPeriod.Monthly)" @onclick="() => ChangeHistoryPeriodAsync(HistoryPeriod.Monthly)">Monthly</button>
+                        <button class="calories-entry-mode-button @(this.historyPeriod == HistoryPeriod.Daily ? "active" : null)" type="button" aria-pressed="@(this.historyPeriod == HistoryPeriod.Daily)" @onclick="() => ChangeHistoryPeriodAsync(HistoryPeriod.Daily)">Daily</button>
+                        <button class="calories-entry-mode-button @(this.historyPeriod == HistoryPeriod.Weekly ? "active" : null)" type="button" aria-pressed="@(this.historyPeriod == HistoryPeriod.Weekly)" @onclick="() => ChangeHistoryPeriodAsync(HistoryPeriod.Weekly)">Weekly</button>
+                        <button class="calories-entry-mode-button @(this.historyPeriod == HistoryPeriod.Monthly ? "active" : null)" type="button" aria-pressed="@(this.historyPeriod == HistoryPeriod.Monthly)" @onclick="() => ChangeHistoryPeriodAsync(HistoryPeriod.Monthly)">Monthly</button>
                     </div>
 
-                    @if (isLoadingHistory)
+                    @if (this.isLoadingHistory)
                     {
-                        <p class="calories-empty-state" role="status">Loading history…</p>
+                        <p class="calories-empty-state" role="status">Loading history...</p>
                     }
-                    else if (historyError is not null)
+                    else if (this.historyError is not null)
                     {
-                        <div class="alert alert-danger" role="alert">@historyError</div>
+                        <div class="alert alert-danger" role="alert">@this.historyError</div>
                     }
                     else
                     {
@@ -617,12 +728,12 @@
                                         <span>@GetChartTickValue(tickIndex).ToString("N0", CultureInfo.CurrentCulture)</span>
                                     }
                                 </div>
-                                <div class="calories-chart-columns" style="--calories-chart-columns: @historyPoints.Count; --calories-chart-column-width: @(ChartColumnWidth)px">
-                                    @for (var index = 0; index < historyPoints.Count; index++)
+                                <div class="calories-chart-columns" style="--calories-chart-columns: @this.historyPoints.Count; --calories-chart-column-width: @(ChartColumnWidth)px">
+                                    @for (var index = 0; index < this.historyPoints.Count; index++)
                                     {
                                         var pointIndex = index;
-                                        var point = historyPoints[index];
-                                        var isSelected = selectedChartPointIndex == pointIndex;
+                                        var point = this.historyPoints[index];
+                                        var isSelected = this.selectedChartPointIndex == pointIndex;
                                         <button class="calories-chart-column @(isSelected ? "selected" : null)"
                                                 type="button"
                                                 aria-pressed="@isSelected"
@@ -662,7 +773,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach (var point in historyPoints.AsEnumerable().Reverse())
+                                    @foreach (var point in this.historyPoints.AsEnumerable().Reverse())
                                     {
                                         <tr @key="point.Start">
                                             <th scope="row">@point.Label</th>

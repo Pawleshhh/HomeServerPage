@@ -35,19 +35,36 @@ public partial class ExpiringFridgeItems
     private bool isRefreshing;
     private int? caloriesGoal;
     private long caloriesConsumed;
+    private long caloriesBurned;
     private string? caloriesError;
     private bool isLoadingCalories = true;
 
-    private int CaloriesProgressPercent => caloriesGoal is > 0
-        ? (int)Math.Clamp(Math.Round(caloriesConsumed * 100d / caloriesGoal.Value), 0, 100)
+    private long NetCalories => this.caloriesConsumed - this.caloriesBurned;
+    private long CaloriesOverGoal => this.caloriesGoal is int goal
+        ? Math.Max(0, this.caloriesConsumed - goal)
+        : 0;
+    private long CaloriesProgressMaximum => this.caloriesGoal is > 0
+        ? this.caloriesGoal.Value
+        : Math.Max(1, this.caloriesConsumed + this.caloriesBurned);
+
+    private int CaloriesProgressPercent => CaloriesProgressMaximum > 0
+        ? (int)Math.Clamp(Math.Round(this.caloriesConsumed * 100d / CaloriesProgressMaximum), 0, 100)
         : 0;
 
-    private string CaloriesTodayValue => isLoadingCalories
+    private int BurnedProgressPercent => CaloriesProgressMaximum > 0
+        ? (int)Math.Clamp(Math.Ceiling(this.caloriesBurned * 100d / CaloriesProgressMaximum), this.caloriesBurned > 0 ? 1 : 0, 100)
+        : 0;
+
+    private int OverGoalProgressPercent => this.caloriesGoal is > 0
+        ? (int)Math.Clamp(Math.Ceiling(this.CaloriesOverGoal * 100d / this.caloriesGoal.Value), this.CaloriesOverGoal > 0 ? 1 : 0, 100)
+        : 0;
+
+    private string CaloriesTodayValue => this.isLoadingCalories
         ? "Loading…"
-        : caloriesError is not null
+        : this.caloriesError is not null
             ? "Unavailable"
-            : caloriesConsumed.ToString("N0", System.Globalization.CultureInfo.CurrentCulture) +
-                (caloriesGoal is null ? " kcal" : $" / {caloriesGoal.Value.ToString("N0", System.Globalization.CultureInfo.CurrentCulture)} kcal");
+            : $"Net {this.NetCalories.ToString("N0", System.Globalization.CultureInfo.CurrentCulture)}" +
+                (this.caloriesGoal is null ? " kcal" : $" / {this.caloriesGoal.Value.ToString("N0", System.Globalization.CultureInfo.CurrentCulture)} kcal");
 
     protected override async Task OnInitializedAsync()
     {
@@ -132,8 +149,8 @@ public partial class ExpiringFridgeItems
 
     private async Task LoadCaloriesAsync()
     {
-        isLoadingCalories = true;
-        caloriesError = null;
+        this.isLoadingCalories = true;
+        this.caloriesError = null;
 
         try
         {
@@ -144,19 +161,21 @@ public partial class ExpiringFridgeItems
                 System.Globalization.CultureInfo.InvariantCulture);
             var goalTask = CaloriesService.GetDailyGoalAsync();
             var entriesTask = CaloriesService.GetEntriesAsync(today, today);
-            await Task.WhenAll(goalTask, entriesTask);
+            var exerciseTask = ExerciseService.GetEntriesAsync(today, today);
+            await Task.WhenAll(goalTask, entriesTask, exerciseTask);
 
-            caloriesGoal = await goalTask;
-            caloriesConsumed = (await entriesTask).Sum(entry => (long)entry.Calories);
+            this.caloriesGoal = await goalTask;
+            this.caloriesConsumed = (await entriesTask).Sum(entry => (long)entry.Calories);
+            this.caloriesBurned = (await exerciseTask).Sum(entry => (long)entry.CaloriesBurned);
         }
         catch (Exception exception)
         {
             Logger.LogError(exception, "Could not load today's calorie total for the fridge widget.");
-            caloriesError = "Unavailable";
+            this.caloriesError = "Unavailable";
         }
         finally
         {
-            isLoadingCalories = false;
+            this.isLoadingCalories = false;
         }
     }
 

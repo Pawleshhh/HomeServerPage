@@ -101,6 +101,29 @@ public sealed class CaloriesLoggedEntryDraft : IValidatableObject
     }
 }
 
+public sealed class ExerciseDraft : IValidatableObject
+{
+    public HomeServerPage.Data.Exercise.ExerciseType Type { get; set; } = HomeServerPage.Data.Exercise.ExerciseType.Gym;
+
+    [Range(typeof(decimal), "0.01", "1000")]
+    public decimal? DistanceKm { get; set; }
+
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        if (HomeServerPage.Data.Exercise.ExerciseCalorieCalculator.RequiresDistance(Type))
+        {
+            if (DistanceKm is null)
+            {
+                yield return new ValidationResult("Enter a distance.", [nameof(DistanceKm)]);
+            }
+            else if (DistanceKm != decimal.Round(DistanceKm.Value, 2))
+            {
+                yield return new ValidationResult("Use at most two decimal places.", [nameof(DistanceKm)]);
+            }
+        }
+    }
+}
+
 public sealed class CaloriesGoalDraft
 {
     [Required]

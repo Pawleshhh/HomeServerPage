@@ -1,5 +1,6 @@
 using HomeServerPage.Data.Astronomy;
 using HomeServerPage.Data.Calories;
+using HomeServerPage.Data.Exercise;
 using HomeServerPage.Data.Fridge;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,6 +16,7 @@ public static class DatabaseMigrationExtensions
         MigrateDatabase<FridgeDbContext>(scopedServices);
         MigrateDatabase<AstronomyDbContext>(scopedServices);
         MigrateDatabase<CaloriesDbContext>(scopedServices);
+        MigrateDatabase<ExerciseDbContext>(scopedServices);
     }
 
     private static void MigrateDatabase<TContext>(IServiceProvider serviceProvider)

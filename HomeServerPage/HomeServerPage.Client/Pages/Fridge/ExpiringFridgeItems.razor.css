@@ -39,7 +39,8 @@
 }
 
 .fridge-calories-progress-track {
-    height: 0.3rem;
+    position: relative;
+    height: 0.5rem;
     overflow: hidden;
     border-radius: 999px;
     background: var(--app-border);
@@ -51,6 +52,26 @@
     border-radius: inherit;
     background: var(--app-calories);
     transition: width 180ms ease;
+}
+
+.fridge-calories-progress-track span.fridge-calories-progress-burned {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
+    height: 100%;
+    background: var(--app-success);
+}
+
+.fridge-calories-progress-track span.fridge-calories-progress-over-goal {
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 2;
+    height: 100%;
+    min-width: 0.45rem;
+    border-right: 2px solid var(--app-surface-raised);
+    background: #f00;
 }
 
 .fridge-expiring-item:first-child {

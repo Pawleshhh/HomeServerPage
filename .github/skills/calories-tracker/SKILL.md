@@ -32,6 +32,12 @@ description: Use when changing the calories tracker page, its food history, nutr
 - If a daily goal already exists, its progress may remain visible in tablet mode; keep the weekly summary and goal editor hidden there unless the user asks.
 - Keep related form values together in compact rows and allow them to wrap on narrower screens.
 
+## Exercise
+
+- Exercise entries (Gym, Running, Bike) live in their own SQLite `ExerciseDbContext` (`ExerciseDbConnection`, `Migrations/ExerciseDb`) behind `IExerciseService` (`HomeServerPage.Client/Data/Exercise`; server `Data/Exercise`, `ExerciseController`), so the future exercise tracker can extend it.
+- `ExerciseCalorieCalculator`: Gym 300 kcal; Running 250 kcal per 3 km; Bike 20 kcal/km up to 25 km (500), linear to 1000 kcal at 40 km, 25 kcal/km beyond. The server recomputes burned kcal and stores it as a snapshot.
+- Consumed and burned kcal remain separate totals; net is consumed minus burned and may be negative. Exercise appears in the flat time-ordered daily log (add via the "Exercise" mode of the entry form; delete only), with daily consumed, burned, and net values. The daily goal bars use the goal as the scale, with consumed progress and an overlapping green burned segment; consumed calories above the goal get an additional red over-goal overlay. Of the green and red overlays, the shorter one renders on top so both extents remain visible. Net is displayed beside the bars, and the fridge widget shows net calories. History charts remain consumed-only.
+
 ## Implementation map
 
 - `/calories` and `/tablet-dashboard/calories` use the shared page component `HomeServerPage/HomeServerPage.Client/Pages/Calories/Calories.razor`, with `CaloriesPage.razor` and `TabletCalories.razor` selecting the mode.

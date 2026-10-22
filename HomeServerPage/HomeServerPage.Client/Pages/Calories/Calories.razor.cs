@@ -13,6 +13,7 @@ using HomeServerPage.Client.Shared;
 using HomeServerPage.Shared.Extensions;
 using System.Globalization;
 using HomeServerPage.Data.Calories;
+using HomeServerPage.Data.Exercise;
 using HomeServerPage.Data.Notifications;
 
 namespace HomeServerPage.Client.Pages.Calories;
@@ -23,6 +24,11 @@ public partial class Calories
     private List<CaloriesFood> foods = [];
     private List<CaloriesLogEntry> weekEntries = [];
     private List<CaloriesLogEntry> dayEntries = [];
+    private List<ExerciseEntry> weekExercises = [];
+    private List<ExerciseEntry> dayExercises = [];
+    private List<DayLogRow> dayLogRows = [];
+    private ExerciseDraft exerciseDraft = new();
+    private int? exercisePendingDeleteId;
     private List<CaloriesChartPoint> historyPoints = [];
     private CaloriesFoodDraft foodDraft = new();
     private CaloriesEntryDraft savedEntryDraft = new();
@@ -65,42 +71,51 @@ public partial class Calories
     [Parameter]
     public bool TabletMode { get; set; }
 
-    private DateOnly WeekStart => StartOfWeek(selectedDate);
+    private DateOnly WeekStart => StartOfWeek(this.selectedDate);
     private DateOnly WeekEnd => WeekStart.AddDays(6);
-    private long DailyCalories => dayEntries.Sum(entry => (long)entry.Calories);
-    private long WeeklyCalories => weekEntries.Sum(entry => (long)entry.Calories);
-    private int? DailyCarbohydrates => SumMacro(dayEntries, entry => entry.CarbohydratesGrams);
-    private int? DailyProtein => SumMacro(dayEntries, entry => entry.ProteinGrams);
-    private int? DailyFat => SumMacro(dayEntries, entry => entry.FatGrams);
-    private int? WeeklyCarbohydrates => SumMacro(weekEntries, entry => entry.CarbohydratesGrams);
-    private int? WeeklyProtein => SumMacro(weekEntries, entry => entry.ProteinGrams);
-    private int? WeeklyFat => SumMacro(weekEntries, entry => entry.FatGrams);
-    private int GoalProgressPercent => dailyGoal is > 0
-        ? (int)Math.Clamp(Math.Round(DailyCalories * 100d / dailyGoal.Value), 0, 100)
+    private long DailyCalories => this.dayEntries.Sum(entry => (long)entry.Calories);
+    private long DailyBurned => this.dayExercises.Sum(exercise => (long)exercise.CaloriesBurned);
+    private long NetDailyCalories => DailyCalories - DailyBurned;
+    private long WeeklyBurned => this.weekExercises.Sum(exercise => (long)exercise.CaloriesBurned);
+    private int BurnedProgressPercent => this.dailyGoal is > 0
+        ? (int)Math.Clamp(Math.Round(DailyBurned * 100d / this.dailyGoal.Value), 0, 100)
         : 0;
-    private long HistoryTotal => historyPoints.Sum(point => point.Calories);
-    private long HistoryAverage => historyPoints.Count == 0
+    private int OverGoalProgressPercent => this.dailyGoal is int goal && this.DailyCalories > goal
+        ? (int)Math.Clamp(Math.Ceiling((this.DailyCalories - goal) * 100d / goal), 1, 100)
+        : 0;
+    private long WeeklyCalories => this.weekEntries.Sum(entry => (long)entry.Calories);
+    private int? DailyCarbohydrates => SumMacro(this.dayEntries, entry => entry.CarbohydratesGrams);
+    private int? DailyProtein => SumMacro(this.dayEntries, entry => entry.ProteinGrams);
+    private int? DailyFat => SumMacro(this.dayEntries, entry => entry.FatGrams);
+    private int? WeeklyCarbohydrates => SumMacro(this.weekEntries, entry => entry.CarbohydratesGrams);
+    private int? WeeklyProtein => SumMacro(this.weekEntries, entry => entry.ProteinGrams);
+    private int? WeeklyFat => SumMacro(this.weekEntries, entry => entry.FatGrams);
+    private int GoalProgressPercent => this.dailyGoal is > 0
+        ? (int)Math.Clamp(Math.Round(DailyCalories * 100d / this.dailyGoal.Value), 0, 100)
+        : 0;
+    private long HistoryTotal => this.historyPoints.Sum(point => point.Calories);
+    private long HistoryAverage => this.historyPoints.Count == 0
         ? 0
-        : (long)Math.Round(historyPoints.Average(point => point.Calories));
-    private int ChartColumnWidth => historyPeriod == HistoryPeriod.Daily ? 42 : 62;
+        : (long)Math.Round(this.historyPoints.Average(point => point.Calories));
+    private int ChartColumnWidth => this.historyPeriod == HistoryPeriod.Daily ? 42 : 62;
     private long ChartAxisMaximum => Math.Max(
         500,
-        ((historyPoints.Count == 0 ? 0 : historyPoints.Max(point => point.Calories)) + 499) / 500 * 500);
+        ((this.historyPoints.Count == 0 ? 0 : this.historyPoints.Max(point => point.Calories)) + 499) / 500 * 500);
     private CaloriesChartPoint? SelectedChartPoint =>
-        selectedChartPointIndex is int index && index >= 0 && index < historyPoints.Count
-            ? historyPoints[index]
+        this.selectedChartPointIndex is int index && index >= 0 && index < this.historyPoints.Count
+            ? this.historyPoints[index]
             : null;
-    private string HistoryPeriodLabel => historyPeriod switch
+    private string HistoryPeriodLabel => this.historyPeriod switch
     {
         HistoryPeriod.Daily => "Day",
         HistoryPeriod.Weekly => "Week",
         _ => "Month"
     };
-    private string HistoryRangeText => historyPeriod switch
+    private string HistoryRangeText => this.historyPeriod switch
     {
-        HistoryPeriod.Daily => $"Last 7 days · {historyFrom.ToString("d MMM", CultureInfo.CurrentCulture)}–{historyThrough.ToString("d MMM yyyy", CultureInfo.CurrentCulture)}",
-        HistoryPeriod.Weekly => $"Last 12 calendar weeks · {historyFrom.ToString("d MMM yyyy", CultureInfo.CurrentCulture)}–{historyThrough.ToString("d MMM yyyy", CultureInfo.CurrentCulture)}",
-        _ => $"Last 12 calendar months · {historyFrom.ToString("MMM yyyy", CultureInfo.CurrentCulture)}–{historyThrough.ToString("MMM yyyy", CultureInfo.CurrentCulture)}"
+        HistoryPeriod.Daily => $"Last 7 days · {this.historyFrom.ToString("d MMM", CultureInfo.CurrentCulture)}–{this.historyThrough.ToString("d MMM yyyy", CultureInfo.CurrentCulture)}",
+        HistoryPeriod.Weekly => $"Last 12 calendar weeks · {this.historyFrom.ToString("d MMM yyyy", CultureInfo.CurrentCulture)}–{this.historyThrough.ToString("d MMM yyyy", CultureInfo.CurrentCulture)}",
+        _ => $"Last 12 calendar months · {this.historyFrom.ToString("MMM yyyy", CultureInfo.CurrentCulture)}–{this.historyThrough.ToString("MMM yyyy", CultureInfo.CurrentCulture)}"
     };
     private string ChartAccessibleLabel => $"{HistoryPeriodLabel} calorie totals for {HistoryRangeText}. Total {HistoryTotal:N0} kilocalories.";
 
@@ -118,20 +133,20 @@ public partial class Calories
 
         try
         {
-            await InitializeTrackerAsync(lifetimeCancellation.Token);
+            await InitializeTrackerAsync(this.lifetimeCancellation.Token);
         }
-        catch (OperationCanceledException) when (lifetimeCancellation.IsCancellationRequested)
+        catch (OperationCanceledException) when (this.lifetimeCancellation.IsCancellationRequested)
         {
         }
         catch (Exception exception)
         {
             Logger.LogError(exception, "Could not initialize the Calories tracker.");
-            loadError = "The Calories tracker could not be loaded. Check the connection and try again.";
+            this.loadError = "The Calories tracker could not be loaded. Check the connection and try again.";
         }
         finally
         {
-            isLoading = false;
-            if (!isDisposed)
+            this.isLoading = false;
+            if (!this.isDisposed)
             {
                 await InvokeAsync(StateHasChanged);
             }
@@ -143,58 +158,59 @@ public partial class Calories
         var foodsTask = CaloriesService.GetFoodsAsync(cancellationToken);
         var goalTask = CaloriesService.GetDailyGoalAsync(cancellationToken);
         var entriesTask = CaloriesService.GetEntriesAsync(WeekStart, WeekEnd, cancellationToken);
-        await Task.WhenAll(foodsTask, goalTask, entriesTask);
+        var exercisesTask = ExerciseService.GetEntriesAsync(WeekStart, WeekEnd, cancellationToken);
+        await Task.WhenAll(foodsTask, goalTask, entriesTask, exercisesTask);
 
-        foods = await foodsTask;
-        dailyGoal = await goalTask;
-        goalDraft.Calories = dailyGoal;
-        SetWeekEntries(await entriesTask);
+        this.foods = await foodsTask;
+        this.dailyGoal = await goalTask;
+        this.goalDraft.Calories = this.dailyGoal;
+        SetWeekEntries(await entriesTask, await exercisesTask);
     }
 
     private async Task RetryLoadingAsync()
     {
-        loadError = null;
-        isLoading = true;
+        this.loadError = null;
+        this.isLoading = true;
         await InvokeAsync(StateHasChanged);
         try
         {
-            await InitializeTrackerAsync(lifetimeCancellation.Token);
+            await InitializeTrackerAsync(this.lifetimeCancellation.Token);
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
             Logger.LogError(exception, "Could not reload the Calories tracker.");
-            loadError = "The Calories tracker could not be loaded. Check the connection and try again.";
+            this.loadError = "The Calories tracker could not be loaded. Check the connection and try again.";
         }
         finally
         {
-            isLoading = false;
+            this.isLoading = false;
         }
     }
 
     private async Task InitializeTrackerAsync(CancellationToken cancellationToken)
     {
-        caloriesJsModule ??= await JS.InvokeAsync<IJSObjectReference>(
+        this.caloriesJsModule ??= await JS.InvokeAsync<IJSObjectReference>(
             "import",
             cancellationToken,
             "./Pages/Calories/Calories.razor.js");
-        var clock = await caloriesJsModule.InvokeAsync<BrowserClock>(
+        var clock = await this.caloriesJsModule.InvokeAsync<BrowserClock>(
             "getLocalClock",
             cancellationToken);
-        today = DateOnly.ParseExact(clock.Date, "yyyy-MM-dd", CultureInfo.InvariantCulture);
-        selectedDate = today;
-        entryTime = clock.Time;
+        this.today = DateOnly.ParseExact(clock.Date, "yyyy-MM-dd", CultureInfo.InvariantCulture);
+        this.selectedDate = this.today;
+        this.entryTime = clock.Time;
         await LoadTrackerDataAsync(cancellationToken);
-        if (!isNotificationsStarted)
+        if (!this.isNotificationsStarted)
         {
             await NotificationEventSource.StartAsync(cancellationToken);
-            isNotificationsStarted = true;
+            this.isNotificationsStarted = true;
         }
     }
 
     private async Task SelectTabAsync(CaloriesTab tab)
     {
-        activeTab = tab;
-        showTabletEntryForm = false;
+        this.activeTab = tab;
+        this.showTabletEntryForm = false;
         ClearStatus();
         if (tab == CaloriesTab.Statistics)
         {
@@ -208,7 +224,7 @@ public partial class Calories
 
     private async Task OnSelectedDateChangedAsync(DateOnly date)
     {
-        selectedDate = date > today ? today : date;
+        this.selectedDate = date > this.today ? this.today : date;
         CancelEntryEdit();
         CancelEntryDelete();
         ClearStatus();
@@ -224,7 +240,7 @@ public partial class Calories
                 DateTimeStyles.None,
                 out _))
         {
-            entryTime = value;
+            this.entryTime = value;
         }
     }
 
@@ -238,15 +254,15 @@ public partial class Calories
                 DateTimeStyles.None,
                 out _))
         {
-            entryEditDraft.Time = value;
+            this.entryEditDraft.Time = value;
         }
     }
 
     private async Task GoToPreviousDayAsync()
     {
-        if (selectedDate > DateOnly.MinValue)
+        if (this.selectedDate > DateOnly.MinValue)
         {
-            selectedDate = selectedDate.AddDays(-1);
+            this.selectedDate = this.selectedDate.AddDays(-1);
             CancelEntryEdit();
             CancelEntryDelete();
             await LoadSelectedWeekAsync();
@@ -255,9 +271,9 @@ public partial class Calories
 
     private async Task GoToNextDayAsync()
     {
-        if (selectedDate < today)
+        if (this.selectedDate < this.today)
         {
-            selectedDate = selectedDate.AddDays(1);
+            this.selectedDate = this.selectedDate.AddDays(1);
             CancelEntryEdit();
             CancelEntryDelete();
             await LoadSelectedWeekAsync();
@@ -266,7 +282,7 @@ public partial class Calories
 
     private async Task GoToTodayAsync()
     {
-        selectedDate = today;
+        this.selectedDate = this.today;
         CancelEntryEdit();
         CancelEntryDelete();
         await LoadSelectedWeekAsync();
@@ -276,39 +292,154 @@ public partial class Calories
     {
         try
         {
-            var entries = await CaloriesService.GetEntriesAsync(WeekStart, WeekEnd, lifetimeCancellation.Token);
-            SetWeekEntries(entries);
+            var entriesTask = CaloriesService.GetEntriesAsync(WeekStart, WeekEnd, this.lifetimeCancellation.Token);
+            var exercisesTask = ExerciseService.GetEntriesAsync(WeekStart, WeekEnd, this.lifetimeCancellation.Token);
+            await Task.WhenAll(entriesTask, exercisesTask);
+            SetWeekEntries(await entriesTask, await exercisesTask);
             return true;
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
-            Logger.LogError(exception, "Could not load Calories entries for {Date}.", selectedDate);
+            Logger.LogError(exception, "Could not load Calories entries for {Date}.", this.selectedDate);
             SetStatus("Entries for this week could not be loaded.", isError: true);
             return false;
         }
     }
 
-    private void SetWeekEntries(List<CaloriesLogEntry> entries)
+    private void SetWeekEntries(List<CaloriesLogEntry> entries, List<ExerciseEntry>? exercises = null)
     {
-        weekEntries = entries;
-        dayEntries = entries
-            .Where(entry => entry.LocalDate == selectedDate)
+        this.weekEntries = entries;
+        if (exercises is not null)
+        {
+            this.weekExercises = exercises;
+        }
+
+        this.dayEntries = entries
+            .Where(entry => entry.LocalDate == this.selectedDate)
             .OrderBy(entry => entry.LoggedAt.UtcDateTime)
             .ThenBy(entry => entry.Id)
             .ToList();
+        this.dayExercises = this.weekExercises
+            .Where(exercise => exercise.LocalDate == this.selectedDate)
+            .OrderBy(exercise => exercise.LoggedAt.UtcDateTime)
+            .ThenBy(exercise => exercise.Id)
+            .ToList();
+        this.dayLogRows = this.dayEntries
+            .Select(entry => new DayLogRow(entry.LoggedAt, 0, entry, null))
+            .Concat(this.dayExercises.Select(exercise => new DayLogRow(exercise.LoggedAt, 1, null, exercise)))
+            .OrderBy(row => row.LoggedAt.UtcDateTime)
+            .ThenBy(row => row.Kind)
+            .ThenBy(row => row.Food?.Id ?? row.Exercise!.Id)
+            .ToList();
     }
 
-    private async Task SaveGoalAsync()
+    private void OnExerciseTypeChanged(ExerciseType type)
     {
-        if (goalDraft.Calories is not int calories)
+        this.exerciseDraft.Type = type;
+        if (!ExerciseCalorieCalculator.RequiresDistance(type))
+        {
+            this.exerciseDraft.DistanceKm = null;
+        }
+    }
+
+    private int? ExercisePreviewCalories =>
+        ExerciseCalorieCalculator.IsValid(this.exerciseDraft.Type, this.exerciseDraft.DistanceKm)
+            ? ExerciseCalorieCalculator.Calculate(this.exerciseDraft.Type, this.exerciseDraft.DistanceKm)
+            : null;
+
+    private async Task AddExerciseAsync()
+    {
+        if (ExercisePreviewCalories is not int calories)
         {
             return;
         }
 
-        isSavingGoal = true;
+        this.isSavingEntry = true;
         try
         {
-            dailyGoal = await CaloriesService.SetDailyGoalAsync(calories, lifetimeCancellation.Token);
+            var loggedAt = await GetLoggedAtAsync();
+            var entry = new ExerciseEntry(
+                0,
+                this.exerciseDraft.Type,
+                this.exerciseDraft.DistanceKm,
+                calories,
+                this.selectedDate,
+                loggedAt);
+            await ExerciseService.AddEntryAsync(entry, this.lifetimeCancellation.Token);
+            this.exerciseDraft = new ExerciseDraft();
+            this.showTabletEntryForm = false;
+            if (await LoadSelectedWeekAsync())
+            {
+                SetStatus("Exercise added to the daily log.");
+            }
+        }
+        catch (OperationCanceledException exception)
+        {
+            if (!this.lifetimeCancellation.IsCancellationRequested)
+            {
+                Logger.LogWarning(exception, "The connection was interrupted while saving an exercise entry.");
+                SetStatus(
+                    "The connection was interrupted before the save could be confirmed. Check the daily log before retrying to avoid duplicates.",
+                    isError: true);
+            }
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(exception, "Could not add exercise to the Calories log.");
+            SetStatus("The exercise could not be added to the log.", isError: true);
+        }
+        finally
+        {
+            this.isSavingEntry = false;
+        }
+    }
+
+    private async Task RemoveExerciseAsync(int id)
+    {
+        this.isDeletingEntry = true;
+        try
+        {
+            if (!await ExerciseService.RemoveEntryAsync(id, this.lifetimeCancellation.Token))
+            {
+                this.exercisePendingDeleteId = null;
+                SetStatus("This exercise could not be found. Refresh the daily log.", isError: true);
+                return;
+            }
+
+            this.exercisePendingDeleteId = null;
+            if (await LoadSelectedWeekAsync())
+            {
+                SetStatus("Exercise deleted.");
+            }
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            Logger.LogError(exception, "Could not delete exercise entry {EntryId}.", id);
+            SetStatus("The exercise could not be deleted.", isError: true);
+        }
+        finally
+        {
+            this.isDeletingEntry = false;
+        }
+    }
+
+    private static string FormatExercise(ExerciseEntry exercise) =>
+        exercise.DistanceKm is decimal km
+            ? $"{ExerciseCalorieCalculator.GetDisplayName(exercise.Type)} · {km.ToString("0.##", CultureInfo.CurrentCulture)} km"
+            : ExerciseCalorieCalculator.GetDisplayName(exercise.Type);
+
+
+    private async Task SaveGoalAsync()
+    {
+        if (this.goalDraft.Calories is not int calories)
+        {
+            return;
+        }
+
+        this.isSavingGoal = true;
+        try
+        {
+            this.dailyGoal = await CaloriesService.SetDailyGoalAsync(calories, this.lifetimeCancellation.Token);
             SetStatus("Daily calorie goal saved.");
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
@@ -318,14 +449,14 @@ public partial class Calories
         }
         finally
         {
-            isSavingGoal = false;
+            this.isSavingGoal = false;
         }
     }
 
     private async Task AddSavedEntryAsync()
     {
-        var selectedFood = foods.FirstOrDefault(food => food.Id == savedEntryDraft.FoodId);
-        if (selectedFood is null || savedEntryDraft.Servings is not decimal servings)
+        var selectedFood = this.foods.FirstOrDefault(food => food.Id == this.savedEntryDraft.FoodId);
+        if (selectedFood is null || this.savedEntryDraft.Servings is not decimal servings)
         {
             return;
         }
@@ -340,12 +471,12 @@ public partial class Calories
                 ScaleMacro(selectedFood.ProteinGrams, servings),
                 ScaleMacro(selectedFood.FatGrams, servings),
                 servings,
-                selectedDate,
+                this.selectedDate,
                 await GetLoggedAtAsync(),
-                NormalizeNote(entryNotes));
+                NormalizeNote(this.entryNotes));
             if (await SaveEntryAsync(entry))
             {
-                savedEntryDraft = new CaloriesEntryDraft();
+                this.savedEntryDraft = new CaloriesEntryDraft();
             }
         }
         catch (OverflowException exception)
@@ -358,7 +489,7 @@ public partial class Calories
             Logger.LogWarning(exception, "The serving multiplier rounds the food's calories below one kcal.");
             SetStatus("That serving multiplier results in less than 1 kcal. Use a larger value.", isError: true);
         }
-        catch (OperationCanceledException) when (lifetimeCancellation.IsCancellationRequested)
+        catch (OperationCanceledException) when (this.lifetimeCancellation.IsCancellationRequested)
         {
         }
         catch (OperationCanceledException exception)
@@ -369,7 +500,7 @@ public partial class Calories
 
     private async Task AddCustomEntryAsync()
     {
-        if (customEntryDraft.Name is null || customEntryDraft.Calories is not int calories)
+        if (this.customEntryDraft.Name is null || this.customEntryDraft.Calories is not int calories)
         {
             return;
         }
@@ -378,21 +509,21 @@ public partial class Calories
         {
             var entry = new CaloriesLogEntry(
                 0,
-                customEntryDraft.Name.Trim(),
+                this.customEntryDraft.Name.Trim(),
                 calories,
-                customEntryDraft.CarbohydratesGrams,
-                customEntryDraft.ProteinGrams,
-                customEntryDraft.FatGrams,
+                this.customEntryDraft.CarbohydratesGrams,
+                this.customEntryDraft.ProteinGrams,
+                this.customEntryDraft.FatGrams,
                 null,
-                selectedDate,
+                this.selectedDate,
                 await GetLoggedAtAsync(),
-                NormalizeNote(entryNotes));
+                NormalizeNote(this.entryNotes));
             if (await SaveEntryAsync(entry))
             {
-                customEntryDraft = new CustomCaloriesEntryDraft();
+                this.customEntryDraft = new CustomCaloriesEntryDraft();
             }
         }
-        catch (OperationCanceledException) when (lifetimeCancellation.IsCancellationRequested)
+        catch (OperationCanceledException) when (this.lifetimeCancellation.IsCancellationRequested)
         {
         }
         catch (OperationCanceledException exception)
@@ -403,13 +534,13 @@ public partial class Calories
 
     private async Task<bool> SaveEntryAsync(CaloriesLogEntry entry)
     {
-        isSavingEntry = true;
+        this.isSavingEntry = true;
         try
         {
-            await CaloriesService.AddEntryAsync(entry, lifetimeCancellation.Token);
+            await CaloriesService.AddEntryAsync(entry, this.lifetimeCancellation.Token);
             var entriesLoaded = await LoadSelectedWeekAsync();
-            showTabletEntryForm = false;
-            entryNotes = null;
+            this.showTabletEntryForm = false;
+            this.entryNotes = null;
             if (entriesLoaded)
             {
                 SetStatus("Food added to the daily log.");
@@ -419,7 +550,7 @@ public partial class Calories
         }
         catch (OperationCanceledException exception)
         {
-            if (!lifetimeCancellation.IsCancellationRequested)
+            if (!this.lifetimeCancellation.IsCancellationRequested)
             {
                 Logger.LogWarning(exception, "The connection was interrupted while saving a Calories entry.");
                 SetStatus(
@@ -437,11 +568,11 @@ public partial class Calories
         }
         finally
         {
-            isSavingEntry = false;
+            this.isSavingEntry = false;
         }
     }
 
-    private Task<DateTimeOffset> GetLoggedAtAsync() => GetLoggedAtAsync(entryTime);
+    private Task<DateTimeOffset> GetLoggedAtAsync() => GetLoggedAtAsync(this.entryTime);
 
     private void HandleInterruptedEntrySubmission(OperationCanceledException exception, string operation)
     {
@@ -453,26 +584,26 @@ public partial class Calories
 
     private async Task<DateTimeOffset> GetLoggedAtAsync(string timeValue)
     {
-        caloriesJsModule ??= await JS.InvokeAsync<IJSObjectReference>(
+        this.caloriesJsModule ??= await JS.InvokeAsync<IJSObjectReference>(
             "import",
-            lifetimeCancellation.Token,
+            this.lifetimeCancellation.Token,
             "./Pages/Calories/Calories.razor.js");
-        var offsetMinutes = await caloriesJsModule.InvokeAsync<int>(
+        var offsetMinutes = await this.caloriesJsModule.InvokeAsync<int>(
             "getOffsetMinutes",
-            lifetimeCancellation.Token,
-            selectedDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+            this.lifetimeCancellation.Token,
+            this.selectedDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
             timeValue);
         var localDateTime = DateTime.SpecifyKind(
-            selectedDate.ToDateTime(TimeOnly.ParseExact(timeValue, "HH:mm", CultureInfo.InvariantCulture)),
+            this.selectedDate.ToDateTime(TimeOnly.ParseExact(timeValue, "HH:mm", CultureInfo.InvariantCulture)),
             DateTimeKind.Unspecified);
         return new DateTimeOffset(localDateTime, TimeSpan.FromMinutes(offsetMinutes));
     }
 
     private void EditLoggedEntry(CaloriesLogEntry entry)
     {
-        editingEntryId = entry.Id;
-        entryPendingDeleteId = null;
-        entryEditDraft = new CaloriesLoggedEntryDraft
+        this.editingEntryId = entry.Id;
+        this.entryPendingDeleteId = null;
+        this.entryEditDraft = new CaloriesLoggedEntryDraft
         {
             Name = entry.Name,
             Calories = entry.Calories,
@@ -483,14 +614,14 @@ public partial class Calories
             Time = entry.LoggedAt.ToString("HH:mm", CultureInfo.InvariantCulture),
             Notes = entry.Notes
         };
-        entryEditServingsBaseline = entry.Servings;
+        this.entryEditServingsBaseline = entry.Servings;
         ClearStatus();
     }
 
     private void ScaleEditedEntryForServingsChange()
     {
-        if (entryEditServingsBaseline is not decimal previousServings ||
-            entryEditDraft.Servings is not decimal nextServings ||
+        if (this.entryEditServingsBaseline is not decimal previousServings ||
+            this.entryEditDraft.Servings is not decimal nextServings ||
             previousServings <= 0 ||
             nextServings <= 0)
         {
@@ -499,7 +630,7 @@ public partial class Calories
 
         if (nextServings != decimal.Round(nextServings, 2))
         {
-            entryEditDraft.Servings = previousServings;
+            this.entryEditDraft.Servings = previousServings;
             SetStatus("Serving multipliers can use up to two decimal places.", isError: true);
             return;
         }
@@ -507,21 +638,21 @@ public partial class Calories
         try
         {
             var factor = nextServings / previousServings;
-            entryEditDraft.Calories = ScaleCalories(entryEditDraft.Calories ?? 0, factor);
-            entryEditDraft.CarbohydratesGrams = ScaleMacro(entryEditDraft.CarbohydratesGrams, factor);
-            entryEditDraft.ProteinGrams = ScaleMacro(entryEditDraft.ProteinGrams, factor);
-            entryEditDraft.FatGrams = ScaleMacro(entryEditDraft.FatGrams, factor);
-            entryEditServingsBaseline = nextServings;
+            this.entryEditDraft.Calories = ScaleCalories(this.entryEditDraft.Calories ?? 0, factor);
+            this.entryEditDraft.CarbohydratesGrams = ScaleMacro(this.entryEditDraft.CarbohydratesGrams, factor);
+            this.entryEditDraft.ProteinGrams = ScaleMacro(this.entryEditDraft.ProteinGrams, factor);
+            this.entryEditDraft.FatGrams = ScaleMacro(this.entryEditDraft.FatGrams, factor);
+            this.entryEditServingsBaseline = nextServings;
         }
         catch (OverflowException exception)
         {
-            entryEditDraft.Servings = previousServings;
+            this.entryEditDraft.Servings = previousServings;
             Logger.LogWarning(exception, "The edited serving multiplier is too large to calculate nutrition.");
             SetStatus("That serving multiplier is too large to calculate. Use a smaller value.", isError: true);
         }
         catch (ArgumentOutOfRangeException exception)
         {
-            entryEditDraft.Servings = previousServings;
+            this.entryEditDraft.Servings = previousServings;
             Logger.LogWarning(exception, "The edited serving multiplier rounds the food's calories below one kcal.");
             SetStatus("That serving multiplier results in less than 1 kcal. Use a larger value.", isError: true);
         }
@@ -529,25 +660,25 @@ public partial class Calories
 
     private void CancelEntryEdit()
     {
-        editingEntryId = null;
-        entryEditServingsBaseline = null;
-        entryEditDraft = new CaloriesLoggedEntryDraft();
+        this.editingEntryId = null;
+        this.entryEditServingsBaseline = null;
+        this.entryEditDraft = new CaloriesLoggedEntryDraft();
     }
 
     private async Task SaveEntryEditAsync()
     {
-        if (editingEntryId is not int entryId ||
-            entryEditDraft.Name is null ||
-            entryEditDraft.Calories is not int calories ||
-            entryEditDraft.Time is not string time)
+        if (this.editingEntryId is not int entryId ||
+            this.entryEditDraft.Name is null ||
+            this.entryEditDraft.Calories is not int calories ||
+            this.entryEditDraft.Time is not string time)
         {
             return;
         }
 
-        isSavingEntryEdit = true;
+        this.isSavingEntryEdit = true;
         try
         {
-            var originalEntry = dayEntries.FirstOrDefault(entry => entry.Id == entryId);
+            var originalEntry = this.dayEntries.FirstOrDefault(entry => entry.Id == entryId);
             if (originalEntry is null)
             {
                 CancelEntryEdit();
@@ -557,18 +688,18 @@ public partial class Calories
 
             var updatedEntry = originalEntry with
             {
-                Name = entryEditDraft.Name.Trim(),
+                Name = this.entryEditDraft.Name.Trim(),
                 Calories = calories,
-                CarbohydratesGrams = entryEditDraft.CarbohydratesGrams,
-                ProteinGrams = entryEditDraft.ProteinGrams,
-                FatGrams = entryEditDraft.FatGrams,
-                Servings = entryEditDraft.Servings,
-                LocalDate = selectedDate,
+                CarbohydratesGrams = this.entryEditDraft.CarbohydratesGrams,
+                ProteinGrams = this.entryEditDraft.ProteinGrams,
+                FatGrams = this.entryEditDraft.FatGrams,
+                Servings = this.entryEditDraft.Servings,
+                LocalDate = this.selectedDate,
                 LoggedAt = await GetLoggedAtAsync(time),
-                Notes = NormalizeNote(entryEditDraft.Notes)
+                Notes = NormalizeNote(this.entryEditDraft.Notes)
             };
 
-            if (!await CaloriesService.UpdateEntryAsync(updatedEntry, lifetimeCancellation.Token))
+            if (!await CaloriesService.UpdateEntryAsync(updatedEntry, this.lifetimeCancellation.Token))
             {
                 CancelEntryEdit();
                 SetStatus("This log entry could not be found. Refresh the daily log.", isError: true);
@@ -588,31 +719,31 @@ public partial class Calories
         }
         finally
         {
-            isSavingEntryEdit = false;
+            this.isSavingEntryEdit = false;
         }
     }
 
     private void BeginEntryDelete(int id)
     {
-        entryPendingDeleteId = id;
+        this.entryPendingDeleteId = id;
         CancelEntryEdit();
     }
 
-    private void CancelEntryDelete() => entryPendingDeleteId = null;
+    private void CancelEntryDelete() => this.entryPendingDeleteId = null;
 
     private async Task RemoveLoggedEntryAsync(int id)
     {
-        isDeletingEntry = true;
+        this.isDeletingEntry = true;
         try
         {
-            if (!await CaloriesService.RemoveEntryAsync(id, lifetimeCancellation.Token))
+            if (!await CaloriesService.RemoveEntryAsync(id, this.lifetimeCancellation.Token))
             {
-                entryPendingDeleteId = null;
+                this.entryPendingDeleteId = null;
                 SetStatus("This log entry could not be found. Refresh the daily log.", isError: true);
                 return;
             }
 
-            entryPendingDeleteId = null;
+            this.entryPendingDeleteId = null;
             if (await LoadSelectedWeekAsync())
             {
                 SetStatus("Daily log entry deleted.");
@@ -625,32 +756,32 @@ public partial class Calories
         }
         finally
         {
-            isDeletingEntry = false;
+            this.isDeletingEntry = false;
         }
     }
 
     private async Task SaveFoodAsync()
     {
-        if (foodDraft.Name is null || foodDraft.CaloriesPerServing is not int calories)
+        if (this.foodDraft.Name is null || this.foodDraft.CaloriesPerServing is not int calories)
         {
             return;
         }
 
-        isSavingFood = true;
+        this.isSavingFood = true;
         try
         {
             var food = new CaloriesFood(
-                editingFoodId ?? 0,
-                foodDraft.Name.Trim(),
+                this.editingFoodId ?? 0,
+                this.foodDraft.Name.Trim(),
                 calories,
-                foodDraft.CarbohydratesGrams,
-                foodDraft.ProteinGrams,
-                foodDraft.FatGrams);
-            var isNewFood = editingFoodId is null;
-            var succeeded = editingFoodId is int id
+                this.foodDraft.CarbohydratesGrams,
+                this.foodDraft.ProteinGrams,
+                this.foodDraft.FatGrams);
+            var isNewFood = this.editingFoodId is null;
+            var succeeded = this.editingFoodId is int id
                 ? await CaloriesService.UpdateFoodAsync(
                     food with { Id = id },
-                    lifetimeCancellation.Token)
+                    this.lifetimeCancellation.Token)
                 : await AddFoodAsync(food);
 
             if (!succeeded)
@@ -659,8 +790,8 @@ public partial class Calories
                 return;
             }
 
-            foodDraft = new CaloriesFoodDraft();
-            editingFoodId = null;
+            this.foodDraft = new CaloriesFoodDraft();
+            this.editingFoodId = null;
             if (await LoadFoodsAsync())
             {
                 SetStatus(isNewFood ? "Saved food added." : "Saved food updated.");
@@ -673,20 +804,20 @@ public partial class Calories
         }
         finally
         {
-            isSavingFood = false;
+            this.isSavingFood = false;
         }
     }
 
     private async Task<bool> AddFoodAsync(CaloriesFood food)
     {
-        await CaloriesService.AddFoodAsync(food, lifetimeCancellation.Token);
+        await CaloriesService.AddFoodAsync(food, this.lifetimeCancellation.Token);
         return true;
     }
 
     private void EditFood(CaloriesFood food)
     {
-        editingFoodId = food.Id;
-        foodDraft = new CaloriesFoodDraft
+        this.editingFoodId = food.Id;
+        this.foodDraft = new CaloriesFoodDraft
         {
             Name = food.Name,
             CaloriesPerServing = food.CaloriesPerServing,
@@ -694,36 +825,36 @@ public partial class Calories
             ProteinGrams = food.ProteinGrams,
             FatGrams = food.FatGrams
         };
-        foodPendingDeleteId = null;
+        this.foodPendingDeleteId = null;
         ClearStatus();
     }
 
     private void CancelFoodEdit()
     {
-        editingFoodId = null;
-        foodDraft = new CaloriesFoodDraft();
+        this.editingFoodId = null;
+        this.foodDraft = new CaloriesFoodDraft();
     }
 
     private void BeginFoodDelete(int id)
     {
-        foodPendingDeleteId = id;
-        editingFoodId = null;
+        this.foodPendingDeleteId = id;
+        this.editingFoodId = null;
     }
 
-    private void CancelFoodDelete() => foodPendingDeleteId = null;
+    private void CancelFoodDelete() => this.foodPendingDeleteId = null;
 
     private async Task RemoveFoodAsync(int id)
     {
         try
         {
-            var removed = await CaloriesService.RemoveFoodAsync(id, lifetimeCancellation.Token);
+            var removed = await CaloriesService.RemoveFoodAsync(id, this.lifetimeCancellation.Token);
             if (!removed)
             {
                 SetStatus("The saved food could not be found. Refresh and try again.", isError: true);
                 return;
             }
 
-            foodPendingDeleteId = null;
+            this.foodPendingDeleteId = null;
             await LoadFoodsAsync();
             SetStatus("Saved food deleted. Existing history is unchanged.");
         }
@@ -738,7 +869,7 @@ public partial class Calories
     {
         try
         {
-            foods = await CaloriesService.GetFoodsAsync(lifetimeCancellation.Token);
+            this.foods = await CaloriesService.GetFoodsAsync(this.lifetimeCancellation.Token);
             return true;
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
@@ -751,38 +882,38 @@ public partial class Calories
 
     private async Task ChangeHistoryPeriodAsync(HistoryPeriod period)
     {
-        historyPeriod = period;
+        this.historyPeriod = period;
         await LoadHistoryAsync();
     }
 
     private async Task LoadHistoryAsync()
     {
-        isLoadingHistory = true;
-        historyError = null;
-        selectedChartPointIndex = null;
+        this.isLoadingHistory = true;
+        this.historyError = null;
+        this.selectedChartPointIndex = null;
         try
         {
-            (historyFrom, historyThrough) = GetHistoryRange(historyPeriod, today);
+            (this.historyFrom, this.historyThrough) = GetHistoryRange(this.historyPeriod, this.today);
             var entries = await CaloriesService.GetEntriesAsync(
-                historyFrom,
-                historyThrough,
-                lifetimeCancellation.Token);
-            historyPoints = CreateHistoryPoints(entries, historyPeriod, historyFrom, historyThrough);
+                this.historyFrom,
+                this.historyThrough,
+                this.lifetimeCancellation.Token);
+            this.historyPoints = CreateHistoryPoints(entries, this.historyPeriod, this.historyFrom, this.historyThrough);
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
-            Logger.LogError(exception, "Could not load {Period} Calories history.", historyPeriod);
-            historyError = "Calories history could not be loaded. Check the connection and try again.";
+            Logger.LogError(exception, "Could not load {Period} Calories history.", this.historyPeriod);
+            this.historyError = "Calories history could not be loaded. Check the connection and try again.";
         }
         finally
         {
-            isLoadingHistory = false;
+            this.isLoadingHistory = false;
         }
     }
 
     private async Task HandleNotificationReceivedAsync(string notificationType)
     {
-        if (notificationType != RealtimeNotificationTypes.CaloriesChanged || isDisposed || today == default)
+        if (notificationType != RealtimeNotificationTypes.CaloriesChanged || this.isDisposed || this.today == default)
         {
             return;
         }
@@ -791,12 +922,12 @@ public partial class Calories
         {
             try
             {
-                await LoadTrackerDataAsync(lifetimeCancellation.Token);
-                if (activeTab == CaloriesTab.Statistics)
+                await LoadTrackerDataAsync(this.lifetimeCancellation.Token);
+                if (this.activeTab == CaloriesTab.Statistics)
                 {
                     await LoadHistoryAsync();
                 }
-                else if (activeTab == CaloriesTab.Foods)
+                else if (this.activeTab == CaloriesTab.Foods)
                 {
                     await LoadFoodsAsync();
                 }
@@ -816,15 +947,15 @@ public partial class Calories
 
     private long GetChartTickValue(int tickIndex) => ChartAxisMaximum * tickIndex / 4;
 
-    private void SelectChartPoint(int index) => selectedChartPointIndex = index;
+    private void SelectChartPoint(int index) => this.selectedChartPointIndex = index;
 
     private void OpenTabletEntryForm()
     {
-        showTabletEntryForm = true;
+        this.showTabletEntryForm = true;
         ClearStatus();
     }
 
-    private void CloseTabletEntryForm() => showTabletEntryForm = false;
+    private void CloseTabletEntryForm() => this.showTabletEntryForm = false;
 
     private static List<CaloriesChartPoint> CreateHistoryPoints(
         IEnumerable<CaloriesLogEntry> entries,
@@ -962,32 +1093,32 @@ public partial class Calories
 
     private void SetStatus(string message, bool isError = false)
     {
-        statusMessage = message;
-        statusIsError = isError;
+        this.statusMessage = message;
+        this.statusIsError = isError;
     }
 
     private void ClearStatus()
     {
-        statusMessage = null;
-        statusIsError = false;
+        this.statusMessage = null;
+        this.statusIsError = false;
     }
 
     public async ValueTask DisposeAsync()
     {
-        isDisposed = true;
-        lifetimeCancellation.Cancel();
+        this.isDisposed = true;
+        this.lifetimeCancellation.Cancel();
         NotificationEventSource.NotificationReceived -= HandleNotificationReceivedAsync;
-        if (isNotificationsStarted)
+        if (this.isNotificationsStarted)
         {
             await NotificationEventSource.StopAsync();
         }
 
-        if (caloriesJsModule is not null)
+        if (this.caloriesJsModule is not null)
         {
-            await caloriesJsModule.DisposeAsync();
+            await this.caloriesJsModule.DisposeAsync();
         }
 
-        lifetimeCancellation.Dispose();
+        this.lifetimeCancellation.Dispose();
     }
 
     private enum CaloriesTab
@@ -1000,7 +1131,8 @@ public partial class Calories
     private enum EntryMode
     {
         SavedFood,
-        CustomFood
+        CustomFood,
+        Exercise
     }
 
     private enum HistoryPeriod
@@ -1011,6 +1143,8 @@ public partial class Calories
     }
 
     private sealed record BrowserClock(string Date, string Time);
+
+    private sealed record DayLogRow(DateTimeOffset LoggedAt, int Kind, CaloriesLogEntry? Food, ExerciseEntry? Exercise);
 
     private sealed record CaloriesChartPoint(DateOnly Start, string Label, long Calories);
 }

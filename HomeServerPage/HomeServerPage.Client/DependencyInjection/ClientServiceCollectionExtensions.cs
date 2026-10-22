@@ -3,6 +3,7 @@ using HomeServerPage.Client.Data.Astronomy.Telescopes;
 using HomeServerPage.Data;
 using HomeServerPage.Data.Astronomy;
 using HomeServerPage.Data.Calories;
+using HomeServerPage.Data.Exercise;
 using HomeServerPage.Data.Fridge;
 using HomeServerPage.Data.Notifications;
 using HomeServerPage.Data.PublicTransport;
@@ -25,6 +26,7 @@ public static class ClientServiceCollectionExtensions
         services.AddScoped<TabletDashboardRefreshService>();
         services.AddScoped<IFridgeService, FridgeHttpService>();
         services.AddScoped<ICaloriesService, CaloriesHttpService>();
+        services.AddScoped<IExerciseService, ExerciseHttpService>();
         services.AddScoped<IAstronomyService, AstronomyHttpService>();
         services.AddScoped<IObservationPointService, ObservationPointHttpService>();
         services.AddScoped<ITelescopeService, TelescopeHttpService>();

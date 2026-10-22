@@ -177,7 +177,19 @@
     font-size: 0.82rem;
 }
 
+.calories-exercise-total {
+    margin: 0.35rem 0 0;
+    color: var(--app-text-muted);
+    font-size: 0.82rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.calories-exercise-total strong {
+    color: var(--app-success);
+}
+
 .calories-goal-progress {
+    position: relative;
     height: 0.7rem;
     margin-top: 0.85rem;
     overflow: hidden;
@@ -191,6 +203,31 @@
     border-radius: inherit;
     background: var(--app-calories);
     transition: width 180ms ease;
+}
+
+.calories-goal-progress span.calories-goal-burned {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
+    height: 100%;
+    background: var(--app-success);
+}
+
+.calories-goal-progress span.calories-goal-over-goal {
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 2;
+    height: 100%;
+    min-width: 0.45rem;
+    border-right: 2px solid var(--app-surface-raised);
+    background: #f00;
+}
+
+.calories-goal-burned-caption,
+.calories-log-kcal.calories-exercise-kcal {
+    color: var(--app-success);
 }
 
 .calories-goal-caption {

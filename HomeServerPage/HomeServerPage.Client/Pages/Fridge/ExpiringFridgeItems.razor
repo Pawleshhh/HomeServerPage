@@ -1,9 +1,11 @@
 @using HomeServerPage.Data.Fridge
 @using HomeServerPage.Data.Calories
+@using HomeServerPage.Data.Exercise
 @using HomeServerPage.Data.Notifications
 @implements IDisposable
 @inject IFridgeService FridgeService
 @inject ICaloriesService CaloriesService
+@inject IExerciseService ExerciseService
 @inject HomeServerPage.Data.IDateTimeService DateTimeService
 @inject HomeServerPage.Client.Data.TabletDashboardRefreshService DashboardRefreshService
 @inject IJSRuntime JS
@@ -56,18 +58,26 @@
             </div>
         }
 
-        <div class="fridge-calories-progress" aria-label="Calories consumed today">
-            <span class="fridge-calories-progress-label">Calories today</span>
-            @if (caloriesGoal is int goal && caloriesError is null && !isLoadingCalories)
+        <div class="fridge-calories-progress" aria-label="Net calories today">
+            <span class="fridge-calories-progress-label">Net calories</span>
+            @if (this.caloriesError is null && !this.isLoadingCalories)
             {
                 <div class="fridge-calories-progress-track"
                      role="progressbar"
-                     aria-label="Calories consumed today"
+                     aria-label="Net calories today"
                      aria-valuemin="0"
-                     aria-valuemax="@goal"
-                     aria-valuenow="@Math.Min(caloriesConsumed, goal)"
-                     aria-valuetext="@($"{caloriesConsumed:N0} of {goal:N0} kcal")">
-                    <span style="width: @(CaloriesProgressPercent)%"></span>
+                     aria-valuemax="@this.CaloriesProgressMaximum"
+                     aria-valuenow="@Math.Clamp(this.NetCalories, 0, this.CaloriesProgressMaximum)"
+                     aria-valuetext="@($"Net {this.NetCalories:N0} kcal; {this.caloriesConsumed:N0} kcal consumed, {this.caloriesBurned:N0} kcal burned" + (this.caloriesGoal is int goal ? $"; goal {goal:N0} kcal" + (this.CaloriesOverGoal > 0 ? $"; consumed {this.CaloriesOverGoal:N0} kcal over goal" : string.Empty) : "; no daily goal set"))">
+                    <span style="width: @(this.CaloriesProgressPercent)%"></span>
+                    @if (this.caloriesBurned > 0)
+                    {
+                        <span class="fridge-calories-progress-burned" style="width: @(this.BurnedProgressPercent)%; z-index: @(this.BurnedProgressPercent <= this.OverGoalProgressPercent ? 2 : 1)" title="@($"{this.caloriesBurned:N0} kcal burned")"></span>
+                    }
+                    @if (this.OverGoalProgressPercent > 0)
+                    {
+                        <span class="fridge-calories-progress-over-goal" style="width: @(this.OverGoalProgressPercent)%; z-index: @(this.OverGoalProgressPercent < this.BurnedProgressPercent ? 2 : 1)" title="@($"{this.CaloriesOverGoal:N0} kcal consumed over goal")"></span>
+                    }
                 </div>
             }
             else
@@ -78,7 +88,7 @@
             }
             <span class="fridge-calories-progress-value"
                   aria-live="polite"
-                  title="@(caloriesGoal is null ? "Set a daily goal in Calories to track progress." : null)">
+                  title="@(this.caloriesGoal is null ? "Set a daily goal in Calories to track progress." : null)">
                 @CaloriesTodayValue
             </span>
         </div>
