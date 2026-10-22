@@ -358,6 +358,13 @@ public partial class Calories
             Logger.LogWarning(exception, "The serving multiplier rounds the food's calories below one kcal.");
             SetStatus("That serving multiplier results in less than 1 kcal. Use a larger value.", isError: true);
         }
+        catch (OperationCanceledException) when (lifetimeCancellation.IsCancellationRequested)
+        {
+        }
+        catch (OperationCanceledException exception)
+        {
+            HandleInterruptedEntrySubmission(exception, "preparing a saved-food entry");
+        }
     }
 
     private async Task AddCustomEntryAsync()
@@ -367,20 +374,30 @@ public partial class Calories
             return;
         }
 
-        var entry = new CaloriesLogEntry(
-            0,
-            customEntryDraft.Name.Trim(),
-            calories,
-            customEntryDraft.CarbohydratesGrams,
-            customEntryDraft.ProteinGrams,
-            customEntryDraft.FatGrams,
-            null,
-            selectedDate,
-            await GetLoggedAtAsync(),
-            NormalizeNote(entryNotes));
-        if (await SaveEntryAsync(entry))
+        try
         {
-            customEntryDraft = new CustomCaloriesEntryDraft();
+            var entry = new CaloriesLogEntry(
+                0,
+                customEntryDraft.Name.Trim(),
+                calories,
+                customEntryDraft.CarbohydratesGrams,
+                customEntryDraft.ProteinGrams,
+                customEntryDraft.FatGrams,
+                null,
+                selectedDate,
+                await GetLoggedAtAsync(),
+                NormalizeNote(entryNotes));
+            if (await SaveEntryAsync(entry))
+            {
+                customEntryDraft = new CustomCaloriesEntryDraft();
+            }
+        }
+        catch (OperationCanceledException) when (lifetimeCancellation.IsCancellationRequested)
+        {
+        }
+        catch (OperationCanceledException exception)
+        {
+            HandleInterruptedEntrySubmission(exception, "preparing a custom-food entry");
         }
     }
 
@@ -400,6 +417,18 @@ public partial class Calories
 
             return true;
         }
+        catch (OperationCanceledException exception)
+        {
+            if (!lifetimeCancellation.IsCancellationRequested)
+            {
+                Logger.LogWarning(exception, "The connection was interrupted while saving a Calories entry.");
+                SetStatus(
+                    "The connection was interrupted before the save could be confirmed. Check the daily log before retrying to avoid duplicates.",
+                    isError: true);
+            }
+
+            return false;
+        }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
             Logger.LogError(exception, "Could not add food to the Calories log.");
@@ -413,6 +442,14 @@ public partial class Calories
     }
 
     private Task<DateTimeOffset> GetLoggedAtAsync() => GetLoggedAtAsync(entryTime);
+
+    private void HandleInterruptedEntrySubmission(OperationCanceledException exception, string operation)
+    {
+        Logger.LogWarning(exception, "The connection was interrupted while {Operation}.", operation);
+        SetStatus(
+            "The connection was interrupted before the save was attempted. Check the daily log, then retry.",
+            isError: true);
+    }
 
     private async Task<DateTimeOffset> GetLoggedAtAsync(string timeValue)
     {
