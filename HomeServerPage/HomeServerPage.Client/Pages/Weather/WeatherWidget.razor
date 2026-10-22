@@ -79,6 +79,23 @@
                             <dd>@this.snapshot.UvIndex.ToString("0.#")</dd>
                         </div>
                     </dl>
+                    @if (this.nextDayForecast is not null)
+                    {
+                        <dl class="weather-details weather-next-day">
+                            <div>
+                                <dt>Tomorrow max</dt>
+                                <dd>@this.nextDayForecast.MaxTemperatureCelsius.ToString("0.#")°C</dd>
+                            </div>
+                            <div>
+                                <dt>Tomorrow min</dt>
+                                <dd>@this.nextDayForecast.MinTemperatureCelsius.ToString("0.#")°C</dd>
+                            </div>
+                            <div>
+                                <dt>Tomorrow rain chance</dt>
+                                <dd>@this.nextDayForecast.ChanceOfRainPercent%</dd>
+                            </div>
+                        </dl>
+                    }
                 </div>
             </div>
         }

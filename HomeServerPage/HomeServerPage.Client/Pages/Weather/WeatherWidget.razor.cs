@@ -22,6 +22,7 @@ public partial class WeatherWidget
     private bool isLoading = true;
     private string? loadError;
     private WeatherForecastDay? forecastDay;
+    private WeatherForecastDay? nextDayForecast;
 
     [Parameter]
     public bool AutoRefresh { get; set; }
@@ -47,9 +48,10 @@ public partial class WeatherWidget
 
         try
         {
-            var forecast = await WeatherService.GetForecastAsync(1);
+            var forecast = await WeatherService.GetForecastAsync(2);
             this.snapshot = forecast.Current;
             this.forecastDay = forecast.Days.FirstOrDefault();
+            this.nextDayForecast = forecast.Days.Skip(1).FirstOrDefault();
         }
         catch (Exception)
         {
