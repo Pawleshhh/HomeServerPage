@@ -287,7 +287,7 @@
                                 {
                                     <div class="calories-compact-field">
                                         <label class="form-label" for="calories-exercise-km">Distance (km)</label>
-                                        <InputNumber id="calories-exercise-km" class="form-control" @bind-Value="this.exerciseDraft.DistanceKm" min="0.01" max="1000" step="0.01" />
+                                        <InputNumber id="calories-exercise-km" class="form-control calories-touch-number" @bind-Value="this.exerciseDraft.DistanceKm" min="0.01" max="1000" step="0.1" />
                                         <ValidationMessage For="() => this.exerciseDraft.DistanceKm" />
                                     </div>
                                 }
@@ -316,7 +316,7 @@
                                         <option value="">Choose a saved food</option>
                                         @foreach (var food in this.foods)
                                         {
-                                            <option value="@food.Id">@food.Name - @food.CaloriesPerServing kcal/serving</option>
+                                            <option value="@food.Id">@food.Name - @food.CaloriesPerServing kcal/serving@(food.GramsPerServing is decimal grams ? $" · {FormatGrams(grams)} g" : null)</option>
                                         }
                                     </InputSelect>
                                     <ValidationMessage For="() => this.savedEntryDraft.FoodId" />
@@ -327,8 +327,13 @@
                                 </div>
                                 <div class="calories-compact-field">
                                     <label class="form-label" for="calories-serving-count">Serving multiplier</label>
-                                    <InputNumber id="calories-serving-count" class="form-control" @bind-Value="this.savedEntryDraft.Servings" min="0.01" step="0.01" />
+                                    <InputNumber id="calories-serving-count" class="form-control calories-touch-number" @bind-Value="this.savedEntryDraft.Servings" min="0.01" step="0.1" />
                                     <ValidationMessage For="() => this.savedEntryDraft.Servings" />
+                                    @if (this.SelectedSavedFood?.GramsPerServing is decimal gramsPerServing &&
+                                         this.savedEntryDraft.Servings is decimal servings)
+                                    {
+                                        <span class="calories-amount-preview">Amount eaten: @FormatGrams(gramsPerServing * servings) g</span>
+                                    }
                                 </div>
                                 <div class="calories-compact-field">
                                     <label class="form-label" for="calories-entry-time">Time eaten</label>
@@ -485,34 +490,41 @@
                                                 </div>
                                                 <div class="calories-compact-field">
                                                     <label class="form-label" for="@($"edit-entry-kcal-{entry.Id}")">Calories (kcal)</label>
-                                                    <InputNumber id="@($"edit-entry-kcal-{entry.Id}")" class="form-control" @bind-Value="this.entryEditDraft.Calories" min="1" step="1" />
+                                                    <InputNumber id="@($"edit-entry-kcal-{entry.Id}")" class="form-control calories-touch-number" @bind-Value="this.entryEditDraft.Calories" min="1" step="1" />
                                                     <ValidationMessage For="() => this.entryEditDraft.Calories" />
                                                 </div>
                                                 <div class="calories-compact-field">
                                                     <label class="form-label" for="@($"edit-entry-carbs-{entry.Id}")">Carbs (g)</label>
-                                                    <InputNumber id="@($"edit-entry-carbs-{entry.Id}")" class="form-control" @bind-Value="this.entryEditDraft.CarbohydratesGrams" min="0" step="1" />
+                                                    <InputNumber id="@($"edit-entry-carbs-{entry.Id}")" class="form-control calories-touch-number" @bind-Value="this.entryEditDraft.CarbohydratesGrams" min="0" step="1" />
                                                 </div>
                                                 <div class="calories-compact-field">
                                                     <label class="form-label" for="@($"edit-entry-protein-{entry.Id}")">Protein (g)</label>
-                                                    <InputNumber id="@($"edit-entry-protein-{entry.Id}")" class="form-control" @bind-Value="this.entryEditDraft.ProteinGrams" min="0" step="1" />
+                                                    <InputNumber id="@($"edit-entry-protein-{entry.Id}")" class="form-control calories-touch-number" @bind-Value="this.entryEditDraft.ProteinGrams" min="0" step="1" />
                                                 </div>
                                                 <div class="calories-compact-field">
                                                     <label class="form-label" for="@($"edit-entry-fat-{entry.Id}")">Fat (g)</label>
-                                                    <InputNumber id="@($"edit-entry-fat-{entry.Id}")" class="form-control" @bind-Value="this.entryEditDraft.FatGrams" min="0" step="1" />
+                                                    <InputNumber id="@($"edit-entry-fat-{entry.Id}")" class="form-control calories-touch-number" @bind-Value="this.entryEditDraft.FatGrams" min="0" step="1" />
                                                 </div>
                                                 <div class="calories-compact-field">
                                                     @if (this.entryEditDraft.Servings is not null)
                                                     {
                                                         <label class="form-label" for="@($"edit-entry-servings-{entry.Id}")">Serving multiplier</label>
                                                         <InputNumber id="@($"edit-entry-servings-{entry.Id}")"
-                                                                     class="form-control"
+                                                                     class="form-control calories-touch-number"
                                                                      @bind-Value="this.entryEditDraft.Servings"
                                                                      @bind-Value:after="ScaleEditedEntryForServingsChange"
                                                                      min="0.01"
-                                                                     step="0.01" />
+                                                                     step="0.1" />
                                                         <ValidationMessage For="() => this.entryEditDraft.Servings" />
                                                     }
                                                 </div>
+                                                @if (this.entryEditDraft.GramsConsumed is decimal gramsConsumed)
+                                                {
+                                                    <div class="calories-compact-field">
+                                                        <span class="form-label">Amount eaten</span>
+                                                        <output class="calories-entry-grams-value">@FormatGrams(gramsConsumed) g</output>
+                                                    </div>
+                                                }
                                                 <div class="calories-compact-field">
                                                     <label class="form-label" for="@($"edit-entry-time-{entry.Id}")">Time eaten</label>
                                                     <input id="@($"edit-entry-time-{entry.Id}")"
@@ -539,6 +551,10 @@
                                         <time class="calories-log-time" datetime="@entry.LoggedAt.ToString("O", CultureInfo.InvariantCulture)">@entry.LoggedAt.ToString("HH:mm", CultureInfo.CurrentCulture)</time>
                                         <div class="calories-log-copy">
                                             <strong>@entry.Name</strong>
+                                            @if (entry.GramsConsumed is decimal gramsConsumed)
+                                            {
+                                                <span>@FormatGrams(gramsConsumed) g eaten</span>
+                                            }
                                             @if (entry.Servings is decimal servings)
                                             {
                                                 <span>@servings.ToString("0.##", CultureInfo.CurrentCulture) serving(s)</span>
@@ -616,23 +632,32 @@
                             </div>
                             <div class="calories-compact-field">
                                 <label class="form-label" for="calories-food-kcal">Calories per serving (kcal)</label>
-                                <InputNumber id="calories-food-kcal" class="form-control" @bind-Value="this.foodDraft.CaloriesPerServing" min="1" step="1" />
+                                <InputNumber id="calories-food-kcal" class="form-control calories-touch-number" @bind-Value="this.foodDraft.CaloriesPerServing" min="1" step="1" />
                                 <ValidationMessage For="() => this.foodDraft.CaloriesPerServing" />
                             </div>
                             <div class="calories-compact-field">
                                 <label class="form-label" for="calories-food-carbs">Carbohydrates per serving (g)</label>
-                                <InputNumber id="calories-food-carbs" class="form-control" @bind-Value="this.foodDraft.CarbohydratesGrams" min="0" step="1" />
+                                <InputNumber id="calories-food-carbs" class="form-control calories-touch-number" @bind-Value="this.foodDraft.CarbohydratesGrams" min="0" step="1" />
                                 <ValidationMessage For="() => this.foodDraft.CarbohydratesGrams" />
                             </div>
                             <div class="calories-compact-field">
                                 <label class="form-label" for="calories-food-protein">Protein per serving (g)</label>
-                                <InputNumber id="calories-food-protein" class="form-control" @bind-Value="this.foodDraft.ProteinGrams" min="0" step="1" />
+                                <InputNumber id="calories-food-protein" class="form-control calories-touch-number" @bind-Value="this.foodDraft.ProteinGrams" min="0" step="1" />
                                 <ValidationMessage For="() => this.foodDraft.ProteinGrams" />
                             </div>
                             <div class="calories-compact-field">
                                 <label class="form-label" for="calories-food-fat">Fat per serving (g)</label>
-                                <InputNumber id="calories-food-fat" class="form-control" @bind-Value="this.foodDraft.FatGrams" min="0" step="1" />
+                                <InputNumber id="calories-food-fat" class="form-control calories-touch-number" @bind-Value="this.foodDraft.FatGrams" min="0" step="1" />
                                 <ValidationMessage For="() => this.foodDraft.FatGrams" />
+                            </div>
+                            <div class="calories-compact-field">
+                                <label class="form-label" for="calories-food-grams">Serving amount (g, optional)</label>
+                                <InputNumber id="calories-food-grams"
+                                             class="form-control calories-touch-number"
+                                             @bind-Value="this.foodDraft.GramsPerServing"
+                                             min="0.1"
+                                             step="0.1" />
+                                <ValidationMessage For="() => this.foodDraft.GramsPerServing" />
                             </div>
                             <div class="calories-form-submit">
                                 <button class="btn btn-primary" type="submit" disabled="@this.isSavingFood">
@@ -640,7 +665,7 @@
                                 </button>
                             </div>
                         </div>
-                        <p class="calories-compact-help">Nutrition is per serving; choose a multiplier up to two decimal places.</p>
+                        <p class="calories-compact-help">Nutrition is per serving. Optional serving grams scale with the multiplier.</p>
                     </EditForm>
                 </section>
 
@@ -665,6 +690,10 @@
                                     <div class="calories-food-copy">
                                         <strong>@food.Name</strong>
                                         <span>@food.CaloriesPerServing.ToString("N0", CultureInfo.CurrentCulture) kcal per serving</span>
+                                        @if (food.GramsPerServing is decimal gramsPerServing)
+                                        {
+                                            <span>@FormatGrams(gramsPerServing) g per serving</span>
+                                        }
                                         <span>Carbs @FormatMacro(food.CarbohydratesGrams) | Protein @FormatMacro(food.ProteinGrams) | Fat @FormatMacro(food.FatGrams)</span>
                                     </div>
                                     <div class="calories-food-actions">

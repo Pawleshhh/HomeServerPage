@@ -740,6 +740,34 @@
     background-color: var(--app-surface);
 }
 
+::deep .calories-page input[type="number"] {
+    padding-right: 2rem;
+}
+
+::deep .calories-page input[type="number"]::-webkit-inner-spin-button,
+::deep .calories-page input[type="number"]::-webkit-outer-spin-button {
+    width: 1.75rem;
+    height: 2.4rem;
+    opacity: 1;
+    cursor: pointer;
+}
+
+.calories-amount-preview {
+    margin-top: 0.25rem;
+    color: var(--app-calories);
+    font-size: 0.75rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.calories-entry-grams-value {
+    display: flex;
+    min-height: 2.5rem;
+    align-items: center;
+    color: var(--app-text);
+    font-variant-numeric: tabular-nums;
+}
+
 ::deep .calories-page .form-label {
     margin-bottom: 0.35rem;
 }

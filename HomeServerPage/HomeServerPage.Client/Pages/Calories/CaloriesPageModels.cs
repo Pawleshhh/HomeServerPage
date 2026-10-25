@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace HomeServerPage.Client.Pages;
 
-public sealed class CaloriesFoodDraft
+public sealed class CaloriesFoodDraft : IValidatableObject
 {
     [Required]
     [StringLength(160)]
@@ -20,6 +20,19 @@ public sealed class CaloriesFoodDraft
 
     [Range(0, int.MaxValue)]
     public int? FatGrams { get; set; }
+
+    [Range(typeof(decimal), "0.1", "79228162514264337593543950335")]
+    public decimal? GramsPerServing { get; set; }
+
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        if (GramsPerServing is decimal grams && grams != decimal.Round(grams, 1))
+        {
+            yield return new ValidationResult(
+                "Grams per serving may have at most one decimal place.",
+                [nameof(GramsPerServing)]);
+        }
+    }
 }
 
 public sealed class CaloriesEntryDraft : IValidatableObject
@@ -84,6 +97,8 @@ public sealed class CaloriesLoggedEntryDraft : IValidatableObject
     [Range(typeof(decimal), "0.01", "79228162514264337593543950335")]
     public decimal? Servings { get; set; }
 
+    public decimal? GramsConsumed { get; set; }
+
     [Required]
     public string? Time { get; set; }
 
@@ -97,6 +112,13 @@ public sealed class CaloriesLoggedEntryDraft : IValidatableObject
             yield return new ValidationResult(
                 "Use at most two decimal places.",
                 [nameof(Servings)]);
+        }
+
+        if (GramsConsumed is decimal grams && grams != decimal.Round(grams, 3))
+        {
+            yield return new ValidationResult(
+                "Consumed grams may have at most three decimal places.",
+                [nameof(GramsConsumed)]);
         }
     }
 }

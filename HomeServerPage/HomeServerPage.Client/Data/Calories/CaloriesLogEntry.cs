@@ -10,4 +10,5 @@ public record CaloriesLogEntry(
     decimal? Servings,
     DateOnly LocalDate,
     DateTimeOffset LoggedAt,
-    string? Notes = null);
+    string? Notes = null,
+    decimal? GramsConsumed = null);

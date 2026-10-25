@@ -32,6 +32,9 @@ namespace HomeServerPage.Migrations.CaloriesDb
                     b.Property<int?>("FatGrams")
                         .HasColumnType("INTEGER");
 
+                    b.Property<decimal?>("GramsPerServing")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(160)
@@ -45,6 +48,8 @@ namespace HomeServerPage.Migrations.CaloriesDb
                     b.ToTable("Foods", t =>
                         {
                             t.HasCheckConstraint("CK_CaloriesFoods_Calories", "CaloriesPerServing > 0");
+
+                            t.HasCheckConstraint("CK_CaloriesFoods_GramsPerServing", "GramsPerServing IS NULL OR CAST(GramsPerServing AS REAL) > 0");
 
                             t.HasCheckConstraint("CK_CaloriesFoods_Macros", "(CarbohydratesGrams IS NULL OR CarbohydratesGrams >= 0) AND (ProteinGrams IS NULL OR ProteinGrams >= 0) AND (FatGrams IS NULL OR FatGrams >= 0)");
                         });
@@ -64,6 +69,9 @@ namespace HomeServerPage.Migrations.CaloriesDb
 
                     b.Property<int?>("FatGrams")
                         .HasColumnType("INTEGER");
+
+                    b.Property<decimal?>("GramsConsumed")
+                        .HasColumnType("TEXT");
 
                     b.Property<DateOnly>("LocalDate")
                         .HasColumnType("TEXT");
@@ -93,6 +101,8 @@ namespace HomeServerPage.Migrations.CaloriesDb
                     b.ToTable("Entries", t =>
                         {
                             t.HasCheckConstraint("CK_CaloriesEntries_Calories", "Calories > 0");
+
+                            t.HasCheckConstraint("CK_CaloriesEntries_GramsConsumed", "GramsConsumed IS NULL OR CAST(GramsConsumed AS REAL) > 0");
 
                             t.HasCheckConstraint("CK_CaloriesEntries_Macros", "(CarbohydratesGrams IS NULL OR CarbohydratesGrams >= 0) AND (ProteinGrams IS NULL OR ProteinGrams >= 0) AND (FatGrams IS NULL OR FatGrams >= 0)");
 

@@ -6,4 +6,5 @@ public record CaloriesFood(
     int CaloriesPerServing,
     int? CarbohydratesGrams,
     int? ProteinGrams,
-    int? FatGrams);
+    int? FatGrams,
+    decimal? GramsPerServing = null);

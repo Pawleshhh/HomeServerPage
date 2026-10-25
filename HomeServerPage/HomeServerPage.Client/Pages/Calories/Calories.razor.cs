@@ -67,6 +67,8 @@ public partial class Calories
     private bool isDisposed;
     private IJSObjectReference? caloriesJsModule;
     private bool isTabletMode => TabletMode;
+    private CaloriesFood? SelectedSavedFood =>
+        this.foods.FirstOrDefault(food => food.Id == this.savedEntryDraft.FoodId);
 
     [Parameter]
     public bool TabletMode { get; set; }
@@ -473,7 +475,8 @@ public partial class Calories
                 servings,
                 this.selectedDate,
                 await GetLoggedAtAsync(),
-                NormalizeNote(this.entryNotes));
+                NormalizeNote(this.entryNotes),
+                ScaleGrams(selectedFood.GramsPerServing, servings));
             if (await SaveEntryAsync(entry))
             {
                 this.savedEntryDraft = new CaloriesEntryDraft();
@@ -611,6 +614,7 @@ public partial class Calories
             ProteinGrams = entry.ProteinGrams,
             FatGrams = entry.FatGrams,
             Servings = entry.Servings,
+            GramsConsumed = entry.GramsConsumed,
             Time = entry.LoggedAt.ToString("HH:mm", CultureInfo.InvariantCulture),
             Notes = entry.Notes
         };
@@ -642,6 +646,7 @@ public partial class Calories
             this.entryEditDraft.CarbohydratesGrams = ScaleMacro(this.entryEditDraft.CarbohydratesGrams, factor);
             this.entryEditDraft.ProteinGrams = ScaleMacro(this.entryEditDraft.ProteinGrams, factor);
             this.entryEditDraft.FatGrams = ScaleMacro(this.entryEditDraft.FatGrams, factor);
+            this.entryEditDraft.GramsConsumed = ScaleGrams(this.entryEditDraft.GramsConsumed, factor);
             this.entryEditServingsBaseline = nextServings;
         }
         catch (OverflowException exception)
@@ -696,7 +701,8 @@ public partial class Calories
                 Servings = this.entryEditDraft.Servings,
                 LocalDate = this.selectedDate,
                 LoggedAt = await GetLoggedAtAsync(time),
-                Notes = NormalizeNote(this.entryEditDraft.Notes)
+                Notes = NormalizeNote(this.entryEditDraft.Notes),
+                GramsConsumed = this.entryEditDraft.GramsConsumed
             };
 
             if (!await CaloriesService.UpdateEntryAsync(updatedEntry, this.lifetimeCancellation.Token))
@@ -776,7 +782,8 @@ public partial class Calories
                 calories,
                 this.foodDraft.CarbohydratesGrams,
                 this.foodDraft.ProteinGrams,
-                this.foodDraft.FatGrams);
+                this.foodDraft.FatGrams,
+                this.foodDraft.GramsPerServing);
             var isNewFood = this.editingFoodId is null;
             var succeeded = this.editingFoodId is int id
                 ? await CaloriesService.UpdateFoodAsync(
@@ -823,7 +830,8 @@ public partial class Calories
             CaloriesPerServing = food.CaloriesPerServing,
             CarbohydratesGrams = food.CarbohydratesGrams,
             ProteinGrams = food.ProteinGrams,
-            FatGrams = food.FatGrams
+            FatGrams = food.FatGrams,
+            GramsPerServing = food.GramsPerServing
         };
         this.foodPendingDeleteId = null;
         ClearStatus();
@@ -1057,6 +1065,14 @@ public partial class Calories
 
     private static int? ScaleMacro(int? grams, decimal multiplier) =>
         grams is int value ? ScaleNutritionValue(value, multiplier) : null;
+
+    private static decimal? ScaleGrams(decimal? grams, decimal multiplier) =>
+        grams is decimal value
+            ? decimal.Round(value * multiplier, 3, MidpointRounding.AwayFromZero)
+            : null;
+
+    private static string FormatGrams(decimal grams) =>
+        grams.ToString("0.###", CultureInfo.CurrentCulture);
 
     private static int ScaleNutritionValue(int value, decimal multiplier) =>
         checked(decimal.ToInt32(decimal.Round(

@@ -135,11 +135,15 @@ public sealed class CaloriesController(ICaloriesService caloriesService) : Contr
             return "A food name of at most 160 characters is required.";
         }
 
-        return food.CaloriesPerServing <= 0 || HasNegativeMacros(
+        return food.CaloriesPerServing <= 0 ||
+            food.GramsPerServing is <= 0 ||
+            (food.GramsPerServing is decimal gramsPerServing &&
+                gramsPerServing != decimal.Round(gramsPerServing, 1)) ||
+            HasNegativeMacros(
             food.CarbohydratesGrams,
             food.ProteinGrams,
             food.FatGrams)
-            ? "Calories must be positive and optional macros cannot be negative."
+            ? "Calories must be positive, grams per serving must be positive with at most one decimal place, and optional macros cannot be negative."
             : null;
     }
 
@@ -155,9 +159,12 @@ public sealed class CaloriesController(ICaloriesService caloriesService) : Contr
             entry.Servings is <= 0 ||
             (entry.Servings is decimal servings &&
                 servings != decimal.Round(servings, 2)) ||
+            entry.GramsConsumed is <= 0 ||
+            (entry.GramsConsumed is decimal gramsConsumed &&
+                gramsConsumed != decimal.Round(gramsConsumed, 3)) ||
             entry.Notes?.Length > 500)
         {
-            return "Calories and servings must be positive, servings may have at most two decimals, optional macros cannot be negative, and notes must be at most 500 characters.";
+            return "Calories and servings must be positive, servings may have at most two decimals, consumed grams must be positive with at most three decimals, optional macros cannot be negative, and notes must be at most 500 characters.";
         }
 
         return null;

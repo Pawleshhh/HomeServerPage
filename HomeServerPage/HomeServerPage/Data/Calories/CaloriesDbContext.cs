@@ -18,9 +18,14 @@ public sealed class CaloriesDbContext(DbContextOptions<CaloriesDbContext> option
             entity.Property(food => food.Name)
                 .IsRequired()
                 .HasMaxLength(160);
+            entity.Property(food => food.GramsPerServing)
+                .HasColumnType("TEXT");
             entity.ToTable(table =>
             {
                 table.HasCheckConstraint("CK_CaloriesFoods_Calories", "CaloriesPerServing > 0");
+                table.HasCheckConstraint(
+                    "CK_CaloriesFoods_GramsPerServing",
+                    "GramsPerServing IS NULL OR CAST(GramsPerServing AS REAL) > 0");
                 table.HasCheckConstraint(
                     "CK_CaloriesFoods_Macros",
                     "(CarbohydratesGrams IS NULL OR CarbohydratesGrams >= 0) " +
@@ -42,6 +47,8 @@ public sealed class CaloriesDbContext(DbContextOptions<CaloriesDbContext> option
                 .HasMaxLength(500);
             entity.Property(entry => entry.Servings)
                 .HasColumnType("TEXT");
+            entity.Property(entry => entry.GramsConsumed)
+                .HasColumnType("TEXT");
             entity.HasIndex(entry => entry.LocalDate);
             entity.ToTable(table =>
             {
@@ -54,6 +61,9 @@ public sealed class CaloriesDbContext(DbContextOptions<CaloriesDbContext> option
                 table.HasCheckConstraint(
                     "CK_CaloriesEntries_Servings",
                     "Servings IS NULL OR CAST(Servings AS REAL) > 0");
+                table.HasCheckConstraint(
+                    "CK_CaloriesEntries_GramsConsumed",
+                    "GramsConsumed IS NULL OR CAST(GramsConsumed AS REAL) > 0");
             });
         });
 
