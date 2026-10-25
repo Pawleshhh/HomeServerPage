@@ -331,7 +331,7 @@
 
 .calories-compact-form {
     display: grid;
-    align-items: end;
+    align-items: start;
     gap: 0.55rem;
 }
 
@@ -348,12 +348,16 @@
 }
 
 .calories-compact-field {
-    display: flex;
+    display: grid;
     min-width: 0;
-    flex-direction: column;
+    grid-template-rows: 2.5rem auto auto;
+    align-content: start;
 }
 
 .calories-compact-field .form-label {
+    display: flex;
+    min-height: 2.5rem;
+    align-items: flex-end;
     margin-bottom: 0.2rem;
     color: var(--app-text-muted);
     font-size: 0.76rem;
@@ -363,8 +367,30 @@
 
 .calories-compact-field .form-control,
 .calories-compact-field .form-select {
-    min-height: 2.5rem;
+    min-height: 2.85rem;
     font-size: 0.9rem;
+}
+
+.calories-compact-field > .form-label,
+.calories-compact-field > .form-control,
+.calories-compact-field > .form-select,
+.calories-compact-field > .calories-decimal-input,
+.calories-compact-field > .calories-entry-grams-value {
+    grid-row: 1;
+}
+
+.calories-compact-field > .form-control,
+.calories-compact-field > .form-select,
+.calories-compact-field > .calories-decimal-input,
+.calories-compact-field > .calories-entry-grams-value {
+    grid-row: 2;
+}
+
+.calories-compact-field ::deep .validation-message,
+.calories-compact-field .calories-amount-preview,
+.calories-compact-field .form-text {
+    grid-row: 3;
+    margin-top: 0.2rem;
 }
 
 .calories-wide-field {
@@ -386,10 +412,11 @@
 .calories-form-submit {
     display: flex;
     align-items: flex-end;
+    align-self: end;
 }
 
 .calories-form-submit .btn {
-    min-height: 2.5rem;
+    min-height: 2.85rem;
     white-space: nowrap;
 }
 
@@ -738,18 +765,6 @@
     border-color: var(--app-border-strong);
     color: var(--app-text);
     background-color: var(--app-surface);
-}
-
-::deep .calories-page input[type="number"] {
-    padding-right: 2rem;
-}
-
-::deep .calories-page input[type="number"]::-webkit-inner-spin-button,
-::deep .calories-page input[type="number"]::-webkit-outer-spin-button {
-    width: 1.75rem;
-    height: 2.4rem;
-    opacity: 1;
-    cursor: pointer;
 }
 
 .calories-amount-preview {

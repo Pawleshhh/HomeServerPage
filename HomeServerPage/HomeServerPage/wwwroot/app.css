@@ -255,6 +255,14 @@ h1:focus {
     background-color: var(--app-surface);
 }
 
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    width: 2.75rem;
+    height: 2.75rem;
+    opacity: 1;
+    cursor: pointer;
+}
+
 .form-control::placeholder {
     color: var(--app-text-subtle);
 }

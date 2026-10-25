@@ -1,0 +1,76 @@
+.calories-decimal-input {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 2.75rem;
+    align-items: stretch;
+    min-height: 2.85rem;
+    min-width: 0;
+}
+
+.calories-decimal-input ::deep .calories-decimal-input-field {
+    min-width: 0;
+    min-height: 2.85rem;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    -moz-appearance: textfield;
+}
+
+.calories-decimal-input ::deep .calories-decimal-input-field::-webkit-inner-spin-button,
+.calories-decimal-input ::deep .calories-decimal-input-field::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.calories-decimal-input-controls {
+    display: grid;
+    min-height: 2.85rem;
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+}
+
+.calories-decimal-step {
+    display: inline-flex;
+    min-width: 2.75rem;
+    min-height: 0;
+    align-items: center;
+    justify-content: center;
+    padding: 0.05rem;
+    border: 1px solid var(--app-border-strong);
+    color: var(--app-text);
+    background: var(--app-surface-muted);
+    cursor: pointer;
+    touch-action: manipulation;
+}
+
+.calories-decimal-step:first-child {
+    border-bottom: 0;
+    border-top-right-radius: var(--app-radius-sm);
+}
+
+.calories-decimal-step:last-child {
+    border-bottom-right-radius: var(--app-radius-sm);
+}
+
+.calories-decimal-step i {
+    font-size: 0.85rem;
+    line-height: 1;
+}
+
+.calories-decimal-step:hover:not(:disabled) {
+    color: var(--app-calories);
+    background: var(--app-calories-soft);
+}
+
+.calories-decimal-step:focus-visible {
+    position: relative;
+    z-index: 1;
+    outline: 3px solid var(--app-focus);
+    outline-offset: 1px;
+}
+
+.calories-decimal-step:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+.calories-decimal-input.is-disabled .calories-decimal-input-controls {
+    opacity: 0.6;
+}

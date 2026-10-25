@@ -1,0 +1,100 @@
+@using System.Linq.Expressions
+
+<div class="calories-decimal-input @(this.Disabled ? "is-disabled" : null)">
+    <InputNumber id="@this.Id"
+                 class="form-control calories-decimal-input-field"
+                 TValue="decimal?"
+                 Value="this.Value"
+                 ValueChanged="this.ValueChanged"
+                 ValueExpression="this.ValueExpression"
+                 min="@this.Minimum"
+                 max="@this.Maximum"
+                 step="any"
+                 disabled="@this.Disabled"
+                 aria-label="@this.AriaLabel" />
+    <span class="calories-decimal-input-controls">
+        <button class="calories-decimal-step" type="button"
+                aria-label="@this.IncreaseLabel"
+                title="@this.IncreaseLabel"
+                disabled="@this.Disabled"
+                @onclick="() => this.StepAsync(1)">
+            <i class="bi bi-chevron-up" aria-hidden="true"></i>
+        </button>
+        <button class="calories-decimal-step" type="button"
+                aria-label="@this.DecreaseLabel"
+                title="@this.DecreaseLabel"
+                disabled="@this.Disabled"
+                @onclick="() => this.StepAsync(-1)">
+            <i class="bi bi-chevron-down" aria-hidden="true"></i>
+        </button>
+    </span>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public string Id { get; set; } = string.Empty;
+
+    [Parameter]
+    public string? AriaLabel { get; set; }
+
+    [Parameter]
+    public string IncreaseLabel { get; set; } = "Increase by 0.1";
+
+    [Parameter]
+    public string DecreaseLabel { get; set; } = "Decrease by 0.1";
+
+    [Parameter]
+    public decimal? Value { get; set; }
+
+    [Parameter]
+    public EventCallback<decimal?> ValueChanged { get; set; }
+
+    [Parameter, EditorRequired]
+    public Expression<Func<decimal?>>? ValueExpression { get; set; }
+
+    [Parameter]
+    public decimal Minimum { get; set; }
+
+    [Parameter]
+    public decimal? Maximum { get; set; }
+
+    [Parameter]
+    public decimal Step { get; set; } = 0.1m;
+
+    [Parameter]
+    public int DecimalPlaces { get; set; } = 2;
+
+    [Parameter]
+    public bool Disabled { get; set; }
+
+    private async Task StepAsync(int direction)
+    {
+        if (this.Disabled)
+        {
+            return;
+        }
+
+        if (this.Value is null)
+        {
+            if (direction < 0)
+            {
+                return;
+            }
+
+            await this.ValueChanged.InvokeAsync(this.Minimum);
+            return;
+        }
+
+        var next = decimal.Round(
+            this.Value.Value + this.Step * direction,
+            this.DecimalPlaces,
+            MidpointRounding.AwayFromZero);
+        next = Math.Max(this.Minimum, next);
+        if (this.Maximum is decimal maximum)
+        {
+            next = Math.Min(maximum, next);
+        }
+
+        await this.ValueChanged.InvokeAsync(next);
+    }
+}

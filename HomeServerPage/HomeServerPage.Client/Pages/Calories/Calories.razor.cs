@@ -69,6 +69,48 @@ public partial class Calories
     private bool isTabletMode => TabletMode;
     private CaloriesFood? SelectedSavedFood =>
         this.foods.FirstOrDefault(food => food.Id == this.savedEntryDraft.FoodId);
+    private int? SavedFoodCaloriesPreview
+    {
+        get
+        {
+            if (this.SelectedSavedFood is not CaloriesFood food ||
+                this.savedEntryDraft.Servings is not decimal multiplier ||
+                multiplier <= 0)
+            {
+                return null;
+            }
+
+            try
+            {
+                return ScaleCalories(food.CaloriesPerServing, multiplier);
+            }
+            catch (Exception exception) when (exception is OverflowException or ArgumentOutOfRangeException)
+            {
+                return null;
+            }
+        }
+    }
+    private decimal? SavedFoodGramsPreview
+    {
+        get
+        {
+            if (this.SelectedSavedFood?.GramsPerServing is not decimal gramsPerServing ||
+                this.savedEntryDraft.Servings is not decimal multiplier ||
+                multiplier <= 0)
+            {
+                return null;
+            }
+
+            try
+            {
+                return ScaleGrams(gramsPerServing, multiplier);
+            }
+            catch (OverflowException)
+            {
+                return null;
+            }
+        }
+    }
 
     [Parameter]
     public bool TabletMode { get; set; }
