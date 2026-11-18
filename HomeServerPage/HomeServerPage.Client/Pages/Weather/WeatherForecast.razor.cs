@@ -12,6 +12,7 @@ using HomeServerPage.Client.Layout;
 using HomeServerPage.Client.Shared;
 using HomeServerPage.Shared.Extensions;
 using HomeServerPage.Data.Weather;
+using HomeServerPage.Data.Locations;
 using WeatherForecastModel = HomeServerPage.Data.Weather.WeatherForecast;
 
 namespace HomeServerPage.Client.Pages.Weather;
@@ -22,21 +23,43 @@ public partial class WeatherForecast
     private bool isLoading = true;
     private string? loadError;
 
-    private string LocationLabel => forecast?.Current.Location.Name ?? "Szczecin";
+    private SavedLocation? location;
+    private int? loadedLocationId;
 
-    protected override async Task OnInitializedAsync()
+    [Parameter]
+    public SavedLocation? Location { get; set; }
+
+    private string LocationLabel => this.location?.Name ?? this.forecast?.Current.Location.Name ?? "Default";
+
+    protected override async Task OnParametersSetAsync()
     {
+        var selectedLocation = this.Location ?? await this.LocationSelectionService.GetSelectedLocationAsync(
+            LocationFeature.Weather);
+        if (this.loadedLocationId == selectedLocation.Id)
+        {
+            return;
+        }
+
+        this.location = selectedLocation;
+        this.loadedLocationId = selectedLocation.Id;
+        await this.LoadForecastAsync();
+    }
+
+    private async Task LoadForecastAsync()
+    {
+        this.isLoading = true;
         try
         {
-            forecast = await WeatherService.GetForecastAsync();
+            this.forecast = await this.WeatherService.GetForecastAsync(this.location!);
+            this.loadError = null;
         }
-        catch (Exception)
+        catch (Exception exception)
         {
-            loadError = "Could not load the weather forecast.";
+            this.loadError = $"Could not load the weather forecast: {exception.Message}";
         }
         finally
         {
-            isLoading = false;
+            this.isLoading = false;
         }
     }
 

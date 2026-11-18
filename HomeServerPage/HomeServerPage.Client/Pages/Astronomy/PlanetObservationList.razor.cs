@@ -24,6 +24,9 @@ public partial class PlanetObservationList
     [Parameter]
     public DateTime RequestDateUtc { get; set; }
 
+    [Parameter, EditorRequired]
+    public TimeZoneInfo LocationTimeZone { get; set; } = default!;
+
     [Parameter]
     public bool Compact { get; set; }
 
@@ -31,23 +34,23 @@ public partial class PlanetObservationList
     public bool TableLayout { get; set; }
 
     private IEnumerable<AstronomyObservation> VisibleObservations =>
-        Observations;
+        this.Observations;
 
     private static string GetObservationImageUrl(string key) =>
         $"images/astronomy/solarsystem/{key}.png";
 
     private IEnumerable<(string Label, string Value)> GetResultValues(RiseTransitSetResult result)
     {
-        yield return ("Rise", result.RiseUT.FormatUtHours(RequestDateUtc, AstronomyDefaults.LocalTimeZone));
+        yield return ("Rise", result.RiseUT.FormatUtHours(this.RequestDateUtc, this.LocationTimeZone));
 
-        if (!Compact)
+        if (!this.Compact)
         {
-            yield return ("Transit", result.TransitUT.FormatUtHours(RequestDateUtc, AstronomyDefaults.LocalTimeZone));
+            yield return ("Transit", result.TransitUT.FormatUtHours(this.RequestDateUtc, this.LocationTimeZone));
         }
 
-        yield return ("Set", result.SetUT.FormatUtHours(RequestDateUtc, AstronomyDefaults.LocalTimeZone));
+        yield return ("Set", result.SetUT.FormatUtHours(this.RequestDateUtc, this.LocationTimeZone));
 
-        if (!Compact && result.RisesAndSets)
+        if (!this.Compact && result.RisesAndSets)
         {
             yield return ("Above horizon", FormatDuration(result.HoursAboveHorizon));
         }

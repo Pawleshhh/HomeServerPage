@@ -1,18 +1,9 @@
-using Microsoft.AspNetCore.Components;
-using System.Net.Http;
-using System.Net.Http.Json;
-using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.AspNetCore.Components.Routing;
-using Microsoft.AspNetCore.Components.Web;
-using static Microsoft.AspNetCore.Components.Web.RenderMode;
-using Microsoft.AspNetCore.Components.Web.Virtualization;
-using Microsoft.JSInterop;
-using HomeServerPage.Client;
-using HomeServerPage.Client.Layout;
-using HomeServerPage.Client.Shared;
-using HomeServerPage.Shared.Extensions;
 using AstroCalc.Core;
+using HomeServerPage.Client.Data;
+using HomeServerPage.Client.Data.Locations;
 using HomeServerPage.Data.Astronomy;
+using HomeServerPage.Data.Locations;
+using Microsoft.AspNetCore.Components;
 
 namespace HomeServerPage.Client.Pages.Astronomy;
 
@@ -26,147 +17,221 @@ public partial class Astronomy
         new AstronomyTab("observation-points", "Observation points", "observation-points-panel", typeof(AstronomyObservationPointsTab))
     ];
 
-    private GeographicCoordinate location = AstronomyDefaults.Location;
+    [Inject]
+    private ILocationService LocationService { get; set; } = default!;
+
+    [Inject]
+    private ILocationSelectionService LocationSelectionService { get; set; } = default!;
+
+    private SavedLocation? selectedLocation;
+    private IReadOnlyList<SavedLocation> locations = [];
     private IReadOnlyList<ObservationPoint> observationPoints = [];
     private int? selectedObservationPointId;
     private DateTime selectedLocalDateTime;
     private DateTime requestDateUtc;
     private string activeTab = astronomyTabs[0].Key;
+    private bool isLoadingLocations = true;
     private bool isLoadingObservationPoints;
+    private string? locationError;
     private string? observationPointLoadError;
 
-    private IAstronomyTab CurrentTab => astronomyTabs.First(tab => tab.Key == activeTab);
+    private IAstronomyTab CurrentTab => astronomyTabs.First(tab => tab.Key == this.activeTab);
 
-    private ObservationPoint? SelectedObservationPoint => selectedObservationPointId is int id
-        ? observationPoints.FirstOrDefault(observationPoint => observationPoint.Id == id)
+    private ObservationPoint? SelectedObservationPoint => this.selectedObservationPointId is int id
+        ? this.observationPoints.FirstOrDefault(observationPoint => observationPoint.Id == id)
         : null;
 
     private IDictionary<string, object?> CurrentTabParameters =>
-        CurrentTab.ComponentType switch
+        this.CurrentTab.ComponentType switch
         {
-            _ when CurrentTab.ComponentType == typeof(AstronomyObservationsTab) => new Dictionary<string, object?>
+            _ when this.CurrentTab.ComponentType == typeof(AstronomyObservationsTab) => new Dictionary<string, object?>
             {
-                [nameof(AstronomyObservationsTab.Location)] = location,
-                [nameof(AstronomyObservationsTab.RequestDateUtc)] = requestDateUtc
+                [nameof(AstronomyObservationsTab.Location)] = this.selectedLocation,
+                [nameof(AstronomyObservationsTab.RequestDateUtc)] = this.requestDateUtc
             },
-            _ when CurrentTab.ComponentType == typeof(AstronomyObservationPointsTab) => new Dictionary<string, object?>
+            _ when this.CurrentTab.ComponentType == typeof(AstronomyObservationPointsTab) => new Dictionary<string, object?>
             {
-                [nameof(AstronomyObservationPointsTab.Location)] = location,
-                [nameof(AstronomyObservationPointsTab.SelectedLocalDateTime)] = selectedLocalDateTime,
-                [nameof(AstronomyObservationPointsTab.ObservationPoints)] = observationPoints,
-                [nameof(AstronomyObservationPointsTab.SelectedObservationPoint)] = SelectedObservationPoint,
+                [nameof(AstronomyObservationPointsTab.Location)] = this.selectedLocation,
+                [nameof(AstronomyObservationPointsTab.Locations)] = this.locations,
+                [nameof(AstronomyObservationPointsTab.SelectedLocalDateTime)] = this.selectedLocalDateTime,
+                [nameof(AstronomyObservationPointsTab.ObservationPoints)] = this.observationPoints,
+                [nameof(AstronomyObservationPointsTab.SelectedObservationPoint)] = this.SelectedObservationPoint,
                 [nameof(AstronomyObservationPointsTab.ObservationPointSaved)] =
-                    EventCallback.Factory.Create<ObservationPoint>(this, OnObservationPointSaved),
+                    EventCallback.Factory.Create<ObservationPoint>(this, this.OnObservationPointSaved),
                 [nameof(AstronomyObservationPointsTab.ObservationPointDeleted)] =
-                    EventCallback.Factory.Create<int>(this, OnObservationPointDeleted),
+                    EventCallback.Factory.Create<int>(this, this.OnObservationPointDeleted),
                 [nameof(AstronomyObservationPointsTab.ObservationPointSelected)] =
-                    EventCallback.Factory.Create<int?>(this, OnObservationPointSelectedFromTab)
+                    EventCallback.Factory.Create<int?>(this, this.OnObservationPointSelectedFromTab)
             },
             _ => new Dictionary<string, object?>()
         };
 
-    private bool IsActive(IAstronomyTab tab) => tab.Key == activeTab;
+    private bool IsActive(IAstronomyTab tab) => tab.Key == this.activeTab;
 
-    private void ShowTab(string tabKey) => activeTab = tabKey;
+    private void ShowTab(string tabKey) => this.activeTab = tabKey;
 
     protected override async Task OnInitializedAsync()
     {
-        var nowInPoland = TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, AstronomyDefaults.LocalTimeZone);
-        selectedLocalDateTime = nowInPoland.DateTime;
-        UpdateRequestDate();
+        this.isLoadingLocations = true;
+        this.locationError = null;
 
-        await LoadObservationPointsAsync();
-    }
-
-    private Task OnLocationChanged(GeographicCoordinate newLocation)
-    {
-        location = newLocation;
-
-        if (SelectedObservationPoint is not null && !CoordinatesMatch(SelectedObservationPoint, newLocation))
+        try
         {
-            selectedObservationPointId = null;
+            this.locations = await this.LocationService.GetLocationsAsync();
+        }
+        catch (Exception exception)
+        {
+            this.locationError = $"Unable to load saved locations: {exception.Message}";
         }
 
-        return Task.CompletedTask;
+        if (this.locations.Count > 0)
+        {
+            try
+            {
+                await this.DateTimeService.SyncAsync();
+                this.selectedLocation = await this.LocationSelectionService.GetSelectedLocationAsync(
+                    LocationFeature.Astronomy);
+                this.InitializeLocalDateTime(this.selectedLocation, null);
+            }
+            catch (Exception exception)
+            {
+                this.locationError = $"Unable to load the astronomy location: {exception.Message}";
+            }
+        }
+
+        await this.LoadObservationPointsAsync();
+        this.isLoadingLocations = false;
+    }
+
+    private async Task OnLocationChangedAsync(ChangeEventArgs eventArgs)
+    {
+        if (!int.TryParse(eventArgs.Value?.ToString(), out var locationId))
+        {
+            this.locationError = "Select a valid astronomy location.";
+            return;
+        }
+
+        this.locationError = null;
+
+        try
+        {
+            if (this.requestDateUtc == default)
+            {
+                await this.DateTimeService.SyncAsync();
+            }
+
+            var currentInstant = this.requestDateUtc == default
+                ? new DateTimeOffset(
+                    DateTime.SpecifyKind(this.DateTimeService.UtcNow, DateTimeKind.Utc))
+                : new DateTimeOffset(
+                    DateTime.SpecifyKind(this.requestDateUtc, DateTimeKind.Utc));
+            this.selectedLocation = await this.LocationSelectionService.SetSelectedLocationAsync(
+                LocationFeature.Astronomy,
+                locationId);
+            if (this.SelectedObservationPoint?.LocationId != locationId)
+            {
+                this.selectedObservationPointId = null;
+            }
+
+            this.InitializeLocalDateTime(this.selectedLocation, currentInstant);
+        }
+        catch (Exception exception)
+        {
+            this.locationError = $"Unable to save the astronomy location: {exception.Message}";
+        }
     }
 
     private Task OnSelectedDateTimeChanged()
     {
-        UpdateRequestDate();
+        this.UpdateRequestDate();
         return Task.CompletedTask;
+    }
+
+    private void InitializeLocalDateTime(SavedLocation location, DateTimeOffset? instant)
+    {
+        var timeZone = TimeZoneInfo.FindSystemTimeZoneById(location.TimeZoneId);
+        var selectedInstant = instant
+            ?? new DateTimeOffset(
+                DateTime.SpecifyKind(this.DateTimeService.UtcNow, DateTimeKind.Utc));
+        this.selectedLocalDateTime = TimeZoneInfo.ConvertTime(selectedInstant, timeZone).DateTime;
+        this.UpdateRequestDate();
     }
 
     private void UpdateRequestDate()
     {
-        requestDateUtc = TimeZoneInfo.ConvertTimeToUtc(
-            DateTime.SpecifyKind(selectedLocalDateTime, DateTimeKind.Unspecified),
-            AstronomyDefaults.LocalTimeZone);
+        if (this.selectedLocation is null)
+        {
+            return;
+        }
+
+        var timeZone = TimeZoneInfo.FindSystemTimeZoneById(this.selectedLocation.TimeZoneId);
+        this.requestDateUtc = TimeZoneInfo.ConvertTimeToUtc(
+            DateTime.SpecifyKind(this.selectedLocalDateTime, DateTimeKind.Unspecified),
+            timeZone);
     }
 
     private async Task LoadObservationPointsAsync()
     {
-        isLoadingObservationPoints = true;
-        observationPointLoadError = null;
+        this.isLoadingObservationPoints = true;
+        this.observationPointLoadError = null;
 
         try
         {
-            observationPoints = await ObservationPointService.GetObservationPointsAsync();
+            this.observationPoints = await this.ObservationPointService.GetObservationPointsAsync();
         }
         catch (Exception exception)
         {
-            observationPoints = [];
-            observationPointLoadError = $"Unable to load observation points: {exception.Message}";
+            this.observationPoints = [];
+            this.observationPointLoadError = $"Unable to load observation points: {exception.Message}";
         }
         finally
         {
-            isLoadingObservationPoints = false;
+            this.isLoadingObservationPoints = false;
         }
     }
 
-    private Task OnObservationPointSelectedFromTab(int? observationPointId)
+    private async Task OnObservationPointSelectedFromTab(int? observationPointId)
     {
-        selectedObservationPointId = observationPointId;
-
-        if (SelectedObservationPoint is not null)
+        this.selectedObservationPointId = observationPointId;
+        if (this.SelectedObservationPoint?.LocationId is int locationId)
         {
-            location = SelectedObservationPoint.Coordinates;
+            await this.SelectLocationAsync(locationId);
         }
-
-        return Task.CompletedTask;
-    }
-
-    private Task OnObservationPointSelected()
-    {
-        var selectedPoint = SelectedObservationPoint;
-        if (selectedPoint is not null)
-        {
-            location = selectedPoint.Coordinates;
-        }
-
-        return Task.CompletedTask;
     }
 
     private async Task OnObservationPointSaved(ObservationPoint observationPoint)
     {
-        await LoadObservationPointsAsync();
-        selectedObservationPointId = observationPoint.Id;
-        location = observationPoint.Coordinates;
+        await this.LoadObservationPointsAsync();
+        this.selectedObservationPointId = observationPoint.Id;
+
+        if (observationPoint.LocationId is int locationId)
+        {
+            await this.SelectLocationAsync(locationId);
+        }
     }
 
     private async Task OnObservationPointDeleted(int observationPointId)
     {
-        var wasSelected = selectedObservationPointId == observationPointId;
-        await LoadObservationPointsAsync();
-
-        if (wasSelected)
+        if (this.selectedObservationPointId == observationPointId)
         {
-            selectedObservationPointId = null;
-            location = AstronomyDefaults.Location;
+            this.selectedObservationPointId = null;
         }
+
+        await this.LoadObservationPointsAsync();
     }
 
-    private static bool CoordinatesMatch(ObservationPoint observationPoint, GeographicCoordinate coordinate) =>
-        observationPoint.Latitude == coordinate.Latitude.Degrees
-        && observationPoint.Longitude == coordinate.Longitude.Degrees
-        && (observationPoint.ElevationMeters ?? 0) == coordinate.ElevationMeters;
+    private async Task SelectLocationAsync(int locationId)
+    {
+        if (this.selectedLocation?.Id == locationId)
+        {
+            return;
+        }
+
+        var currentInstant = new DateTimeOffset(
+            DateTime.SpecifyKind(this.requestDateUtc, DateTimeKind.Utc));
+        this.selectedLocation = await this.LocationSelectionService.SetSelectedLocationAsync(
+            LocationFeature.Astronomy,
+            locationId);
+        this.InitializeLocalDateTime(this.selectedLocation, currentInstant);
+    }
 }

@@ -1,3 +1,5 @@
+using HomeServerPage.Client.Data.Locations;
+using HomeServerPage.Data.Locations;
 using HomeServerPage.Data.Weather;
 using Microsoft.AspNetCore.Mvc;
 
@@ -5,15 +7,24 @@ namespace HomeServerPage.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public sealed class WeatherController(IWeatherService weatherService) : ControllerBase
+public sealed class WeatherController(
+    IWeatherService weatherService,
+    ILocationService locationService) : ControllerBase
 {
     [HttpGet("current")]
     public async Task<ActionResult<WeatherSnapshot>> GetCurrent(
+        [FromQuery] int locationId,
         CancellationToken cancellationToken = default)
     {
+        var location = await locationService.GetLocationAsync(locationId, cancellationToken);
+        if (location is null)
+        {
+            return NotFound($"Location {locationId} was not found.");
+        }
+
         try
         {
-            return Ok(await weatherService.GetCurrentAsync(cancellationToken));
+            return Ok(await weatherService.GetCurrentAsync(location, cancellationToken));
         }
         catch (WeatherApiException exception)
         {
@@ -28,6 +39,7 @@ public sealed class WeatherController(IWeatherService weatherService) : Controll
 
     [HttpGet("forecast")]
     public async Task<ActionResult<WeatherForecast>> GetForecast(
+        [FromQuery] int locationId,
         [FromQuery] int days = 3,
         CancellationToken cancellationToken = default)
     {
@@ -36,9 +48,15 @@ public sealed class WeatherController(IWeatherService weatherService) : Controll
             return BadRequest("Forecast days must be between 1 and 14.");
         }
 
+        var location = await locationService.GetLocationAsync(locationId, cancellationToken);
+        if (location is null)
+        {
+            return NotFound($"Location {locationId} was not found.");
+        }
+
         try
         {
-            return Ok(await weatherService.GetForecastAsync(days, cancellationToken));
+            return Ok(await weatherService.GetForecastAsync(location, days, cancellationToken));
         }
         catch (WeatherApiException exception)
         {
@@ -53,12 +71,19 @@ public sealed class WeatherController(IWeatherService weatherService) : Controll
 
     [HttpGet("astronomy")]
     public async Task<ActionResult<WeatherAstronomy>> GetAstronomy(
+        [FromQuery] int locationId,
         [FromQuery] DateOnly date,
         CancellationToken cancellationToken = default)
     {
+        var location = await locationService.GetLocationAsync(locationId, cancellationToken);
+        if (location is null)
+        {
+            return NotFound($"Location {locationId} was not found.");
+        }
+
         try
         {
-            return Ok(await weatherService.GetAstronomyAsync(date, cancellationToken));
+            return Ok(await weatherService.GetAstronomyAsync(location, date, cancellationToken));
         }
         catch (WeatherApiException exception)
         {

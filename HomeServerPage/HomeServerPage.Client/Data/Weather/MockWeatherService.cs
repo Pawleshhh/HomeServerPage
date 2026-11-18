@@ -1,30 +1,32 @@
+using HomeServerPage.Data.Locations;
+using HomeServerPage.Data;
+
 namespace HomeServerPage.Data.Weather;
 
-public sealed class MockWeatherService : IWeatherService
+public sealed class MockWeatherService(IDateTimeService dateTimeService) : IWeatherService
 {
-    private static readonly WeatherLocation Location = new(
-        "Szczecin",
-        "West Pomeranian",
-        "Poland",
-        53.4285m,
-        14.5528m,
-        "Europe/Warsaw",
-        DateTimeOffset.Now);
-
-    public Task<WeatherSnapshot> GetCurrentAsync(CancellationToken cancellationToken = default)
+    public async Task<WeatherSnapshot> GetCurrentAsync(
+        SavedLocation location,
+        CancellationToken cancellationToken = default)
     {
-        return Task.FromResult(CreateCurrent());
+        await dateTimeService.SyncAsync(cancellationToken);
+        return CreateCurrent(location, GetUtcNow());
     }
 
-    public Task<WeatherForecast> GetForecastAsync(
+    public async Task<WeatherForecast> GetForecastAsync(
+        SavedLocation location,
         int days = 3,
         CancellationToken cancellationToken = default)
     {
-        var current = CreateCurrent();
+        await dateTimeService.SyncAsync(cancellationToken);
+        var utcNow = GetUtcNow();
+        var current = CreateCurrent(location, utcNow);
+        var timeZone = TimeZoneInfo.FindSystemTimeZoneById(location.TimeZoneId);
+        var localDate = DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(utcNow, timeZone).DateTime);
         var forecastDays = Enumerable.Range(0, Math.Clamp(days, 1, 14))
             .Select(offset =>
             {
-                var date = DateOnly.FromDateTime(DateTime.Today.AddDays(offset));
+                var date = localDate.AddDays(offset);
                 return new WeatherForecastDay(
                     date,
                     20m + offset,
@@ -44,10 +46,11 @@ public sealed class MockWeatherService : IWeatherService
             })
             .ToArray();
 
-        return Task.FromResult(new WeatherForecast(current, forecastDays));
+        return new WeatherForecast(current, forecastDays);
     }
 
     public Task<WeatherAstronomy> GetAstronomyAsync(
+        SavedLocation location,
         DateOnly date,
         CancellationToken cancellationToken = default)
     {
@@ -60,10 +63,21 @@ public sealed class MockWeatherService : IWeatherService
             35));
     }
 
-    private static WeatherSnapshot CreateCurrent() =>
-        new(
-            Location,
-            DateTimeOffset.Now,
+    private static WeatherSnapshot CreateCurrent(SavedLocation location, DateTimeOffset utcNow)
+    {
+        var timeZone = TimeZoneInfo.FindSystemTimeZoneById(location.TimeZoneId);
+        var weatherLocation = new WeatherLocation(
+            location.Name,
+            string.Empty,
+            string.Empty,
+            (decimal)location.Latitude,
+            (decimal)location.Longitude,
+            location.TimeZoneId,
+            TimeZoneInfo.ConvertTime(utcNow, timeZone));
+
+        return new WeatherSnapshot(
+            weatherLocation,
+            utcNow,
             18.4m,
             17.8m,
             64,
@@ -77,4 +91,11 @@ public sealed class MockWeatherService : IWeatherService
             3m,
             new WeatherCondition("Partly cloudy", "https://cdn.weatherapi.com/weather/64x64/day/116.png", 1003),
             new WeatherAirQuality(224.5m, 18.2m, 72.1m, 3.4m, 8.6m, 14.2m, 1, 2));
+    }
+
+    private DateTimeOffset GetUtcNow()
+    {
+        var utcNow = DateTime.SpecifyKind(dateTimeService.UtcNow, DateTimeKind.Utc);
+        return new DateTimeOffset(utcNow);
+    }
 }

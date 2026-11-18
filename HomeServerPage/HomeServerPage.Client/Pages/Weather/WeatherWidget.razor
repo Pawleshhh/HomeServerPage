@@ -1,6 +1,8 @@
 @using HomeServerPage.Data.Weather
+@using HomeServerPage.Data.Locations
 @implements IDisposable
 @inject IWeatherService WeatherService
+@inject HomeServerPage.Client.Data.Locations.ILocationSelectionService LocationSelectionService
 @inject HomeServerPage.Client.Data.TabletDashboardRefreshService DashboardRefreshService
 
 <section class="dashboard-card dashboard-card-weather card h-100" aria-labelledby="weather-widget-heading">

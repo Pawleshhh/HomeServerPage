@@ -14,6 +14,7 @@ Follow the existing service and component patterns when changing behavior. Keep 
 
 - The site has a normal responsive mode and a compact `TabletDashboard` mode. The primary touch display is approximately 1024x600.
 - Keep normal and tablet navigation, layouts, and page behavior consistent with the existing mode-specific patterns.
+- Keep related form labels and controls vertically aligned: use consistent label space and control heights within a row, and place loading/error/help messages so they do not shift one field relative to another. Preserve alignment when the layout wraps.
 - Preserve light and dark theme support, loading/error states, and correct refresh behavior when changing pages or widgets.
 - Keep project work on the active branch. Do not create another branch, stash changes, or commit unless the user explicitly asks.
 - For new product or UX work, ask about unresolved behavior, scope, or layout choices before implementation instead of silently choosing defaults. Ask focused questions and wait for answers where the decision affects user-visible behavior. Do not ask about choices already answered by the request or established code.

@@ -1,6 +1,8 @@
 @using HomeServerPage.Data.Weather
+@using HomeServerPage.Data.Locations
 @using WeatherForecastModel = HomeServerPage.Data.Weather.WeatherForecast
 @inject IWeatherService WeatherService
+@inject HomeServerPage.Client.Data.Locations.ILocationSelectionService LocationSelectionService
 
 <section class="weather-forecast dashboard-card" aria-labelledby="weather-forecast-heading">
     <div class="card-body">
@@ -9,23 +11,23 @@
                 <span class="dashboard-card-icon" aria-hidden="true"><i class="bi bi-calendar3"></i></span>
                 <div>
                     <h2 id="weather-forecast-heading" class="dashboard-card-title">Forecast</h2>
-                    <p class="dashboard-card-subtitle">The next few days in @LocationLabel.</p>
+                    <p class="dashboard-card-subtitle">The next few days in @this.LocationLabel.</p>
                 </div>
             </div>
         </div>
 
-        @if (isLoading)
+        @if (this.isLoading)
         {
             <p class="dashboard-card-status" role="status">Loading forecast…</p>
         }
-        else if (loadError is not null)
+        else if (this.loadError is not null)
         {
-            <p class="dashboard-card-status is-error mb-0" role="alert">@loadError</p>
+            <p class="dashboard-card-status is-error mb-0" role="alert">@this.loadError</p>
         }
-        else if (forecast is not null)
+        else if (this.forecast is not null)
         {
             <div class="weather-forecast-list">
-                @foreach (var day in forecast.Days)
+                @foreach (var day in this.forecast.Days)
                 {
                     <article class="weather-forecast-day">
                         <div class="weather-forecast-day-heading">

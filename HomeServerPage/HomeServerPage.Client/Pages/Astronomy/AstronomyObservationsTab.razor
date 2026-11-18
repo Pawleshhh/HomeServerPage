@@ -1,6 +1,7 @@
 @using AstroCalc.Core
 @using HomeServerPage.Data.Astronomy
 @using HomeServerPage.Data.Weather
+@using HomeServerPage.Data.Locations
 
 @inject IAstronomyService AstronomyService
 @inject IWeatherService WeatherService
@@ -11,47 +12,49 @@
             <div class="d-flex justify-content-between align-items-baseline mb-3">
                 <h2 id="celestial-body-list-heading" class="h4 mb-0">Celestial bodies</h2>
 
-                @if (observationTime is not null)
+                @if (this.observationTime is not null)
                 {
                     <small class="text-body-secondary">
-                        @observationTime.Value.ToString("g")
+                        @this.observationTime.Value.ToString("g")
                     </small>
                 }
             </div>
 
-            @if (isLoading)
+            @if (this.isLoading)
             {
                 <p class="text-body-secondary">Loading celestial observations…</p>
             }
-            else if (loadError is not null)
+            else if (this.loadError is not null)
             {
                 <div class="alert alert-danger" role="alert">
-                    @loadError
+                    @this.loadError
                 </div>
             }
             else
             {
-                <MoonPhase Astronomy="moonAstronomy" ObservationDateUtc="RequestDateUtc" />
-                <PlanetObservationList Observations="solarSystemObservations" RequestDateUtc="RequestDateUtc" />
+                <MoonPhase Astronomy="this.moonAstronomy" ObservationDateUtc="this.RequestDateUtc" />
+                <PlanetObservationList Observations="this.solarSystemObservations"
+                                       RequestDateUtc="this.RequestDateUtc"
+                                       LocationTimeZone="this.LocationTimeZone" />
             }
         </section>
 
         <section class="astronomy-panel astronomy-future-panel" aria-labelledby="astronomy-future-heading">
             <h2 id="astronomy-future-heading" class="h5">Visible Messier objects</h2>
 
-            @if (isLoading)
+            @if (this.isLoading)
             {
                 <p class="text-body-secondary mb-0" role="status">Loading Messier observations…</p>
             }
-            else if (loadError is null && messierObservations.Count == 0)
+            else if (this.loadError is null && this.messierObservations.Count == 0)
             {
                 <p class="text-body-secondary mb-0">No Messier objects rise and set at this location.</p>
             }
-            else if (loadError is null)
+            else if (this.loadError is null)
             {
                 <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
                     <label class="small text-body-secondary" for="messier-sort">Sort by</label>
-                    <select id="messier-sort" class="form-select form-select-sm w-auto" @bind="messierSort">
+                    <select id="messier-sort" class="form-select form-select-sm w-auto" @bind="this.messierSort">
                         <option value="@MessierSort.Name">Name</option>
                         <option value="@MessierSort.RiseTime">Rise time</option>
                         <option value="@MessierSort.SetTime">Set time</option>
@@ -60,13 +63,13 @@
 
                 <div class="messier-observation-list">
                     <div class="messier-observation-items">
-                        @foreach (var messier in SortedMessierObservations)
+                        @foreach (var messier in this.SortedMessierObservations)
                         {
                             <article class="astronomy-object-card messier-observation-item">
                                 <span class="messier-observation-name">@messier.Name</span>
                                 <div class="messier-observation-times">
-                                    <span>Rise @messier.TransitResult.RiseUT.FormatUtHours(RequestDateUtc, AstronomyDefaults.LocalTimeZone)</span>
-                                    <span>Set @messier.TransitResult.SetUT.FormatUtHours(RequestDateUtc, AstronomyDefaults.LocalTimeZone)</span>
+                                    <span>Rise @messier.TransitResult.RiseUT.FormatUtHours(RequestDateUtc, LocationTimeZone)</span>
+                                    <span>Set @messier.TransitResult.SetUT.FormatUtHours(RequestDateUtc, LocationTimeZone)</span>
                                 </div>
                             </article>
                         }

@@ -15,6 +15,7 @@ using HomeServerPage.Data;
 using HomeServerPage.Data.Astronomy;
 using HomeServerPage.Data.Weather;
 using HomeServerPage.Client.Data;
+using HomeServerPage.Data.Locations;
 
 namespace HomeServerPage.Client.Pages.Astronomy;
 
@@ -33,14 +34,17 @@ public partial class AstronomyWidget
     private WeatherAstronomy? moonAstronomy;
     private DateTime requestDateUtc;
     private DateTimeOffset? observationTime;
+    private SavedLocation? location;
+    private TimeZoneInfo LocationTimeZone =>
+        TimeZoneInfo.FindSystemTimeZoneById(this.location?.TimeZoneId ?? "Etc/UTC");
     private bool isLoading = true;
     private string? loadError;
 
     protected override async Task OnInitializedAsync()
     {
-        if (AutoRefresh)
+        if (this.AutoRefresh)
         {
-            DashboardRefreshService.WidgetRefreshRequested += this.HandleWidgetRefreshRequestedAsync;
+            this.DashboardRefreshService.WidgetRefreshRequested += this.HandleWidgetRefreshRequestedAsync;
         }
 
         await this.LoadObservationsAsync();
@@ -68,20 +72,29 @@ public partial class AstronomyWidget
 
         try
         {
-            await DateTimeService.SyncAsync();
-            var nowInPoland = DateTimeService.Now;
-            this.requestDateUtc = DateTimeService.UtcNow;
-            this.observationTime = nowInPoland;
+            await this.DateTimeService.SyncAsync();
+            this.location = await this.LocationSelectionService.GetSelectedLocationAsync(
+                LocationFeature.Astronomy);
+            var locationTimeZone = TimeZoneInfo.FindSystemTimeZoneById(this.location.TimeZoneId);
+            var utcNow = DateTime.SpecifyKind(this.DateTimeService.UtcNow, DateTimeKind.Utc);
+            this.requestDateUtc = utcNow;
+            this.observationTime = TimeZoneInfo.ConvertTime(
+                new DateTimeOffset(utcNow),
+                locationTimeZone);
+            var localDate = DateOnly.FromDateTime(this.observationTime.Value.DateTime);
 
             var solarSystemObservationsTask = AstronomyObservationLoader.LoadSolarSystemAsync(
-                AstronomyService,
+                this.AstronomyService,
                 this.requestDateUtc,
-                AstronomyDefaults.Location);
-            var moonAstronomyTask = WeatherService.GetAstronomyAsync(
-                DateOnly.FromDateTime(this.requestDateUtc));
+                this.location.Coordinates);
+            var moonAstronomyTask = this.WeatherService.GetAstronomyAsync(
+                this.location,
+                localDate);
             await Task.WhenAll(solarSystemObservationsTask, moonAstronomyTask);
             var solarObservations = await solarSystemObservationsTask;
-            this.solarSystemObservations = solarObservations.Where(p => p.Key != "uranus" && p.Key != "neptune").ToList();
+            this.solarSystemObservations = solarObservations
+                .Where(observation => observation.Key != "uranus" && observation.Key != "neptune")
+                .ToList();
             this.moonAstronomy = await moonAstronomyTask;
         }
         catch (Exception exception)
@@ -96,9 +109,9 @@ public partial class AstronomyWidget
 
     public void Dispose()
     {
-        if (AutoRefresh)
+        if (this.AutoRefresh)
         {
-            DashboardRefreshService.WidgetRefreshRequested -= this.HandleWidgetRefreshRequestedAsync;
+            this.DashboardRefreshService.WidgetRefreshRequested -= this.HandleWidgetRefreshRequestedAsync;
         }
     }
 }

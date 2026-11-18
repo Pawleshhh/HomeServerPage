@@ -1,6 +1,7 @@
 @page "/weather"
 @page "/tablet-dashboard/weather"
 @using HomeServerPage.Client.Pages.Weather
+@using HomeServerPage.Data.Locations
 
 <PageTitle>Weather</PageTitle>
 
@@ -9,6 +10,49 @@
                 Description="Current conditions and a quick look at the day ahead."
                 Accent="transport" />
 
-    <WeatherWidget />
-    <WeatherForecast />
+    <section class="dashboard-card mb-4" aria-labelledby="weather-location-heading">
+        <div class="card-body">
+            <label id="weather-location-heading" class="form-label" for="weather-location-select">Weather location</label>
+            @if (this.isLoadingLocation)
+            {
+                <p class="form-text" role="status">Loading locations…</p>
+            }
+            else if (this.locationError is not null && this.locations.Count == 0)
+            {
+                <p class="text-danger mb-0" role="alert">@this.locationError</p>
+            }
+            else if (this.locations.Count == 0)
+            {
+                <p class="text-danger mb-0" role="alert">
+                    No saved locations are available. Add one in <a href="settings">Settings</a>.
+                </p>
+            }
+            else
+            {
+                @if (this.locationError is not null)
+                {
+                    <p class="text-danger" role="alert">@this.locationError</p>
+                }
+                <select id="weather-location-select"
+                        class="form-select"
+                        value="@this.selectedLocation?.Id"
+                        @onchange="this.OnLocationChangedAsync">
+                    @if (this.selectedLocation is null)
+                    {
+                        <option value="">Choose a saved location</option>
+                    }
+                    @foreach (var location in this.locations)
+                    {
+                        <option value="@location.Id">@location.Name</option>
+                    }
+                </select>
+            }
+        </div>
+    </section>
+
+    @if (this.selectedLocation is not null)
+    {
+        <WeatherWidget @key="this.selectedLocation.Id" Location="this.selectedLocation" />
+        <WeatherForecast @key="this.selectedLocation.Id" Location="this.selectedLocation" />
+    }
 </div>

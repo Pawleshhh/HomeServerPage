@@ -3,8 +3,10 @@
 
 @using AstroCalc.Core
 @using HomeServerPage.Data.Astronomy
+@using HomeServerPage.Data.Locations
 
 @inject IObservationPointService ObservationPointService
+@inject HomeServerPage.Data.IDateTimeService DateTimeService
 
 <PageTitle>Astronomy</PageTitle>
 
@@ -17,66 +19,87 @@
         <h2 id="observer-settings-heading" class="visually-hidden">Observation settings</h2>
         <div class="row g-3 astronomy-settings-grid">
             <div class="col-12 col-lg-8">
-                <label class="form-label" for="observation-point-select">Observation point</label>
-                @if (isLoadingObservationPoints)
-                {
-                    <p class="form-text mt-0 mb-2" role="status">Loading saved observation points...</p>
-                }
-                else
-                {
-                    <select id="observation-point-select"
-                            class="form-select mb-2"
-                            @bind="selectedObservationPointId"
-                            @bind:after="OnObservationPointSelected">
-                        <option value="">Custom location</option>
-                        @foreach (var observationPoint in observationPoints)
-                        {
-                            <option value="@observationPoint.Id">@observationPoint.Name</option>
-                        }
-                    </select>
-                }
-
-                @if (observationPointLoadError is not null)
-                {
-                    <p class="form-text text-danger mt-0 mb-2">@observationPointLoadError</p>
-                }
-
-                <GeoLocationInput Value="location" ValueChanged="OnLocationChanged" />
+                <label class="form-label" for="astronomy-location-select">Astronomy location</label>
+                <select id="astronomy-location-select"
+                        class="form-select"
+                        value="@this.selectedLocation?.Id"
+                        disabled="@(this.isLoadingLocations || this.locations.Count == 0)"
+                        @onchange="this.OnLocationChangedAsync">
+                    @if (this.isLoadingLocations)
+                    {
+                        <option value="">Loading locations…</option>
+                    }
+                    else if (this.locations.Count == 0)
+                    {
+                        <option value="">No saved locations</option>
+                    }
+                    else if (this.selectedLocation is null)
+                    {
+                        <option value="">Choose a saved location</option>
+                    }
+                    @foreach (var location in this.locations)
+                    {
+                        <option value="@location.Id">@location.Name</option>
+                    }
+                </select>
             </div>
 
             <div class="col-12 col-lg-4">
                 <EditForm Model="this">
                     <label class="form-label" for="observation-datetime">Observation date and time</label>
                     <InputDate id="observation-datetime"
-                               @bind-Value="selectedLocalDateTime"
-                               @bind-Value:after="OnSelectedDateTimeChanged"
+                               @bind-Value="this.selectedLocalDateTime"
+                               @bind-Value:after="this.OnSelectedDateTimeChanged"
                                Type="InputDateType.DateTimeLocal"
                                class="form-control" />
                 </EditForm>
             </div>
         </div>
+
+        @if (this.locationError is not null)
+        {
+            <p class="form-text text-danger mt-3 mb-0" role="alert">@this.locationError</p>
+        }
+        else if (!this.isLoadingLocations && this.locations.Count == 0)
+        {
+            <p class="form-text text-danger mt-3 mb-0" role="alert">
+                No saved locations are available. Add one in <a href="settings">Settings</a>.
+            </p>
+        }
+
+        @if (this.isLoadingObservationPoints)
+        {
+            <p class="form-text mt-2 mb-0" role="status">Loading observation points...</p>
+        }
+        else if (this.observationPointLoadError is not null)
+        {
+            <p class="form-text text-danger mt-2 mb-0" role="alert">@this.observationPointLoadError</p>
+        }
     </section>
 
-    <ul class="nav nav-tabs astronomy-tabs" role="tablist" aria-label="Astronomy sections">
-        @foreach (var tab in astronomyTabs)
-        {
-            <li class="nav-item" role="presentation">
-                <button id="@tab.Key-tab"
-                        class='nav-link astronomy-tab-button @(IsActive(tab) ? "active" : null)'
-                        type="button"
-                        role="tab"
-                        aria-controls="@tab.PanelId"
-                        aria-selected="@IsActive(tab)"
-                        @onclick="() => ShowTab(tab.Key)">
-                    @tab.Label
-                </button>
-            </li>
-        }
-    </ul>
+    @if (this.selectedLocation is not null)
+    {
+        <ul class="nav nav-tabs astronomy-tabs" role="tablist" aria-label="Astronomy sections">
+            @foreach (var tab in astronomyTabs)
+            {
+                <li class="nav-item" role="presentation">
+                    <button id="@tab.Key-tab"
+                            class='nav-link astronomy-tab-button @(this.IsActive(tab) ? "active" : null)'
+                            type="button"
+                            role="tab"
+                            aria-controls="@tab.PanelId"
+                            aria-selected="@this.IsActive(tab)"
+                            @onclick="() => this.ShowTab(tab.Key)">
+                        @tab.Label
+                    </button>
+                </li>
+            }
+        </ul>
 
-    <div class="astronomy-tab-content">
-        <DynamicComponent @key="CurrentTab.Key"
-                          Type="CurrentTab.ComponentType"
-                          Parameters="CurrentTabParameters" />
-    </div>
+        <div class="astronomy-tab-content">
+            <DynamicComponent @key="this.CurrentTab.Key"
+                              Type="this.CurrentTab.ComponentType"
+                              Parameters="this.CurrentTabParameters" />
+        </div>
+    }
 </div>

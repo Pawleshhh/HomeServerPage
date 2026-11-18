@@ -12,6 +12,7 @@ using HomeServerPage.Client.Layout;
 using HomeServerPage.Client.Shared;
 using HomeServerPage.Shared.Extensions;
 using HomeServerPage.Data.Weather;
+using HomeServerPage.Data.Locations;
 using HomeServerPage.Client.Data;
 
 namespace HomeServerPage.Client.Pages.Weather;
@@ -23,21 +24,40 @@ public partial class WeatherWidget
     private string? loadError;
     private WeatherForecastDay? forecastDay;
     private WeatherForecastDay? nextDayForecast;
+    private SavedLocation? location;
+    private int? loadedLocationId;
+
+    [Parameter]
+    public SavedLocation? Location { get; set; }
 
     [Parameter]
     public bool AutoRefresh { get; set; }
 
-    private string LocationLabel => this.snapshot?.Location.Name ?? "Szczecin";
+    private string LocationLabel => this.location?.Name ?? this.snapshot?.Location.Name ?? "Default";
     private string WeatherIconClass => WeatherConditionIcons.GetIconClass(this.snapshot?.Condition.Text);
     private int RainChancePercent => this.forecastDay?.ChanceOfRainPercent ?? 0;
 
-    protected override async Task OnInitializedAsync()
+    protected override Task OnInitializedAsync()
     {
-        if (AutoRefresh)
+        if (this.AutoRefresh)
         {
-            DashboardRefreshService.WidgetRefreshRequested += this.HandleWidgetRefreshRequestedAsync;
+            this.DashboardRefreshService.WidgetRefreshRequested += this.HandleWidgetRefreshRequestedAsync;
         }
 
+        return Task.CompletedTask;
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var selectedLocation = this.Location ?? await this.LocationSelectionService.GetSelectedLocationAsync(
+            LocationFeature.Weather);
+        if (this.loadedLocationId == selectedLocation.Id)
+        {
+            return;
+        }
+
+        this.location = selectedLocation;
+        this.loadedLocationId = selectedLocation.Id;
         await this.LoadWeatherAsync();
     }
 
@@ -48,14 +68,18 @@ public partial class WeatherWidget
 
         try
         {
-            var forecast = await WeatherService.GetForecastAsync(2);
+            var selectedLocation = this.Location
+                ?? await this.LocationSelectionService.GetSelectedLocationAsync(LocationFeature.Weather);
+            this.location = selectedLocation;
+            this.loadedLocationId = selectedLocation.Id;
+            var forecast = await this.WeatherService.GetForecastAsync(selectedLocation, 2);
             this.snapshot = forecast.Current;
             this.forecastDay = forecast.Days.FirstOrDefault();
             this.nextDayForecast = forecast.Days.Skip(1).FirstOrDefault();
         }
-        catch (Exception)
+        catch (Exception exception)
         {
-            this.loadError = "Could not load weather.";
+            this.loadError = $"Could not load weather: {exception.Message}";
         }
         finally
         {
@@ -78,9 +102,9 @@ public partial class WeatherWidget
 
     public void Dispose()
     {
-        if (AutoRefresh)
+        if (this.AutoRefresh)
         {
-            DashboardRefreshService.WidgetRefreshRequested -= this.HandleWidgetRefreshRequestedAsync;
+            this.DashboardRefreshService.WidgetRefreshRequested -= this.HandleWidgetRefreshRequestedAsync;
         }
     }
 }

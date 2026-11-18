@@ -1252,9 +1252,6 @@ namespace HomeServerPage.Migrations.AstronomyDb
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<double?>("ElevationMeters")
-                        .HasColumnType("REAL");
-
                     b.Property<double>("HorizonEast")
                         .HasColumnType("REAL");
 
@@ -1279,11 +1276,8 @@ namespace HomeServerPage.Migrations.AstronomyDb
                     b.Property<double>("HorizonWest")
                         .HasColumnType("REAL");
 
-                    b.Property<double>("Latitude")
-                        .HasColumnType("REAL");
-
-                    b.Property<double>("Longitude")
-                        .HasColumnType("REAL");
+                    b.Property<int?>("LocationId")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -1292,15 +1286,15 @@ namespace HomeServerPage.Migrations.AstronomyDb
 
                     b.HasKey("Id");
 
+                    b.HasIndex("LocationId");
+
                     b.HasIndex("Name");
 
                     b.ToTable("ObservationPoints", t =>
                         {
                             t.HasCheckConstraint("CK_ObservationPoints_HorizonAltitudes", "HorizonNorth >= 0 AND HorizonNorth <= 90 AND HorizonNorthEast >= 0 AND HorizonNorthEast <= 90 AND HorizonEast >= 0 AND HorizonEast <= 90 AND HorizonSouthEast >= 0 AND HorizonSouthEast <= 90 AND HorizonSouth >= 0 AND HorizonSouth <= 90 AND HorizonSouthWest >= 0 AND HorizonSouthWest <= 90 AND HorizonWest >= 0 AND HorizonWest <= 90 AND HorizonNorthWest >= 0 AND HorizonNorthWest <= 90");
 
-                            t.HasCheckConstraint("CK_ObservationPoints_Latitude", "Latitude >= -90 AND Latitude <= 90");
-
-                            t.HasCheckConstraint("CK_ObservationPoints_Longitude", "Longitude >= -180 AND Longitude <= 180");
+                            t.HasCheckConstraint("CK_ObservationPoints_LocationId", "LocationId IS NOT NULL AND LocationId > 0");
                         });
                 });
 #pragma warning restore 612, 618

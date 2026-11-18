@@ -1,4 +1,5 @@
 using HomeServerPage.Client.Data;
+using HomeServerPage.Client.Data.Locations;
 using HomeServerPage.Client.Data.Astronomy.Telescopes;
 using HomeServerPage.Data;
 using HomeServerPage.Data.Astronomy;
@@ -8,6 +9,7 @@ using HomeServerPage.Data.Exercise;
 using HomeServerPage.Data.Fridge;
 using HomeServerPage.Data.Notifications;
 using HomeServerPage.Data.PublicTransport;
+using HomeServerPage.Data.Locations;
 using HomeServerPage.Data.Weather;
 using Microsoft.EntityFrameworkCore;
 
@@ -44,6 +46,7 @@ public static class ServerServiceCollectionExtensions
 
         AddFridgeServices(services, configuration);
         AddAstronomyServices(services, configuration);
+        AddLocationServices(services, configuration, environment);
         AddCaloriesServices(services, configuration);
         AddExerciseServices(services, configuration);
         AddWeatherServices(services, configuration, environment);
@@ -66,6 +69,35 @@ public static class ServerServiceCollectionExtensions
         services.AddScoped<IAstronomyService, AstronomyService>();
         services.AddScoped<IObservationPointService, ObservationPointService>();
         services.AddScoped<ITelescopeService, TelescopeService>();
+        services.AddScoped<ILocationReferenceChecker, LocationReferenceChecker>();
+    }
+
+    private static void AddLocationServices(
+        IServiceCollection services,
+        IConfiguration configuration,
+        IHostEnvironment environment)
+    {
+        var connectionString = configuration.GetConnectionString("LocationsDbConnection");
+        services.AddDbContextFactory<LocationsDbContext>(options => options.UseSqlite(connectionString));
+        services.AddSingleton<LocationOperationCoordinator>();
+        services.AddScoped<ILocationService, LocationService>();
+        services.AddScoped<ILocationSelectionService, LocationSelectionService>();
+        services.AddScoped<LegacyObservationPointLocationBackfill>();
+        services.AddScoped<LocationDatabaseInitializer>(serviceProvider =>
+            new LocationDatabaseInitializer(
+                serviceProvider.GetRequiredService<IDbContextFactory<LocationsDbContext>>(),
+                weatherBootstrapEnabled: !environment.IsDevelopment()));
+
+        if (environment.IsDevelopment())
+        {
+            services.AddScoped<IWeatherLocationResolver, UnavailableWeatherLocationResolver>();
+            return;
+        }
+
+        services.AddHttpClient<IWeatherLocationResolver, WeatherApiLocationResolver>(client =>
+        {
+            client.BaseAddress = new Uri("https://api.weatherapi.com/v1/");
+        });
     }
 
     private static void AddCaloriesServices(IServiceCollection services, IConfiguration configuration)
@@ -87,12 +119,6 @@ public static class ServerServiceCollectionExtensions
         IConfiguration configuration,
         IHostEnvironment environment)
     {
-        if (environment.IsDevelopment())
-        {
-            services.AddScoped<IWeatherService, MockWeatherService>();
-            return;
-        }
-
         services.AddOptions<WeatherApiOptions>()
             .Configure(options =>
             {
@@ -106,6 +132,13 @@ public static class ServerServiceCollectionExtensions
                     ? Math.Clamp(forecastDays, 1, 14)
                     : 3;
             });
+
+        if (environment.IsDevelopment())
+        {
+            services.AddScoped<IWeatherService, MockWeatherService>();
+            return;
+        }
+
         services.AddHttpClient<IWeatherService, WeatherApiService>(client =>
         {
             client.BaseAddress = new Uri("https://api.weatherapi.com/v1/");

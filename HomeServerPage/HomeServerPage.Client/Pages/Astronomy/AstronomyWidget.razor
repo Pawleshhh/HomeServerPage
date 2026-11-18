@@ -1,11 +1,13 @@
 @using HomeServerPage.Data
 @using HomeServerPage.Data.Astronomy
 @using HomeServerPage.Data.Weather
+@using HomeServerPage.Data.Locations
 @implements IDisposable
 
 @inject IAstronomyService AstronomyService
 @inject IWeatherService WeatherService
 @inject IDateTimeService DateTimeService
+@inject HomeServerPage.Client.Data.Locations.ILocationSelectionService LocationSelectionService
 @inject HomeServerPage.Client.Data.TabletDashboardRefreshService DashboardRefreshService
 
 <section class="dashboard-card dashboard-card-astronomy astronomy-widget card h-100" aria-labelledby="astronomy-widget-heading">
@@ -19,7 +21,7 @@
                                           OnRefresh="this.HandleRefreshRequestedAsync" />
                 <div>
                     <h2 id="astronomy-widget-heading" class="dashboard-card-title">Astronomy</h2>
-                    <p class="dashboard-card-subtitle">Solar, planetary, and lunar visibility for Szczecin.</p>
+                    <p class="dashboard-card-subtitle">Solar, planetary, and lunar visibility for @this.location?.Name.</p>
                 </div>
             </div>
             <a class="btn btn-sm btn-outline-primary dashboard-card-action" href="@DetailsHref">Open sky tools</a>
@@ -45,6 +47,7 @@
                 <div class="astronomy-widget-observations">
                     <PlanetObservationList Observations="@this.solarSystemObservations"
                                            RequestDateUtc="@this.requestDateUtc"
+                                           LocationTimeZone="@this.LocationTimeZone"
                                            Compact="true"
                                            TableLayout="true" />
                 </div>

@@ -14,13 +14,14 @@ using HomeServerPage.Shared.Extensions;
 using AstroCalc.Core;
 using HomeServerPage.Data.Astronomy;
 using HomeServerPage.Data.Weather;
+using HomeServerPage.Data.Locations;
 
 namespace HomeServerPage.Client.Pages.Astronomy;
 
 public partial class AstronomyObservationsTab
 {
     [Parameter, EditorRequired]
-    public GeographicCoordinate Location { get; set; }
+    public SavedLocation Location { get; set; } = default!;
 
     [Parameter, EditorRequired]
     public DateTime RequestDateUtc { get; set; }
@@ -32,59 +33,66 @@ public partial class AstronomyObservationsTab
     private bool isLoading = true;
     private string? loadError;
     private MessierSort messierSort = MessierSort.Name;
-    private GeographicCoordinate? loadedLocation;
+    private int? loadedLocationId;
     private DateTime loadedRequestDateUtc;
+    private TimeZoneInfo LocationTimeZone =>
+        TimeZoneInfo.FindSystemTimeZoneById(this.Location.TimeZoneId);
 
-    private IEnumerable<AstronomyObservation> SortedMessierObservations => messierSort switch
+    private IEnumerable<AstronomyObservation> SortedMessierObservations => this.messierSort switch
     {
-        MessierSort.RiseTime => messierObservations.OrderBy(observation => observation.TransitResult.RiseUT),
-        MessierSort.SetTime => messierObservations.OrderBy(observation => observation.TransitResult.SetUT),
-        _ => messierObservations.OrderBy(observation => observation.Name)
+        MessierSort.RiseTime => this.messierObservations.OrderBy(observation => observation.TransitResult.RiseUT),
+        MessierSort.SetTime => this.messierObservations.OrderBy(observation => observation.TransitResult.SetUT),
+        _ => this.messierObservations.OrderBy(observation => observation.Name)
     };
 
     protected override async Task OnParametersSetAsync()
     {
-        if (loadedLocation is not null && loadedLocation.Equals(Location) && loadedRequestDateUtc == RequestDateUtc)
+        if (this.loadedLocationId == this.Location.Id
+            && this.loadedRequestDateUtc == this.RequestDateUtc)
         {
             return;
         }
 
-        loadedLocation = Location;
-        loadedRequestDateUtc = RequestDateUtc;
-        observationTime = TimeZoneInfo.ConvertTime(
-            new DateTimeOffset(RequestDateUtc, TimeSpan.Zero),
-            AstronomyDefaults.LocalTimeZone);
+        this.loadedLocationId = this.Location.Id;
+        this.loadedRequestDateUtc = this.RequestDateUtc;
+        this.observationTime = TimeZoneInfo.ConvertTime(
+            new DateTimeOffset(this.RequestDateUtc, TimeSpan.Zero),
+            this.LocationTimeZone);
 
-        await LoadObservationsAsync();
+        await this.LoadObservationsAsync();
     }
 
     private async Task LoadObservationsAsync()
     {
-        isLoading = true;
-        loadError = null;
+        this.isLoading = true;
+        this.loadError = null;
 
         try
         {
-            solarSystemObservations = await AstronomyObservationLoader.LoadSolarSystemAsync(
-                AstronomyService,
-                RequestDateUtc,
-                Location);
+            this.solarSystemObservations = await AstronomyObservationLoader.LoadSolarSystemAsync(
+                this.AstronomyService,
+                this.RequestDateUtc,
+                this.Location.Coordinates);
 
-            moonAstronomy = await WeatherService.GetAstronomyAsync(
-                DateOnly.FromDateTime(RequestDateUtc));
+            var localRequestDate = TimeZoneInfo.ConvertTime(
+                new DateTimeOffset(this.RequestDateUtc, TimeSpan.Zero),
+                this.LocationTimeZone);
+            this.moonAstronomy = await this.WeatherService.GetAstronomyAsync(
+                this.Location,
+                DateOnly.FromDateTime(localRequestDate.DateTime));
 
-            messierObservations = await AstronomyObservationLoader.LoadMessierCatalogAsync(
-                AstronomyService,
-                RequestDateUtc,
-                Location);
+            this.messierObservations = await AstronomyObservationLoader.LoadMessierCatalogAsync(
+                this.AstronomyService,
+                this.RequestDateUtc,
+                this.Location.Coordinates);
         }
         catch (Exception exception)
         {
-            loadError = $"Unable to load celestial observations: {exception.Message}";
+            this.loadError = $"Unable to load celestial observations: {exception.Message}";
         }
         finally
         {
-            isLoading = false;
+            this.isLoading = false;
         }
     }
 

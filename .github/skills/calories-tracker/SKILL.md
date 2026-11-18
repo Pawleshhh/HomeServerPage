@@ -31,6 +31,7 @@ description: Use when changing the calories tracker page, its food history, nutr
 - Keep the add-food form compact; in tablet mode it opens as an overlay rather than permanently consuming dashboard space.
 - If a daily goal already exists, its progress may remain visible in tablet mode; keep the weekly summary and goal editor hidden there unless the user asks.
 - Keep related form values together in compact rows and allow them to wrap on narrower screens.
+- Align labels and controls within each row, keeping label space and input heights consistent. Loading, validation, and error messages must not shift one field relative to its neighbors.
 
 ## Exercise
 

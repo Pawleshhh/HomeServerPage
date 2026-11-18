@@ -9,6 +9,8 @@ description: Use when changing the HomeServerPage tablet dashboard, its schedule
 
 HomeServerPage is the user's personal website hosted on a local home server. It is used from smartphones and a touch monitor attached to a Raspberry Pi. It has a normal desktop/mobile mode and a compact `TabletDashboard` mode for a touch monitor of approximately 1024x600. Keep dashboard widgets within that viewport without vertical or horizontal scrolling where practical.
 
+When changing a form, align related labels and controls consistently across columns. Keep control heights and label space uniform, and place loading/error messages so they do not shift neighboring fields.
+
 ## Scheduled refresh
 
 - Refresh each widget on its own configurable interval without reloading the whole page. The shared default active window is 07:00–23:00 Poland local time (`ActiveUntil` is exclusive), and each widget's cadence is anchored to `ActiveFrom`.

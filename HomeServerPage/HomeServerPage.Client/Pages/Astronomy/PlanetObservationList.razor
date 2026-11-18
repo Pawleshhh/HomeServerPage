@@ -13,7 +13,7 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach (var observation in VisibleObservations)
+                @foreach (var observation in this.VisibleObservations)
                 {
                     <tr data-planet="@observation.Key">
                         <th scope="row">
@@ -22,8 +22,8 @@
                                  alt="" />
                             @observation.Name
                         </th>
-                        <td>@observation.TransitResult.RiseUT.FormatUtHours(RequestDateUtc, AstronomyDefaults.LocalTimeZone)</td>
-                        <td>@observation.TransitResult.SetUT.FormatUtHours(RequestDateUtc, AstronomyDefaults.LocalTimeZone)</td>
+                        <td>@observation.TransitResult.RiseUT.FormatUtHours(RequestDateUtc, LocationTimeZone)</td>
+                        <td>@observation.TransitResult.SetUT.FormatUtHours(RequestDateUtc, LocationTimeZone)</td>
                     </tr>
                 }
             </tbody>
@@ -33,7 +33,7 @@
 else
 {
     <div class="astronomy-planet-items @(Compact ? "astronomy-planet-items-compact" : null)">
-        @foreach (var observation in VisibleObservations)
+        @foreach (var observation in this.VisibleObservations)
         {
             <article class="astronomy-object-card astronomy-planet-item" data-planet="@observation.Key">
                 <img class="astronomy-planet-icon"

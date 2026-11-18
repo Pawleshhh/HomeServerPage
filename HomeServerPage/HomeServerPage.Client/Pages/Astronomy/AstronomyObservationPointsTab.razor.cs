@@ -13,6 +13,7 @@ using HomeServerPage.Client.Shared;
 using HomeServerPage.Shared.Extensions;
 using AstroCalc.Core;
 using HomeServerPage.Data.Astronomy;
+using HomeServerPage.Data.Locations;
 
 namespace HomeServerPage.Client.Pages.Astronomy;
 
@@ -23,7 +24,10 @@ public partial class AstronomyObservationPointsTab
     private static readonly ObservationPointVisibilityCalculator VisibilityCalculator = new();
 
     [Parameter, EditorRequired]
-    public GeographicCoordinate Location { get; set; }
+    public SavedLocation Location { get; set; } = default!;
+
+    [Parameter]
+    public IReadOnlyList<SavedLocation> Locations { get; set; } = [];
 
     [Parameter, EditorRequired]
     public DateTime SelectedLocalDateTime { get; set; }
@@ -48,8 +52,8 @@ public partial class AstronomyObservationPointsTab
 
     private readonly ObservationPointVisibilityCalculator visibilityCalculator = VisibilityCalculator;
     private ObservationPoint editPoint = new();
-    private GeographicCoordinate editLocation = AstronomyDefaults.Location;
     private int? editorPointId;
+    private int? editorLocationId;
     private DateTime rangeStartLocal;
     private DateTime rangeEndLocal;
     private DateTime rangeDate;
@@ -62,144 +66,148 @@ public partial class AstronomyObservationPointsTab
     private string? calculationError;
     private IReadOnlyList<VisibleAstronomyObject> visibleObjects = [];
     private CancellationTokenSource? calculationCancellation;
+    private SavedLocation ActiveLocation => this.SelectedObservationPoint?.Location ?? this.editPoint.Location ?? this.Location;
 
     private IReadOnlyList<VisibleAstronomyObject> FilteredVisibleObjects =>
-        visibleObjects
+        this.visibleObjects
             .Select(observation => new VisibleAstronomyObject(
                 observation.Key,
                 observation.Name,
                 observation.ObjectType,
                 observation.Windows
-                    .Where(window => selectedDirections.Contains(window.Direction))
+                    .Where(window => this.selectedDirections.Contains(window.Direction))
                     .ToList()))
-            .Where(observation => selectedObjectTypes.Contains(observation.ObjectType))
+            .Where(observation => this.selectedObjectTypes.Contains(observation.ObjectType))
             .Where(observation => observation.Windows.Count > 0)
             .ToList();
 
     protected override async Task OnParametersSetAsync()
     {
         var selectedId = SelectedObservationPoint?.Id;
-        if (!hasEditorState || editorPointId != selectedId)
+        if (!this.hasEditorState
+            || this.editorPointId != selectedId
+            || (selectedId is null && this.editorLocationId != this.Location.Id))
         {
-            LoadEditor(SelectedObservationPoint);
-            hasEditorState = true;
+            this.LoadEditor(this.SelectedObservationPoint);
+            this.hasEditorState = true;
         }
 
-        var selectedDate = SelectedLocalDateTime.Date;
-        if (!hasRange || rangeDate != selectedDate)
+        var selectedDate = this.SelectedLocalDateTime.Date;
+        if (!this.hasRange || this.rangeDate != selectedDate)
         {
-            rangeStartLocal = selectedDate;
-            rangeEndLocal = selectedDate.AddDays(1);
-            rangeDate = selectedDate;
-            hasRange = true;
+            this.rangeStartLocal = selectedDate;
+            this.rangeEndLocal = selectedDate.AddDays(1);
+            this.rangeDate = selectedDate;
+            this.hasRange = true;
         }
 
-        await CalculateVisibilityAsync();
+        await this.CalculateVisibilityAsync();
     }
 
     private async Task SaveObservationPointAsync()
     {
-        isSaving = true;
-        editorError = null;
+        this.isSaving = true;
+        this.editorError = null;
 
         try
         {
-            var savedPoint = await ObservationPointService.SaveObservationPointAsync(editPoint);
-            await ObservationPointSaved.InvokeAsync(savedPoint);
-            LoadEditor(savedPoint);
-            hasEditorState = true;
+            this.editPoint.Location = this.FindLocation(this.editPoint.LocationId);
+            var savedPoint = await this.ObservationPointService.SaveObservationPointAsync(this.editPoint);
+            await this.ObservationPointSaved.InvokeAsync(savedPoint);
+            this.LoadEditor(savedPoint);
+            this.hasEditorState = true;
         }
         catch (Exception exception)
         {
-            editorError = $"Unable to save observation point: {exception.Message}";
+            this.editorError = $"Unable to save observation point: {exception.Message}";
         }
         finally
         {
-            isSaving = false;
+            this.isSaving = false;
         }
     }
 
     private async Task DeleteObservationPointAsync()
     {
-        if (editPoint.Id == 0)
+        if (this.editPoint.Id == 0)
         {
             return;
         }
 
-        isDeleting = true;
-        editorError = null;
-        var deletedId = editPoint.Id;
+        this.isDeleting = true;
+        this.editorError = null;
+        var deletedId = this.editPoint.Id;
 
         try
         {
-            await ObservationPointService.DeleteObservationPointAsync(deletedId);
-            await ObservationPointDeleted.InvokeAsync(deletedId);
-            await StartNewPoint();
+            await this.ObservationPointService.DeleteObservationPointAsync(deletedId);
+            await this.ObservationPointDeleted.InvokeAsync(deletedId);
+            await this.StartNewPoint();
         }
         catch (Exception exception)
         {
-            editorError = $"Unable to delete observation point: {exception.Message}";
+            this.editorError = $"Unable to delete observation point: {exception.Message}";
         }
         finally
         {
-            isDeleting = false;
+            this.isDeleting = false;
         }
     }
 
     private async Task OnEditorPointSelected()
     {
-        await ObservationPointSelected.InvokeAsync(editorPointId);
+        await this.ObservationPointSelected.InvokeAsync(this.editorPointId);
 
-        var selectedPoint = ObservationPoints.FirstOrDefault(point => point.Id == editorPointId);
-        LoadEditor(selectedPoint);
-        hasEditorState = true;
+        var selectedPoint = this.ObservationPoints.FirstOrDefault(point => point.Id == this.editorPointId);
+        this.LoadEditor(selectedPoint);
+        this.hasEditorState = true;
     }
 
     private async Task StartNewPoint()
     {
-        editorPointId = null;
-        await ObservationPointSelected.InvokeAsync(null);
-        LoadEditor(null);
-        hasEditorState = true;
-        editorError = null;
+        this.editorPointId = null;
+        await this.ObservationPointSelected.InvokeAsync(null);
+        this.LoadEditor(null);
+        this.hasEditorState = true;
+        this.editorError = null;
     }
 
     private void LoadEditor(ObservationPoint? observationPoint)
     {
-        editPoint = observationPoint is null
-            ? CreateNewPoint(Location)
+        this.editPoint = observationPoint is null
+            ? CreateNewPoint(this.Location)
             : Clone(observationPoint);
-        editLocation = editPoint.Coordinates;
-        editorPointId = observationPoint?.Id;
+        this.editorPointId = observationPoint?.Id;
+        this.editorLocationId = this.editPoint.LocationId;
     }
 
-    private void OnEditLocationChanged(GeographicCoordinate coordinate)
+    private Task OnEditLocationChanged()
     {
-        editLocation = coordinate;
-        editPoint.Latitude = coordinate.Latitude.Degrees;
-        editPoint.Longitude = coordinate.Longitude.Degrees;
+        this.editPoint.Location = this.FindLocation(this.editPoint.LocationId);
+        return this.CalculateVisibilityAsync();
     }
 
     private Task OnRangeChanged() => CalculateVisibilityAsync();
 
     private async Task CalculateVisibilityAsync()
     {
-        calculationCancellation?.Cancel();
-        calculationCancellation?.Dispose();
-        calculationCancellation = new CancellationTokenSource();
-        var cancellationToken = calculationCancellation.Token;
+        this.calculationCancellation?.Cancel();
+        this.calculationCancellation?.Dispose();
+        this.calculationCancellation = new CancellationTokenSource();
+        var cancellationToken = this.calculationCancellation.Token;
 
-        isCalculating = true;
-        calculationError = null;
+        this.isCalculating = true;
+        this.calculationError = null;
 
         try
         {
-            var (fromUtc, toUtc) = ConvertRangeToUtc();
-            var messierObjects = await AstronomyService.GetAllMessierObjects();
+            var (fromUtc, toUtc) = this.ConvertRangeToUtc();
+            var messierObjects = await this.AstronomyService.GetAllMessierObjects();
             await Task.Yield();
 
-            var point = SelectedObservationPoint ?? CreateNewPoint(Location);
-            visibleObjects = visibilityCalculator.Calculate(
+            var point = this.SelectedObservationPoint ?? this.editPoint;
+            point.Location ??= this.FindLocation(point.LocationId);
+            this.visibleObjects = this.visibilityCalculator.Calculate(
                 point,
                 messierObjects,
                 fromUtc,
@@ -211,78 +219,77 @@ public partial class AstronomyObservationPointsTab
         }
         catch (Exception exception)
         {
-            visibleObjects = [];
-            calculationError = $"Unable to calculate visible objects: {exception.Message}";
+            this.visibleObjects = [];
+            this.calculationError = $"Unable to calculate visible objects: {exception.Message}";
         }
         finally
         {
-            if (calculationCancellation?.Token == cancellationToken)
+            if (this.calculationCancellation?.Token == cancellationToken)
             {
-                isCalculating = false;
+                this.isCalculating = false;
             }
         }
     }
 
     private (DateTimeOffset FromUtc, DateTimeOffset ToUtc) ConvertRangeToUtc()
     {
-        if (rangeEndLocal <= rangeStartLocal)
+        if (this.rangeEndLocal <= this.rangeStartLocal)
         {
             throw new ArgumentException("The end of the time range must be after the start.");
         }
 
+        var timeZone = TimeZoneInfo.FindSystemTimeZoneById(this.ActiveLocation.TimeZoneId);
         var fromUtc = TimeZoneInfo.ConvertTimeToUtc(
-            DateTime.SpecifyKind(rangeStartLocal, DateTimeKind.Unspecified),
-            AstronomyDefaults.LocalTimeZone);
+            DateTime.SpecifyKind(this.rangeStartLocal, DateTimeKind.Unspecified),
+            timeZone);
         var toUtc = TimeZoneInfo.ConvertTimeToUtc(
-            DateTime.SpecifyKind(rangeEndLocal, DateTimeKind.Unspecified),
-            AstronomyDefaults.LocalTimeZone);
+            DateTime.SpecifyKind(this.rangeEndLocal, DateTimeKind.Unspecified),
+            timeZone);
 
         return (new DateTimeOffset(fromUtc), new DateTimeOffset(toUtc));
     }
 
-    private bool IsDirectionSelected(HorizonDirection direction) => selectedDirections.Contains(direction);
+    private bool IsDirectionSelected(HorizonDirection direction) => this.selectedDirections.Contains(direction);
 
     private void SetDirectionSelection(HorizonDirection direction, ChangeEventArgs eventArgs)
     {
         if (eventArgs.Value is true)
         {
-            selectedDirections.Add(direction);
+            this.selectedDirections.Add(direction);
         }
         else
         {
-            selectedDirections.Remove(direction);
+            this.selectedDirections.Remove(direction);
         }
     }
 
-    private bool IsObjectTypeSelected(AstronomyObjectType objectType) => selectedObjectTypes.Contains(objectType);
+    private bool IsObjectTypeSelected(AstronomyObjectType objectType) => this.selectedObjectTypes.Contains(objectType);
 
     private void SetObjectTypeSelection(AstronomyObjectType objectType, ChangeEventArgs eventArgs)
     {
         if (eventArgs.Value is true)
         {
-            selectedObjectTypes.Add(objectType);
+            this.selectedObjectTypes.Add(objectType);
         }
         else
         {
-            selectedObjectTypes.Remove(objectType);
+            this.selectedObjectTypes.Remove(objectType);
         }
     }
 
-    private static ObservationPoint CreateNewPoint(GeographicCoordinate location) => new()
+    private static ObservationPoint CreateNewPoint(SavedLocation location) => new()
     {
         Name = string.Empty,
-        Latitude = location.Latitude.Degrees,
-        Longitude = location.Longitude.Degrees,
-        ElevationMeters = location.ElevationMeters == 0 ? null : location.ElevationMeters
+        LocationId = location.Id,
+        Location = location
     };
 
     private static ObservationPoint Clone(ObservationPoint source) => new()
     {
         Id = source.Id,
         Name = source.Name,
-        Latitude = source.Latitude,
-        Longitude = source.Longitude,
-        ElevationMeters = source.ElevationMeters,
+        LocationId = source.LocationId,
+        Location = source.Location,
         HorizonNorth = source.HorizonNorth,
         HorizonNorthEast = source.HorizonNorthEast,
         HorizonEast = source.HorizonEast,
@@ -312,8 +319,15 @@ public partial class AstronomyObservationPointsTab
         _ => objectType.ToString()
     };
 
-    private static string FormatLocalTime(DateTimeOffset utcTime) =>
-        TimeZoneInfo.ConvertTime(utcTime, AstronomyDefaults.LocalTimeZone).ToString("g");
+    private SavedLocation? FindLocation(int? locationId) =>
+        locationId is int id
+            ? this.Locations.FirstOrDefault(location => location.Id == id)
+            : null;
+
+    private string FormatLocalTime(DateTimeOffset utcTime) =>
+        TimeZoneInfo.ConvertTime(
+            utcTime,
+            TimeZoneInfo.FindSystemTimeZoneById(this.ActiveLocation.TimeZoneId)).ToString("g");
 
     private static string FormatDuration(TimeSpan duration)
     {
@@ -327,7 +341,7 @@ public partial class AstronomyObservationPointsTab
 
     public void Dispose()
     {
-        calculationCancellation?.Cancel();
-        calculationCancellation?.Dispose();
+        this.calculationCancellation?.Cancel();
+        this.calculationCancellation?.Dispose();
     }
 }

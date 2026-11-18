@@ -1,0 +1,139 @@
+@page "/settings"
+@page "/tablet-dashboard/settings"
+
+@using HomeServerPage.Data.Locations
+
+<PageTitle>Settings</PageTitle>
+
+<div class="container-fluid settings-page">
+    <PageHeader Title="Settings"
+                Description="Manage shared locations used by Weather and Astronomy."
+                Accent="home" />
+
+    <section class="dashboard-card settings-locations" aria-labelledby="settings-locations-heading">
+        <div class="card-body">
+            <div class="dashboard-card-header">
+                <div>
+                    <h2 id="settings-locations-heading" class="dashboard-card-title">Locations</h2>
+                    <p class="dashboard-card-subtitle">Saved locations are shared across the site.</p>
+                </div>
+                <button class="btn btn-outline-primary btn-sm"
+                        type="button"
+                        @onclick="this.StartNewLocation">
+                    New location
+                </button>
+            </div>
+
+            @if (this.loadError is not null)
+            {
+                <div class="alert alert-danger" role="alert">@this.loadError</div>
+            }
+
+            @if (this.saveError is not null)
+            {
+                <div class="alert alert-danger" role="alert">@this.saveError</div>
+            }
+
+            @if (this.isLoading)
+            {
+                <p role="status">Loading locations…</p>
+            }
+            else
+            {
+                <div class="row g-4">
+                    <div class="col-12 col-xl-5">
+                        <div class="list-group" aria-label="Saved locations">
+                            @foreach (var location in this.locations)
+                            {
+                                <button class="list-group-item list-group-item-action @(this.editLocation.Id == location.Id ? "active" : null)"
+                                        type="button"
+                                        @onclick="() => this.SelectLocation(location)">
+                                    <span class="d-flex justify-content-between align-items-center gap-2">
+                                        <strong>@location.Name</strong>
+                                        @if (location.IsSystemDefault)
+                                        {
+                                            <span class="badge text-bg-secondary">System default</span>
+                                        }
+                                    </span>
+                                    <small>
+                                        @location.Latitude.ToString("0.#####"), @location.Longitude.ToString("0.#####")
+                                        · @location.TimeZoneId
+                                    </small>
+                                </button>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-xl-7">
+                        <EditForm Model="this.editLocation" OnValidSubmit="this.SaveLocationAsync">
+                            <DataAnnotationsValidator />
+                            <ValidationSummary class="text-danger small" />
+
+                            <div class="mb-3">
+                                <label class="form-label" for="saved-location-name">Name</label>
+                                <InputText id="saved-location-name"
+                                           class="form-control"
+                                           @bind-Value="this.editLocation.Name"
+                                           disabled="@this.editLocation.IsSystemDefault" />
+                                <ValidationMessage For="@(() => this.editLocation.Name)" />
+                            </div>
+
+                            <div class="row g-3">
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label" for="saved-location-latitude">Latitude</label>
+                                    <InputNumber id="saved-location-latitude"
+                                                 class="form-control"
+                                                 step="any"
+                                                 @bind-Value="this.editLocation.Latitude"
+                                                 disabled="@this.editLocation.IsSystemDefault" />
+                                    <ValidationMessage For="@(() => this.editLocation.Latitude)" />
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label" for="saved-location-longitude">Longitude</label>
+                                    <InputNumber id="saved-location-longitude"
+                                                 class="form-control"
+                                                 step="any"
+                                                 @bind-Value="this.editLocation.Longitude"
+                                                 disabled="@this.editLocation.IsSystemDefault" />
+                                    <ValidationMessage For="@(() => this.editLocation.Longitude)" />
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label" for="saved-location-elevation">Elevation (m)</label>
+                                    <InputNumber id="saved-location-elevation"
+                                                 class="form-control"
+                                                 step="any"
+                                                 @bind-Value="this.editLocation.ElevationMeters"
+                                                 disabled="@this.editLocation.IsSystemDefault" />
+                                    <ValidationMessage For="@(() => this.editLocation.ElevationMeters)" />
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label" for="saved-location-time-zone">Time-zone ID</label>
+                                    <InputText id="saved-location-time-zone"
+                                               class="form-control"
+                                               @bind-Value="this.editLocation.TimeZoneId"
+                                               disabled="@this.editLocation.IsSystemDefault" />
+                                    <ValidationMessage For="@(() => this.editLocation.TimeZoneId)" />
+                                    <div class="form-text">Use an ID supported by the server, such as Europe/Warsaw.</div>
+                                </div>
+                            </div>
+
+                            <div class="d-flex flex-wrap gap-2 mt-4">
+                                <button class="btn btn-primary"
+                                        type="submit"
+                                        disabled="@(this.isSaving || this.editLocation.IsSystemDefault)">
+                                    @(this.isSaving ? "Saving…" : "Save location")
+                                </button>
+                                <button class="btn btn-outline-danger"
+                                        type="button"
+                                        @onclick="this.DeleteLocationAsync"
+                                        disabled="@(this.isDeleting || this.isSaving || this.editLocation.Id == 0 || this.editLocation.IsSystemDefault)">
+                                    @(this.isDeleting ? "Deleting…" : "Delete location")
+                                </button>
+                            </div>
+                        </EditForm>
+                    </div>
+                </div>
+            }
+        </div>
+    </section>
+</div>

@@ -1,4 +1,5 @@
 using HomeServerPage.Client.Data;
+using HomeServerPage.Client.Data.Locations;
 using HomeServerPage.Client.Data.Astronomy.Telescopes;
 using HomeServerPage.Data;
 using HomeServerPage.Data.Astronomy;
@@ -28,6 +29,8 @@ public static class ClientServiceCollectionExtensions
         services.AddScoped<ICaloriesService, CaloriesHttpService>();
         services.AddScoped<IExerciseService, ExerciseHttpService>();
         services.AddScoped<IAstronomyService, AstronomyHttpService>();
+        services.AddScoped<ILocationService, LocationHttpService>();
+        services.AddScoped<ILocationSelectionService, LocationSelectionHttpService>();
         services.AddScoped<IObservationPointService, ObservationPointHttpService>();
         services.AddScoped<ITelescopeService, TelescopeHttpService>();
         AddWeatherServices(services, environment);

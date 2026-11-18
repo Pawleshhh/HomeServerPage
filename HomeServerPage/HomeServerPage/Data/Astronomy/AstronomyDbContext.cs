@@ -182,14 +182,11 @@ public class AstronomyDbContext(DbContextOptions<AstronomyDbContext> options) : 
             .HasMaxLength(100);
 
         entity.HasIndex(point => point.Name);
+        entity.HasIndex(point => point.LocationId);
 
         entity.ToTable(table => table.HasCheckConstraint(
-            "CK_ObservationPoints_Latitude",
-            "Latitude >= -90 AND Latitude <= 90"));
-
-        entity.ToTable(table => table.HasCheckConstraint(
-            "CK_ObservationPoints_Longitude",
-            "Longitude >= -180 AND Longitude <= 180"));
+            "CK_ObservationPoints_LocationId",
+            "LocationId IS NOT NULL AND LocationId > 0"));
 
         entity.ToTable(table => table.HasCheckConstraint(
             "CK_ObservationPoints_HorizonAltitudes",

@@ -1,6 +1,8 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 using AstroCalc.Core;
+using HomeServerPage.Data.Locations;
 
 namespace HomeServerPage.Data.Astronomy;
 
@@ -12,13 +14,10 @@ public sealed class ObservationPoint
     [StringLength(100)]
     public string Name { get; set; } = string.Empty;
 
-    [Range(-90, 90)]
-    public double Latitude { get; set; }
+    public int? LocationId { get; set; }
 
-    [Range(-180, 180)]
-    public double Longitude { get; set; }
-
-    public double? ElevationMeters { get; set; }
+    [NotMapped]
+    public SavedLocation? Location { get; set; }
 
     [Range(0, 90)]
     public double HorizonNorth { get; set; }
@@ -45,11 +44,13 @@ public sealed class ObservationPoint
     public double HorizonNorthWest { get; set; }
 
     [JsonIgnore]
+    [NotMapped]
     public GeographicCoordinate Coordinates => GeographicCoordinate.FromDegrees(
-        Latitude,
-        Longitude,
-        ElevationMeters ?? 0);
+        this.Location?.Latitude ?? throw new InvalidOperationException("The observation point location is not loaded."),
+        this.Location.Longitude,
+        this.Location.ElevationMeters);
 
     [JsonIgnore]
+    [NotMapped]
     public HorizonProfile Horizon => HorizonProfile.FromObservationPoint(this);
 }

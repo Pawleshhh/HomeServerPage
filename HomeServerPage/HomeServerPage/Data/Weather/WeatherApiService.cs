@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json.Serialization;
+using HomeServerPage.Data.Locations;
 using Microsoft.Extensions.Options;
 
 namespace HomeServerPage.Data.Weather;
@@ -12,25 +13,28 @@ public sealed class WeatherApiService(
 {
     private readonly WeatherApiOptions options = options.Value;
 
-    public async Task<WeatherSnapshot> GetCurrentAsync(CancellationToken cancellationToken = default)
+    public async Task<WeatherSnapshot> GetCurrentAsync(
+        SavedLocation location,
+        CancellationToken cancellationToken = default)
     {
         var response = await GetAsync(
-            $"current.json?key={Uri.EscapeDataString(options.ApiKey)}&q={Uri.EscapeDataString(options.Location)}&aqi=yes",
+            $"current.json?key={Uri.EscapeDataString(this.options.ApiKey)}&q={GetLocationQuery(location)}&aqi=yes",
             cancellationToken);
 
         return MapCurrent(response.Location, response.Current);
     }
 
     public async Task<WeatherForecast> GetForecastAsync(
+        SavedLocation location,
         int days = 3,
         CancellationToken cancellationToken = default)
     {
         var forecastDays = Math.Clamp(
-            days == 3 ? options.ForecastDays : days,
+            days == 3 ? this.options.ForecastDays : days,
             1,
             14);
         var response = await GetAsync(
-            $"forecast.json?key={Uri.EscapeDataString(options.ApiKey)}&q={Uri.EscapeDataString(options.Location)}&days={forecastDays}&aqi=yes&alerts=no",
+            $"forecast.json?key={Uri.EscapeDataString(this.options.ApiKey)}&q={GetLocationQuery(location)}&days={forecastDays}&aqi=yes&alerts=no",
             cancellationToken);
 
         var current = MapCurrent(response.Location, response.Current);
@@ -42,11 +46,12 @@ public sealed class WeatherApiService(
     }
 
     public async Task<WeatherAstronomy> GetAstronomyAsync(
+        SavedLocation location,
         DateOnly date,
         CancellationToken cancellationToken = default)
     {
         var response = await GetAsync(
-            $"astronomy.json?key={Uri.EscapeDataString(options.ApiKey)}&q={Uri.EscapeDataString(options.Location)}&dt={date:yyyy-MM-dd}",
+            $"astronomy.json?key={Uri.EscapeDataString(this.options.ApiKey)}&q={GetLocationQuery(location)}&dt={date:yyyy-MM-dd}",
             cancellationToken);
 
         return MapAstronomy(response.Astronomy?.Astro ?? new WeatherApiAstronomy());
@@ -175,6 +180,10 @@ public sealed class WeatherApiService(
         iconUrl.StartsWith("//", StringComparison.Ordinal)
             ? $"https:{iconUrl}"
             : iconUrl;
+
+    private static string GetLocationQuery(SavedLocation location) =>
+        Uri.EscapeDataString(
+            $"{location.Latitude.ToString(CultureInfo.InvariantCulture)},{location.Longitude.ToString(CultureInfo.InvariantCulture)}");
 
     private sealed class WeatherApiResponse
     {

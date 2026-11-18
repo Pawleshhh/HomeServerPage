@@ -11,7 +11,7 @@ builder.Services.AddHomeServerPageServices(builder.Configuration, builder.Enviro
 
 var app = builder.Build();
 
-app.Services.MigrateApplicationDatabases();
+await app.Services.MigrateApplicationDatabasesAsync();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

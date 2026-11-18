@@ -1,5 +1,6 @@
 @using AstroCalc.Core
 @using HomeServerPage.Data.Astronomy
+@using HomeServerPage.Data.Locations
 
 @implements IDisposable
 
@@ -21,32 +22,32 @@
 
                     <button type="button"
                             class="btn btn-outline-secondary btn-sm"
-                            @onclick="StartNewPoint"
-                            disabled="@isSaving || isDeleting">
+                            @onclick="this.StartNewPoint"
+                            disabled="@this.isSaving || this.isDeleting">
                         New
                     </button>
                 </div>
 
-                @if (editorError is not null)
+                @if (this.editorError is not null)
                 {
-                    <div class="alert alert-danger" role="alert">@editorError</div>
+                    <div class="alert alert-danger" role="alert">@this.editorError</div>
                 }
 
                 <div class="mb-3">
                     <label class="form-label" for="observation-point-editor-select">Saved point</label>
                     <select id="observation-point-editor-select"
                             class="form-select"
-                            @bind="editorPointId"
-                            @bind:after="OnEditorPointSelected">
+                            @bind="this.editorPointId"
+                            @bind:after="this.OnEditorPointSelected">
                         <option value="">New observation point</option>
-                        @foreach (var observationPoint in ObservationPoints)
+                        @foreach (var observationPoint in this.ObservationPoints)
                         {
                             <option value="@observationPoint.Id">@observationPoint.Name</option>
                         }
                     </select>
                 </div>
 
-                <EditForm Model="editPoint" OnValidSubmit="SaveObservationPointAsync">
+                <EditForm Model="this.editPoint" OnValidSubmit="this.SaveObservationPointAsync">
                     <DataAnnotationsValidator />
                     <ValidationSummary class="text-danger small" />
 
@@ -54,22 +55,22 @@
                         <label class="form-label" for="observation-point-name">Name</label>
                         <InputText id="observation-point-name"
                                    class="form-control"
-                                   @bind-Value="editPoint.Name" />
-                        <ValidationMessage For="@(() => editPoint.Name)" />
+                                   @bind-Value="this.editPoint.Name" />
+                        <ValidationMessage For="@(() => this.editPoint.Name)" />
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Coordinates</label>
-                        <GeoLocationInput Value="editLocation"
-                                          ValueChanged="OnEditLocationChanged"
-                                          ShowElevation="false" />
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label" for="observation-point-elevation">Elevation (m) <span class="text-body-secondary">(optional)</span></label>
-                        <InputNumber id="observation-point-elevation"
-                                     class="form-control"
-                                     @bind-Value="editPoint.ElevationMeters" />
+                        <label class="form-label" for="observation-point-location">Location</label>
+                        <InputSelect id="observation-point-location"
+                                     class="form-select"
+                                     @bind-Value="this.editPoint.LocationId"
+                                     @bind-Value:after="this.OnEditLocationChanged">
+                            <option value="">Select a saved location</option>
+                            @foreach (var location in this.Locations)
+                            {
+                                <option value="@location.Id">@location.Name</option>
+                            }
+                        </InputSelect>
                     </div>
 
                     <fieldset class="mb-3">
@@ -78,48 +79,48 @@
                         <div class="row g-2">
                             <div class="col-6 col-md-3">
                                 <label class="form-label" for="horizon-north">N (°)</label>
-                                <InputNumber id="horizon-north" class="form-control" @bind-Value="editPoint.HorizonNorth" />
+                                <InputNumber id="horizon-north" class="form-control" @bind-Value="this.editPoint.HorizonNorth" />
                             </div>
                             <div class="col-6 col-md-3">
                                 <label class="form-label" for="horizon-north-east">NE (°)</label>
-                                <InputNumber id="horizon-north-east" class="form-control" @bind-Value="editPoint.HorizonNorthEast" />
+                                <InputNumber id="horizon-north-east" class="form-control" @bind-Value="this.editPoint.HorizonNorthEast" />
                             </div>
                             <div class="col-6 col-md-3">
                                 <label class="form-label" for="horizon-east">E (°)</label>
-                                <InputNumber id="horizon-east" class="form-control" @bind-Value="editPoint.HorizonEast" />
+                                <InputNumber id="horizon-east" class="form-control" @bind-Value="this.editPoint.HorizonEast" />
                             </div>
                             <div class="col-6 col-md-3">
                                 <label class="form-label" for="horizon-south-east">SE (°)</label>
-                                <InputNumber id="horizon-south-east" class="form-control" @bind-Value="editPoint.HorizonSouthEast" />
+                                <InputNumber id="horizon-south-east" class="form-control" @bind-Value="this.editPoint.HorizonSouthEast" />
                             </div>
                             <div class="col-6 col-md-3">
                                 <label class="form-label" for="horizon-south">S (°)</label>
-                                <InputNumber id="horizon-south" class="form-control" @bind-Value="editPoint.HorizonSouth" />
+                                <InputNumber id="horizon-south" class="form-control" @bind-Value="this.editPoint.HorizonSouth" />
                             </div>
                             <div class="col-6 col-md-3">
                                 <label class="form-label" for="horizon-south-west">SW (°)</label>
-                                <InputNumber id="horizon-south-west" class="form-control" @bind-Value="editPoint.HorizonSouthWest" />
+                                <InputNumber id="horizon-south-west" class="form-control" @bind-Value="this.editPoint.HorizonSouthWest" />
                             </div>
                             <div class="col-6 col-md-3">
                                 <label class="form-label" for="horizon-west">W (°)</label>
-                                <InputNumber id="horizon-west" class="form-control" @bind-Value="editPoint.HorizonWest" />
+                                <InputNumber id="horizon-west" class="form-control" @bind-Value="this.editPoint.HorizonWest" />
                             </div>
                             <div class="col-6 col-md-3">
                                 <label class="form-label" for="horizon-north-west">NW (°)</label>
-                                <InputNumber id="horizon-north-west" class="form-control" @bind-Value="editPoint.HorizonNorthWest" />
+                                <InputNumber id="horizon-north-west" class="form-control" @bind-Value="this.editPoint.HorizonNorthWest" />
                             </div>
                         </div>
                     </fieldset>
 
                     <div class="d-flex flex-wrap gap-2">
-                        <button type="submit" class="btn btn-primary" disabled="@isSaving">
-                            @(isSaving ? "Saving..." : "Save point")
+                        <button type="submit" class="btn btn-primary" disabled="@this.isSaving">
+                            @(this.isSaving ? "Saving..." : "Save point")
                         </button>
                         <button type="button"
                                 class="btn btn-outline-danger"
-                                @onclick="DeleteObservationPointAsync"
-                                disabled="@(editPoint.Id == 0 || isSaving || isDeleting)">
-                            @(isDeleting ? "Deleting..." : "Delete")
+                                @onclick="this.DeleteObservationPointAsync"
+                                disabled="@(this.editPoint.Id == 0 || this.isSaving || this.isDeleting)">
+                            @(this.isDeleting ? "Deleting..." : "Delete")
                         </button>
                     </div>
                 </EditForm>
@@ -139,16 +140,16 @@
                         <InputDate id="visibility-from"
                                    class="form-control"
                                    Type="InputDateType.DateTimeLocal"
-                                   @bind-Value="rangeStartLocal"
-                                   @bind-Value:after="OnRangeChanged" />
+                                   @bind-Value="this.rangeStartLocal"
+                                   @bind-Value:after="this.OnRangeChanged" />
                     </div>
                     <div class="col-12 col-md-6">
                         <label class="form-label" for="visibility-to">To (local time)</label>
                         <InputDate id="visibility-to"
                                    class="form-control"
                                    Type="InputDateType.DateTimeLocal"
-                                   @bind-Value="rangeEndLocal"
-                                   @bind-Value:after="OnRangeChanged" />
+                                   @bind-Value="this.rangeEndLocal"
+                                   @bind-Value:after="this.OnRangeChanged" />
                     </div>
                 </div>
 
@@ -160,8 +161,8 @@
                             <label class="form-check form-check-inline direction-filter">
                                 <input class="form-check-input"
                                        type="checkbox"
-                                       checked="@IsDirectionSelected(direction)"
-                                       @onchange="eventArgs => SetDirectionSelection(direction, eventArgs)" />
+                                       checked="@this.IsDirectionSelected(direction)"
+                                       @onchange="eventArgs => this.SetDirectionSelection(direction, eventArgs)" />
                                 <span class="form-check-label">@FormatDirection(direction)</span>
                             </label>
                         }
@@ -176,30 +177,30 @@
                             <label class="form-check form-check-inline object-type-filter">
                                 <input class="form-check-input"
                                        type="checkbox"
-                                       checked="@IsObjectTypeSelected(objectType)"
-                                       @onchange="eventArgs => SetObjectTypeSelection(objectType, eventArgs)" />
+                                       checked="@this.IsObjectTypeSelected(objectType)"
+                                       @onchange="eventArgs => this.SetObjectTypeSelection(objectType, eventArgs)" />
                                 <span class="form-check-label">@FormatObjectType(objectType)</span>
                             </label>
                         }
                     </div>
                 </fieldset>
 
-                @if (calculationError is not null)
+                @if (this.calculationError is not null)
                 {
-                    <div class="alert alert-danger" role="alert">@calculationError</div>
+                    <div class="alert alert-danger" role="alert">@this.calculationError</div>
                 }
-                else if (isCalculating)
+                else if (this.isCalculating)
                 {
                     <p class="text-body-secondary" role="status">Calculating visible objects...</p>
                 }
-                else if (FilteredVisibleObjects.Count == 0)
+                else if (this.FilteredVisibleObjects.Count == 0)
                 {
                     <p class="text-body-secondary mb-0">No objects match the selected filters and time range.</p>
                 }
                 else
                 {
                     <div class="visibility-results">
-                        @foreach (var observation in FilteredVisibleObjects)
+                        @foreach (var observation in this.FilteredVisibleObjects)
                         {
                             <article class="visibility-object-card">
                                 <div class="d-flex justify-content-between align-items-start gap-3 mb-2">
@@ -215,7 +216,7 @@
                                     {
                                         <div class="visibility-window">
                                             <span class="visibility-direction">@FormatDirection(window.Direction)</span>
-                                            <span>@FormatLocalTime(window.StartUtc) – @FormatLocalTime(window.EndUtc)</span>
+                                            <span>@this.FormatLocalTime(window.StartUtc) – @this.FormatLocalTime(window.EndUtc)</span>
                                             <span class="text-body-secondary">@FormatDuration(window.Duration)</span>
                                         </div>
                                     }
