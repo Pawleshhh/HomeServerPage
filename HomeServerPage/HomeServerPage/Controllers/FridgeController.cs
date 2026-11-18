@@ -12,7 +12,7 @@ public class FridgeController(IFridgeService fridgeService) : ControllerBase
     public async Task<ActionResult<FridgeItem>> GetItem(int id)
     {
         var item = await fridgeService.GetItemAsync(id);
-        return Ok(item);
+        return item is null ? NotFound() : Ok(item);
     }
 
     [HttpGet]
@@ -34,14 +34,10 @@ public class FridgeController(IFridgeService fridgeService) : ControllerBase
         [FromBody] FridgeItem item,
         [FromQuery] bool saveAsTemplate = false)
     {
-        if (string.IsNullOrWhiteSpace(item.Name))
+        var validationError = ValidateItem(item);
+        if (validationError is not null)
         {
-            return BadRequest("Item name is required.");
-        }
-
-        if (item.ExpirationDate.Date < item.AddedDate.Date)
-        {
-            return BadRequest("Expiration date cannot be earlier than added date.");
+            return BadRequest(validationError);
         }
 
         var created = await fridgeService.AddItemAsync(item, saveAsTemplate);
@@ -51,6 +47,12 @@ public class FridgeController(IFridgeService fridgeService) : ControllerBase
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateItem(int id, [FromBody] FridgeItem item)
     {
+        var validationError = ValidateItem(item);
+        if (validationError is not null)
+        {
+            return BadRequest(validationError);
+        }
+
         var updated = await fridgeService.UpdateItemAsync(item with { Id = id });
         if (!updated)
         {
@@ -70,5 +72,41 @@ public class FridgeController(IFridgeService fridgeService) : ControllerBase
         }
 
         return NoContent();
+    }
+
+    private static string? ValidateItem(FridgeItem item)
+    {
+        if (string.IsNullOrWhiteSpace(item.Name))
+        {
+            return "Item name is required.";
+        }
+
+        if (!Enum.IsDefined(item.QuantityType))
+        {
+            return "A valid quantity type is required.";
+        }
+
+        if (!double.IsFinite(item.QuantityValue) || item.QuantityValue < 0)
+        {
+            return "Quantity must be a non-negative number.";
+        }
+
+        if (item.QuantityType == QuantityType.Unit &&
+            item.QuantityValue != Math.Truncate(item.QuantityValue))
+        {
+            return "Unit quantities must be whole numbers.";
+        }
+
+        if (item.ExpirationDate.Date < item.AddedDate.Date)
+        {
+            return "Expiration date cannot be earlier than added date.";
+        }
+
+        if (item.OpenDate is DateTime openDate && openDate.Date < item.AddedDate.Date)
+        {
+            return "Open date cannot be earlier than added date.";
+        }
+
+        return null;
     }
 }

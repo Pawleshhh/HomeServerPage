@@ -43,7 +43,7 @@ public sealed class ObservationPointVisibilityCalculator
 
             var windows = CalculateWindows(
                 target,
-                observationPoint.Coordinates,
+                observationPoint.GetCoordinates(),
                 horizon,
                 startUtc,
                 endUtc,

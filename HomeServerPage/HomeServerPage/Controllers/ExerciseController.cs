@@ -1,3 +1,4 @@
+using HomeServerPage.Data;
 using HomeServerPage.Data.Exercise;
 using Microsoft.AspNetCore.Mvc;
 
@@ -5,7 +6,9 @@ namespace HomeServerPage.Controllers;
 
 [ApiController]
 [Route("api/exercise")]
-public sealed class ExerciseController(IExerciseService exerciseService) : ControllerBase
+public sealed class ExerciseController(
+    IExerciseService exerciseService,
+    IDateTimeService dateTimeService) : ControllerBase
 {
     [HttpGet("entries")]
     public async Task<ActionResult<List<ExerciseEntry>>> GetEntries(
@@ -55,15 +58,16 @@ public sealed class ExerciseController(IExerciseService exerciseService) : Contr
         return removed ? NoContent() : NotFound();
     }
 
-    private static string? Validate(ExerciseEntry entry)
+    private string? Validate(ExerciseEntry entry)
     {
         if (!ExerciseCalorieCalculator.IsValid(entry.Type, entry.DistanceKm))
         {
             return "Gym has no distance; running and biking need a distance above 0 with at most two decimals.";
         }
 
+        var utcNow = DateTime.SpecifyKind(dateTimeService.UtcNow, DateTimeKind.Utc);
         var todayAtEntryOffset = DateOnly.FromDateTime(
-            DateTimeOffset.UtcNow.ToOffset(entry.LoggedAt.Offset).DateTime);
+            new DateTimeOffset(utcNow).ToOffset(entry.LoggedAt.Offset).DateTime);
         return entry.LocalDate <= todayAtEntryOffset &&
             entry.LocalDate == DateOnly.FromDateTime(entry.LoggedAt.DateTime)
                 ? null

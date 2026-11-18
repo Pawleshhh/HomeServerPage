@@ -16,6 +16,8 @@ public partial class Weather
     private SavedLocation? selectedLocation;
     private bool isLoadingLocation = true;
     private string? locationError;
+    private string WeatherWidgetKey => $"weather-widget-{this.selectedLocation?.Id}";
+    private string WeatherForecastKey => $"weather-forecast-{this.selectedLocation?.Id}";
 
     protected override async Task OnInitializedAsync()
     {

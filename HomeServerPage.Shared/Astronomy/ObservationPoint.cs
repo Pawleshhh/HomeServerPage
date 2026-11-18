@@ -43,12 +43,16 @@ public sealed class ObservationPoint
     [Range(0, 90)]
     public double HorizonNorthWest { get; set; }
 
-    [JsonIgnore]
-    [NotMapped]
-    public GeographicCoordinate Coordinates => GeographicCoordinate.FromDegrees(
-        this.Location?.Latitude ?? throw new InvalidOperationException("The observation point location is not loaded."),
-        this.Location.Longitude,
-        this.Location.ElevationMeters);
+    public GeographicCoordinate GetCoordinates()
+    {
+        var location = this.Location
+            ?? throw new InvalidOperationException("The observation point location is not loaded.");
+
+        return GeographicCoordinate.FromDegrees(
+            location.Latitude,
+            location.Longitude,
+            location.ElevationMeters);
+    }
 
     [JsonIgnore]
     [NotMapped]

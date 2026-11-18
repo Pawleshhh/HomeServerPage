@@ -52,7 +52,7 @@
 
     @if (this.selectedLocation is not null)
     {
-        <WeatherWidget @key="this.selectedLocation.Id" Location="this.selectedLocation" />
-        <WeatherForecast @key="this.selectedLocation.Id" Location="this.selectedLocation" />
+        <WeatherWidget @key="this.WeatherWidgetKey" Location="this.selectedLocation" />
+        <WeatherForecast @key="this.WeatherForecastKey" Location="this.selectedLocation" />
     }
 </div>

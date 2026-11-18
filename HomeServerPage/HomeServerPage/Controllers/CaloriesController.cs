@@ -1,3 +1,4 @@
+using HomeServerPage.Data;
 using HomeServerPage.Data.Calories;
 using Microsoft.AspNetCore.Mvc;
 
@@ -5,7 +6,9 @@ namespace HomeServerPage.Controllers;
 
 [ApiController]
 [Route("api/calories")]
-public sealed class CaloriesController(ICaloriesService caloriesService) : ControllerBase
+public sealed class CaloriesController(
+    ICaloriesService caloriesService,
+    IDateTimeService dateTimeService) : ControllerBase
 {
     [HttpGet("foods")]
     public async Task<ActionResult<List<CaloriesFood>>> GetFoods(CancellationToken cancellationToken) =>
@@ -173,10 +176,11 @@ public sealed class CaloriesController(ICaloriesService caloriesService) : Contr
     private static bool HasNegativeMacros(int? carbohydrates, int? protein, int? fat) =>
         carbohydrates < 0 || protein < 0 || fat < 0;
 
-    private static bool HasValidEntryDate(CaloriesLogEntry entry)
+    private bool HasValidEntryDate(CaloriesLogEntry entry)
     {
+        var utcNow = DateTime.SpecifyKind(dateTimeService.UtcNow, DateTimeKind.Utc);
         var todayAtEntryOffset = DateOnly.FromDateTime(
-            DateTimeOffset.UtcNow.ToOffset(entry.LoggedAt.Offset).DateTime);
+            new DateTimeOffset(utcNow).ToOffset(entry.LoggedAt.Offset).DateTime);
         return entry.LocalDate <= todayAtEntryOffset &&
             entry.LocalDate == DateOnly.FromDateTime(entry.LoggedAt.DateTime);
     }

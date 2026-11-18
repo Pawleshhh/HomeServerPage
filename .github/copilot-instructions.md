@@ -28,7 +28,20 @@ Follow the existing service and component patterns when changing behavior. Keep 
 - Keep credentials and private configuration out of committed files. The server currently supports supplying the weather API key through the `WEATHER_API` configuration key.
 - Build the solution with `dotnet build HomeServerPage.slnx` after code changes; run relevant tests when present.
 
+## Testing
+
+- `HomeServerPage.Tests.Unit` contains domain/service unit tests and bUnit component tests. It uses NUnit and Moq; use bUnit for isolated rendering and component interactions, not browser automation.
+- `HomeServerPage.Tests.Integration` contains server API tests. It uses `WebApplicationFactory<Program>`, real SQLite databases/migrations, and test databases under the system temp directory.
+- Run all tests with `dotnet test HomeServerPage.slnx`. To run one suite, use `dotnet test .\HomeServerPage.Tests.Unit\HomeServerPage.Tests.Unit.csproj` or `dotnet test .\HomeServerPage.Tests.Integration\HomeServerPage.Tests.Integration.csproj`.
+- Test observable behavior, state changes, domain boundaries, persistence, API responses, and rendered behavior—not properties or wiring that compilation already verifies. Assert independent expected values instead of repeating the implementation formula in the assertion.
+- Use Moq for service boundaries, clocks, and notification subscribers. Do not mock EF Core `DbSet` query behavior; use the integration SQLite fixture for persistence.
+- Never call live Weather or Public Transport providers from tests. Use deterministic HTTP handlers for provider adapters and fake service registrations for API/component tests; tests must not require API keys or network access.
+- Use `IDateTimeService` or the test clock helpers for date-sensitive behavior. The client clock must be synced before its values are read.
+- Keep API integration tests at the HTTP/service/database boundary. Component tests use mocked services in bUnit; browser-driven UI tests are not part of the current test setup.
+- The test projects are ready for a future CI job, but do not add or change CI workflows unless requested.
+
 ## Focused skills
 
 - For dashboard, scheduled refresh, live clock, or realtime notification work, read [the tablet dashboard skill](skills/tablet-dashboard/SKILL.md).
 - For calories tracker work, read [the calories tracker skill](skills/calories-tracker/SKILL.md).
+- For unit, component, integration, or CI test work, read [the testing skill](skills/testing/SKILL.md).

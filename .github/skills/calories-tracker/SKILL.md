@@ -1,6 +1,6 @@
 ---
 name: calories-tracker
-description: Use when changing the calories tracker page, its food history, nutrition data, charts, or tablet presentation.
+description: Use when changing the calories tracker page, its food history, nutrition data, charts, tablet presentation, or tests for those behaviors.
 ---
 
 # Calories tracker
@@ -45,5 +45,14 @@ description: Use when changing the calories tracker page, its food history, nutr
 - Normal and tablet navigation are separate. Preserve both when changing routes or page availability.
 - Client contracts and HTTP access are under `HomeServerPage/HomeServerPage.Client/Data/Calories`; server behavior and persistence are under `HomeServerPage/HomeServerPage/Data/Calories` and `Controllers/CaloriesController.cs`.
 - The tracker has its own SQLite `CaloriesDbContext` and migrations. Follow the existing EF Core migration and service patterns for persistence changes.
+
+## Tests
+
+- Unit and bUnit component tests are in `HomeServerPage.Tests.Unit`; the calorie component and draft-validation tests are under `Components` and `Domain`.
+- API and SQLite flow tests are in `HomeServerPage.Tests.Integration\Api\CaloriesExerciseApiTests.cs`.
+- Use bUnit to verify meaningful page behavior: scaled saved-food entries, validation, daily totals, error/loading states, and tablet-specific rendering. Mock the injected service interfaces with Moq and use the fixed browser-clock helper instead of depending on the machine clock.
+- Use a fixed `IDateTimeService` in API tests for “today,” future-date, and local-offset boundaries. Keep logged entries as snapshots when testing edits/deletes of reusable foods.
+- Assert expected numeric results directly (including macro rounding); do not duplicate the production calculation formula in a test assertion. The unused `CalculateAstrofotoFov` `additionalFocalLength` parameter remains outside asserted behavior until its purpose is clarified.
+- Run `dotnet test HomeServerPage.slnx` for the full suite, or the specific unit/integration project when iterating.
 
 Ask before changing calorie-log semantics, reusable-food behavior, totals, chart meaning, goal scope, or tablet priorities when the request does not specify the intended behavior. These established requirements are settled; do not ask the user to decide them again unless they request a change.

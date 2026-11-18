@@ -1,6 +1,6 @@
 ---
 name: tablet-dashboard
-description: Use when changing the HomeServerPage tablet dashboard, its scheduled refresh, live clock, or realtime notifications.
+description: Use when changing the HomeServerPage tablet dashboard, its scheduled refresh, live clock, realtime notifications, or tests for those behaviors.
 ---
 
 # Tablet dashboard
@@ -49,5 +49,13 @@ When changing a form, align related labels and controls consistently across colu
 - Widget refresh handlers are in the widget `.razor.cs` partials. The client notification source and shared notification contracts are used by dashboard components.
 - The live clock is part of `HomeServerPage/HomeServerPage.Client/Layout/TabletNavigation.razor`.
 - The shared moon display is `HomeServerPage/HomeServerPage.Client/Pages/Astronomy/MoonPhase.razor` and `.razor.cs`, used by `AstronomyWidget` and `AstronomyObservationsTab`.
+
+## Tests
+
+- Refresh-option and schedule-boundary unit tests are in `HomeServerPage.Tests.Unit\Domain\TabletDashboardRefreshScheduleTests.cs`. Keep the schedule calculation pure and test active-start anchoring, inclusive start, exclusive end, interval boundaries, and the next-day transition without waiting on real timers.
+- bUnit tests for dashboard composition and connection-restored refresh are in `HomeServerPage.Tests.Unit\Components\TabletDashboardComponentTests.cs`; notification publishing is covered by `HomeServerPage.Tests.Unit\Services\RealtimeNotificationServiceTests.cs`.
+- Use a fixed `IDateTimeService` and fake notification event source. Test scheduled refresh and SignalR notifications independently: connection-restored notifications must refresh subscribed data even outside the scheduled refresh window.
+- Use bUnit component tests for rendering and event handling; no browser or live SignalR server is required for the normal suite.
+- Run `dotnet test HomeServerPage.slnx` for the full suite.
 
 Before changing schedule semantics, timezone, active hours, widget cadence, refresh mechanisms, or compact layout, ask if the requested behavior is not explicit. Keep configuration, validation, documentation, and client behavior in sync when changing the schedule.
